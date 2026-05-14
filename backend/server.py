@@ -81,7 +81,44 @@ PRODUCTS: Dict[str, Dict[str, Any]] = {
         "delivery": "Digital bundle delivery details are shown after payment confirmation.",
         "license": "Personal, creator, and small-business use. Resale as a standalone bundle is not included.",
         "image": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80",
-        "external_purchase_url": "https://example.com/evolvix-digital-forward-2"
+        "external_purchase_url": "https://example.com/evolvix-digital-forward-2",
+        "file_slots": ["Digital Forward Workbook PDF", "Creator Planner Spreadsheet", "Support Script Library"]
+    },
+    "ai-confidence-workbook": {
+        "id": "ai-confidence-workbook", "slug": "ai-confidence-workbook", "title": "AI Confidence Workbook",
+        "price": 24.00, "currency": "usd", "category": "Learning", "tag": "New",
+        "description": "A gentle step-by-step workbook for beginners, parents, and elderly users learning AI safely.",
+        "benefits": ["Learn AI at a calm pace", "Understand everyday use cases", "Reduce fear around new tools"],
+        "included": ["Guided workbook", "Safety checklist", "Family support prompts"],
+        "delivery": "Digital workbook delivery details are shown after payment confirmation.",
+        "license": "Personal and family learning use. Redistribution is not included.",
+        "image": "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=1200&q=80",
+        "external_purchase_url": "https://example.com/evolvix-ai-confidence-workbook",
+        "file_slots": ["AI Confidence Workbook PDF", "Safe AI Checklist PDF", "Family Help Cards PDF"]
+    },
+    "mood-to-music-creation-kit": {
+        "id": "mood-to-music-creation-kit", "slug": "mood-to-music-creation-kit", "title": "Mood-to-Music Creation Kit",
+        "price": 27.00, "currency": "usd", "category": "Music", "tag": "Featured",
+        "description": "A creative system for turning emotion, color, and story into AI-assisted music directions.",
+        "benefits": ["Map emotions into sonic palettes", "Build stronger creative prompts", "Develop music concepts by mood"],
+        "included": ["Mood map", "Sound palette cards", "Story-to-song worksheet"],
+        "delivery": "Creative kit delivery details are shown after payment confirmation.",
+        "license": "Personal creative use and client ideation use. Resale is not included.",
+        "image": "https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1200&q=80",
+        "external_purchase_url": "https://example.com/evolvix-mood-to-music-kit",
+        "file_slots": ["Mood Map PDF", "Sound Palette Card Deck", "Story-to-Song Worksheet"]
+    },
+    "creator-store-launch-vault": {
+        "id": "creator-store-launch-vault", "slug": "creator-store-launch-vault", "title": "Creator Store Launch Vault",
+        "price": 69.00, "currency": "usd", "category": "Bundle", "tag": "Best Seller",
+        "description": "A premium launch kit for creators preparing digital products, sales pages, and promo content.",
+        "benefits": ["Prepare a cleaner product launch", "Write stronger product page copy", "Organize social launch content"],
+        "included": ["Store launch planner", "Product copy kit", "Promo calendar"],
+        "delivery": "Launch vault delivery details are shown after payment confirmation.",
+        "license": "Personal creator and small-business use. Resale as a vault is not included.",
+        "image": "https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=1200&q=80",
+        "external_purchase_url": "https://example.com/evolvix-creator-store-vault",
+        "file_slots": ["Launch Planner PDF", "Product Copy Templates DOCX", "30-Day Promo Calendar Spreadsheet"]
     }
 }
 
@@ -91,13 +128,26 @@ PORTFOLIO = [
     {"id": "p3", "title": "Creator Launch Kit", "category": "Digital Products", "summary": "Reusable creator assets and store-ready product visuals.", "image": "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?auto=format&fit=crop&w=1200&q=80"},
     {"id": "p4", "title": "Small Business Tech Clarity", "category": "Business", "summary": "Practical digital transformation support for non-technical teams.", "image": "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=80"},
     {"id": "p5", "title": "Accessible AI Guides", "category": "Accessibility", "summary": "Warm, readable guides designed for older users and families.", "image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80"},
-    {"id": "p6", "title": "Brand Identity Lab", "category": "Brand Assets", "summary": "Futuristic visual systems for high-trust creator brands.", "image": "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?auto=format&fit=crop&w=1200&q=80"}
+    {"id": "p6", "title": "Brand Identity Lab", "category": "Brand Assets", "summary": "Futuristic visual systems for high-trust creator brands.", "image": "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?auto=format&fit=crop&w=1200&q=80"},
+    {"id": "p7", "title": "Evolvix Brand Launch System", "category": "Brand Assets", "summary": "A polished identity rollout framework for logo usage, color, tone, and premium trust signals.", "image": "https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80"},
+    {"id": "p8", "title": "Student AI Productivity Map", "category": "Learning", "summary": "A practical study workflow concept that turns assignments, revision, and planning into guided AI routines.", "image": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80"},
+    {"id": "p9", "title": "Creator Storefront Blueprint", "category": "Digital Products", "summary": "Product packaging, pricing, and sales-page structure for creators selling digital downloads.", "image": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80"},
+    {"id": "p10", "title": "Calm Focus Mood Collection", "category": "Music", "summary": "A mood-first creative direction set for calm, focused, reflective, and late-night AI-assisted sound worlds.", "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80"},
+    {"id": "p11", "title": "Elder-Friendly Tech Support Kit", "category": "Accessibility", "summary": "Simple scripts, visual aids, and confidence-building support flows for older users navigating digital tools.", "image": "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1200&q=80"},
+    {"id": "p12", "title": "Small Business AI Readiness Audit", "category": "Business", "summary": "A clear checklist-based audit for small teams deciding where AI can save time and improve service.", "image": "https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=1200&q=80"}
 ]
 
 BLOG_POSTS = [
     {"id": "b1", "slug": "learning-ai-without-overwhelm", "title": "Learning AI Without Overwhelm", "category": "AI Tools", "excerpt": "A clear path for students, parents, and professionals entering the AI era.", "read_time": "5 min", "date": "2026-05-13"},
     {"id": "b2", "slug": "mood-based-creative-media", "title": "Mood-Based Creative Media", "category": "Music Creativity", "excerpt": "How emotion can guide music prompts, digital art direction, and story worlds.", "read_time": "4 min", "date": "2026-05-10"},
-    {"id": "b3", "slug": "digital-products-that-build-trust", "title": "Digital Products That Build Trust", "category": "Creator Resources", "excerpt": "What buyers need to see before purchasing downloads, bundles, and templates.", "read_time": "6 min", "date": "2026-05-08"}
+    {"id": "b3", "slug": "digital-products-that-build-trust", "title": "Digital Products That Build Trust", "category": "Creator Resources", "excerpt": "What buyers need to see before purchasing downloads, bundles, and templates.", "read_time": "6 min", "date": "2026-05-08"},
+    {"id": "b4", "slug": "five-ai-habits-for-students", "title": "Five AI Habits for Students", "category": "Student-Friendly Tech", "excerpt": "Simple study, research, and revision routines that keep AI helpful instead of distracting.", "read_time": "5 min", "date": "2026-05-06"},
+    {"id": "b5", "slug": "how-to-package-a-digital-download", "title": "How to Package a Digital Download", "category": "Digital Products", "excerpt": "A buyer-first checklist for naming, previewing, pricing, and delivering digital products clearly.", "read_time": "7 min", "date": "2026-05-04"},
+    {"id": "b6", "slug": "ai-for-parents-and-older-users", "title": "AI for Parents and Older Users", "category": "AI Tools", "excerpt": "A warm guide to making new technology feel safe, useful, and less intimidating at home.", "read_time": "6 min", "date": "2026-05-02"},
+    {"id": "b7", "slug": "mood-memory-and-music-prompts", "title": "Mood, Memory, and Music Prompts", "category": "Music Creativity", "excerpt": "How nostalgia, calm, focus, and cinematic emotion can become stronger creative briefs.", "read_time": "4 min", "date": "2026-04-30"},
+    {"id": "b8", "slug": "creator-productivity-without-burnout", "title": "Creator Productivity Without Burnout", "category": "Productivity", "excerpt": "A practical operating rhythm for creators balancing learning, content, products, and rest.", "read_time": "5 min", "date": "2026-04-28"},
+    {"id": "b9", "slug": "trust-signals-every-small-digital-brand-needs", "title": "Trust Signals Every Small Digital Brand Needs", "category": "Creator Resources", "excerpt": "The visual, copy, support, and policy details that help visitors feel safe buying from you.", "read_time": "6 min", "date": "2026-04-25"},
+    {"id": "b10", "slug": "from-prompt-to-product", "title": "From Prompt to Product", "category": "Digital Creativity", "excerpt": "A simple framework for turning AI-assisted ideas into useful templates, kits, and content systems.", "read_time": "8 min", "date": "2026-04-22"}
 ]
 
 
@@ -132,6 +182,7 @@ class ProductResponse(BaseModel):
     license: str
     image: str
     external_purchase_url: str
+    file_slots: List[str] = Field(default_factory=list)
 
 
 @api_router.get("/")
@@ -161,6 +212,20 @@ async def get_product(slug: str):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product
+
+
+@api_router.get("/products/{slug}/delivery-slots")
+async def get_product_delivery_slots(slug: str):
+    product = PRODUCTS.get(slug)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return {
+        "product_id": product["id"],
+        "title": product["title"],
+        "delivery_status": "file_slots_ready",
+        "file_slots": product.get("file_slots", ["Main download file", "Usage guide", "Bonus resource"]),
+        "note": "Attach final files to these slots when real product assets are ready.",
+    }
 
 
 @api_router.post("/contact")
