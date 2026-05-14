@@ -71,6 +71,17 @@ PRODUCTS: Dict[str, Dict[str, Any]] = {
         "license": "Use internally or with clients. Public resale is not included.",
         "image": "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80",
         "external_purchase_url": "https://example.com/evolvix-brand-audit"
+    },
+    "digital-forward-2": {
+        "id": "digital-forward-2", "slug": "digital-forward-2", "title": "Digital Forward 2.0 Bundle",
+        "price": 59.00, "currency": "usd", "category": "Bundle", "tag": "Featured",
+        "description": "A premium future-readiness pack combining AI prompts, digital planning sheets, and creator/business clarity tools.",
+        "benefits": ["Plan your next digital move", "Package learning and creation together", "Build confidence for AI-era workflows"],
+        "included": ["AI readiness workbook", "Creator product planner", "Digital support scripts", "Launch checklist"],
+        "delivery": "Digital bundle delivery details are shown after payment confirmation.",
+        "license": "Personal, creator, and small-business use. Resale as a standalone bundle is not included.",
+        "image": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80",
+        "external_purchase_url": "https://example.com/evolvix-digital-forward-2"
     }
 }
 
@@ -211,10 +222,31 @@ async def create_checkout_session(payload: CheckoutCreate, request: Request):
 
 @api_router.get("/payments/status/{session_id}")
 async def get_payment_status(session_id: str, request: Request):
-    status = await get_stripe_checkout(request).get_checkout_status(session_id)
     transaction = await db.payment_transactions.find_one({"session_id": session_id}, {"_id": 0})
     if not transaction:
         raise HTTPException(status_code=404, detail="Payment transaction not found")
+
+    try:
+        status = await get_stripe_checkout(request).get_checkout_status(session_id)
+    except Exception as exc:
+        logger.warning("Stripe status lookup failed for %s: %s", session_id, exc)
+        fallback_status = "open"
+        fallback_payment_status = "unpaid"
+        await db.payment_transactions.update_one(
+            {"session_id": session_id},
+            {"$set": {"status": fallback_status, "payment_status": fallback_payment_status, "provider_status_error": str(exc), "updated_at": now_iso()}},
+        )
+        product = PRODUCTS.get(transaction.get("product_id"), {})
+        return {
+            "status": fallback_status,
+            "payment_status": fallback_payment_status,
+            "amount_total": int(float(transaction.get("amount", 0)) * 100),
+            "currency": transaction.get("currency", "usd"),
+            "metadata": transaction.get("metadata", {}),
+            "delivery": product.get("delivery", "Digital delivery will be prepared after payment confirmation."),
+            "provider_status": "pending_verification",
+        }
+
     update_doc = {"status": status.status, "payment_status": status.payment_status, "updated_at": now_iso()}
     if status.payment_status == "paid" and not transaction.get("processed"):
         update_doc["processed"] = True

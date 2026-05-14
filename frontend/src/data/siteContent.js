@@ -16,6 +16,7 @@ export const products = [
   { id: "creator-assets-bundle", slug: "creator-assets-bundle", title: "Creator Assets Glow Bundle", price: 39, category: "Assets", tag: "Featured", description: "Launch graphics, overlays, and brand blocks for digital creators.", image: "https://images.unsplash.com/photo-1635776063043-ab23b4c226f6?auto=format&fit=crop&w=1200&q=80" },
   { id: "mood-music-pack", slug: "mood-music-pack", title: "Mood Music Prompt Pack", price: 19, category: "Music", tag: "New", description: "Emotion-led prompt cards for AI-assisted music and digital storytelling.", image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=1200&q=80" },
   { id: "digital-brand-audit", slug: "digital-brand-audit", title: "Digital Brand Audit Template", price: 49, category: "Business", tag: "Bundle", description: "A practical audit kit for improving trust, offers, and digital presence.", image: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80" },
+  { id: "digital-forward-2", slug: "digital-forward-2", title: "Digital Forward 2.0 Bundle", price: 59, category: "Bundle", tag: "Featured", description: "AI prompts, digital planning sheets, and creator/business clarity tools in one premium pack.", image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80" },
 ];
 
 export const portfolioItems = [
