@@ -1,0 +1,13 @@
+import { useState } from "react";
+import { Mail, MessageCircle, Send } from "lucide-react";
+import { toast } from "sonner";
+import { contactDetails } from "../data/siteContent";
+import { submitContact } from "../api";
+import { SectionHeader } from "../components/SectionHeader";
+
+export default function Contact() {
+  const [form, setForm] = useState({ name: "", email: "", inquiry_type: "Business inquiry", message: "" });
+  const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+  const submit = async (event) => { event.preventDefault(); try { await submitContact(form); toast.success("Your message has been received."); setForm({ name: "", email: "", inquiry_type: "Business inquiry", message: "" }); } catch (error) { toast.error("Please complete every field before sending."); } };
+  return <section className="section page-section" data-testid="contact-page"><SectionHeader eyebrow="Contact" title="Let’s talk about products, support, custom work, or collaboration." /><div className="contact-grid"><form onSubmit={submit} className="contact-form" data-testid="contact-form"><input value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder="Your name" data-testid="contact-name-input" /><input value={form.email} onChange={(e) => setField("email", e.target.value)} placeholder="Email address" data-testid="contact-email-input" /><select value={form.inquiry_type} onChange={(e) => setField("inquiry_type", e.target.value)} data-testid="contact-inquiry-select"><option>Business inquiry</option><option>Collaboration inquiry</option><option>Product support</option><option>Custom work</option><option>AI/music creative request</option></select><textarea value={form.message} onChange={(e) => setField("message", e.target.value)} placeholder="Tell me what you need" data-testid="contact-message-textarea" /><button type="submit" className="primary-btn" data-testid="contact-submit-button">Send Message <Send size={18} /></button></form><aside className="contact-panel" data-testid="contact-details-panel"><a href={`mailto:${contactDetails.email}`} data-testid="contact-email-link"><Mail size={19} /> {contactDetails.email}</a><a href={`https://wa.me/${contactDetails.whatsapp.replace(/\D/g, "")}`} data-testid="contact-whatsapp-link"><MessageCircle size={19} /> WhatsApp placeholder</a><p data-testid="contact-business-note">Business and collaboration inquiries are welcome. Product support can be requested with the product name and purchase details.</p></aside></div></section>;
+}

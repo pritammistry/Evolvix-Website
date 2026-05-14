@@ -1,0 +1,9 @@
+import { useState } from "react";
+import { Music2, Play, WandSparkles } from "lucide-react";
+import { musicMoods } from "../data/siteContent";
+import { SectionHeader } from "../components/SectionHeader";
+
+export default function CreativeLab() {
+  const [selected, setSelected] = useState(musicMoods[0]);
+  return <section className="section page-section lab-page" data-testid="creative-lab-page"><SectionHeader eyebrow="AI Music / Creative Lab" title="Mood-driven creative experiences for sound, feeling, and story." text="Explore emotional themes and choose a feeling to shape AI-assisted music ideas and digital creation briefs." /><div className="lab-grid"><div className="mood-selector" data-testid="mood-selector">{musicMoods.map((item) => <button key={item.mood} className={selected.mood === item.mood ? "active" : ""} onClick={() => setSelected(item)} data-testid={`mood-select-${item.mood.toLowerCase()}-button`}><Music2 size={17} /> {item.mood}</button>)}</div><article className="sample-player" data-testid="sample-player-card"><span className="eyebrow" data-testid="selected-mood-eyebrow">Selected feeling</span><h2 data-testid="selected-mood-title">{selected.mood}</h2><p data-testid="selected-mood-tone">{selected.tone}</p><button data-testid="sample-play-button"><Play size={18} /> Sample Preview</button><div className="wave-lines" data-testid="sample-wave-visual"><i></i><i></i><i></i><i></i><i></i></div></article><article className="creation-card" data-testid="create-by-mood-card"><WandSparkles size={26} /><h2 data-testid="create-by-mood-title">Create by mood</h2><p data-testid="create-by-mood-text">Future expansion can add personalized AI-assisted music briefs, cover art directions, lyrics concepts, and emotional sound palettes.</p></article></div></section>;
+}
