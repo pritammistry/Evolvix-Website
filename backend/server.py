@@ -6,7 +6,7 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import uuid
 from datetime import datetime, timezone
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest
@@ -291,6 +291,7 @@ async def get_payment_status(session_id: str, request: Request):
     if not transaction:
         raise HTTPException(status_code=404, detail="Payment transaction not found")
 
+    status: Optional[Any] = None
     try:
         status = await get_stripe_checkout(request).get_checkout_status(session_id)
     except Exception as exc:
@@ -311,6 +312,9 @@ async def get_payment_status(session_id: str, request: Request):
             "delivery": product.get("delivery", "Digital delivery will be prepared after payment confirmation."),
             "provider_status": "pending_verification",
         }
+
+    if status is None:
+        raise HTTPException(status_code=502, detail="Payment status unavailable")
 
     update_doc = {"status": status.status, "payment_status": status.payment_status, "updated_at": now_iso()}
     if status.payment_status == "paid" and not transaction.get("processed"):
