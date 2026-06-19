@@ -8,6 +8,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Dict, Any, Optional
 import uuid
+import hashlib
 from datetime import datetime, timezone
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest
 
@@ -25,6 +26,22 @@ api_router = APIRouter(prefix="/api")
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def slugify(value: str) -> str:
+    return "-".join("".join(ch.lower() if ch.isalnum() else " " for ch in value).split())
+
+
+def admin_token() -> str:
+    raw = f"{os.environ['ADMIN_PASSWORD']}:{os.environ['ADMIN_TOKEN_SECRET']}"
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def verify_admin_request(request: Request) -> None:
+    header = request.headers.get("Authorization", "")
+    expected = f"Bearer {admin_token()}"
+    if header != expected:
+        raise HTTPException(status_code=401, detail="Admin authentication required")
 
 
 DEFAULT_SITE_CONTENT: Dict[str, Any] = {
@@ -227,6 +244,18 @@ class SiteContentUpdate(BaseModel):
     content: Dict[str, Any]
 
 
+class AdminLogin(BaseModel):
+    password: str
+
+
+class AdminContentUpdate(BaseModel):
+    content: Dict[str, Any]
+
+
+class AdminListUpdate(BaseModel):
+    items: List[Dict[str, Any]]
+
+
 class CheckoutCreate(BaseModel):
     product_id: str
     origin_url: str
@@ -259,11 +288,12 @@ async def root():
 async def get_site_content():
     custom = await db.site_content.find_one({"id": "primary"}, {"_id": 0})
     editable_content = custom.get("content", DEFAULT_SITE_CONTENT) if custom else DEFAULT_SITE_CONTENT
+    catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
     return {
         **editable_content,
-        "products": list(PRODUCTS.values()),
-        "portfolio": PORTFOLIO,
-        "blog": BLOG_POSTS,
+        "products": catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()),
+        "portfolio": catalog.get("portfolio", PORTFOLIO) if catalog else PORTFOLIO,
+        "blog": catalog.get("blog", BLOG_POSTS) if catalog else BLOG_POSTS,
     }
 
 
@@ -274,6 +304,95 @@ async def update_site_content(payload: SiteContentUpdate):
     return {"message": "Site content updated", "updated_at": doc["updated_at"]}
 
 
+@api_router.post("/admin/login")
+async def admin_login(payload: AdminLogin):
+    if payload.password != os.environ["ADMIN_PASSWORD"]:
+        raise HTTPException(status_code=401, detail="Invalid admin password")
+    return {"token": admin_token(), "message": "Admin login successful"}
+
+
+@api_router.get("/admin/dashboard")
+async def admin_dashboard(request: Request):
+    verify_admin_request(request)
+    custom = await db.site_content.find_one({"id": "primary"}, {"_id": 0})
+    catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
+    return {
+        "content": custom.get("content", DEFAULT_SITE_CONTENT) if custom else DEFAULT_SITE_CONTENT,
+        "products": catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()),
+        "portfolio": catalog.get("portfolio", PORTFOLIO) if catalog else PORTFOLIO,
+        "blog": catalog.get("blog", BLOG_POSTS) if catalog else BLOG_POSTS,
+        "updated_at": max(custom.get("updated_at", "") if custom else "", catalog.get("updated_at", "") if catalog else ""),
+    }
+
+
+@api_router.put("/admin/content")
+async def admin_update_content(payload: AdminContentUpdate, request: Request):
+    verify_admin_request(request)
+    doc = {"id": "primary", "content": payload.content, "updated_at": now_iso()}
+    await db.site_content.update_one({"id": "primary"}, {"$set": doc}, upsert=True)
+    return {"message": "Content sections saved", "updated_at": doc["updated_at"]}
+
+
+def normalize_catalog_items(items: List[Dict[str, Any]], kind: str) -> List[Dict[str, Any]]:
+    normalized = []
+    for index, item in enumerate(items):
+        clean = {**item}
+        title = str(clean.get("title") or clean.get("name") or f"{kind}-{index + 1}")
+        clean.setdefault("id", slugify(title) or f"{kind}-{index + 1}")
+        if kind == "products":
+            clean.setdefault("slug", slugify(title) or clean["id"])
+            clean["price"] = float(clean.get("price") or 0)
+            clean.setdefault("currency", "usd")
+            clean.setdefault("category", "Learning and Growth")
+            clean.setdefault("tag", "Available")
+            clean.setdefault("description", "Editable Evolvix product.")
+            clean.setdefault("benefits", [])
+            clean.setdefault("included", [])
+            clean.setdefault("delivery", "Digital delivery details are shown after checkout.")
+            clean.setdefault("license", "Usage terms can be customized.")
+            clean.setdefault("image", "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80")
+            clean.setdefault("external_purchase_url", "https://gumroad.com/")
+            clean.setdefault("file_slots", [])
+        if kind == "portfolio":
+            clean.setdefault("category", "Digital Products")
+            clean.setdefault("summary", "Editable showcase item.")
+            clean.setdefault("image", "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?auto=format&fit=crop&w=1200&q=80")
+        if kind == "blog":
+            clean.setdefault("slug", slugify(title) or clean["id"])
+            clean.setdefault("category", "AI Tools")
+            clean.setdefault("excerpt", "Editable insight article summary.")
+            clean.setdefault("date", now_iso()[:10])
+            clean.setdefault("read_time", clean.get("readTime", "5 min"))
+        normalized.append(clean)
+    return normalized
+
+
+@api_router.put("/admin/{kind}")
+async def admin_update_catalog(kind: str, payload: AdminListUpdate, request: Request):
+    verify_admin_request(request)
+    if kind not in {"products", "portfolio", "blog"}:
+        raise HTTPException(status_code=400, detail="Unsupported admin catalog type")
+    items = normalize_catalog_items(payload.items, kind)
+    await db.editable_catalog.update_one(
+        {"id": "primary"},
+        {"$set": {kind: items, "updated_at": now_iso(), "id": "primary"}},
+        upsert=True,
+    )
+    return {"message": f"{kind.title()} saved", "count": len(items)}
+
+
+@api_router.post("/admin/reset")
+async def admin_reset(request: Request):
+    verify_admin_request(request)
+    await db.site_content.update_one({"id": "primary"}, {"$set": {"id": "primary", "content": DEFAULT_SITE_CONTENT, "updated_at": now_iso()}}, upsert=True)
+    await db.editable_catalog.update_one(
+        {"id": "primary"},
+        {"$set": {"id": "primary", "products": list(PRODUCTS.values()), "portfolio": PORTFOLIO, "blog": BLOG_POSTS, "updated_at": now_iso()}},
+        upsert=True,
+    )
+    return {"message": "Admin content reset to Evolvix defaults"}
+
+
 @api_router.post("/site-content/reset")
 async def reset_site_content():
     await db.site_content.update_one(
@@ -281,17 +400,25 @@ async def reset_site_content():
         {"$set": {"id": "primary", "content": DEFAULT_SITE_CONTENT, "updated_at": now_iso()}},
         upsert=True,
     )
+    await db.editable_catalog.update_one(
+        {"id": "primary"},
+        {"$set": {"id": "primary", "products": list(PRODUCTS.values()), "portfolio": PORTFOLIO, "blog": BLOG_POSTS, "updated_at": now_iso()}},
+        upsert=True,
+    )
     return {"message": "Site content reset to Evolvix defaults"}
 
 
 @api_router.get("/products", response_model=List[ProductResponse])
 async def get_products():
-    return list(PRODUCTS.values())
+    catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
+    return catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values())
 
 
 @api_router.get("/products/{slug}", response_model=ProductResponse)
 async def get_product(slug: str):
-    product = PRODUCTS.get(slug)
+    catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
+    products = catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values())
+    product = next((item for item in products if item.get("slug") == slug or item.get("id") == slug), None)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product
@@ -299,7 +426,9 @@ async def get_product(slug: str):
 
 @api_router.get("/products/{slug}/delivery-slots")
 async def get_product_delivery_slots(slug: str):
-    product = PRODUCTS.get(slug)
+    catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
+    products = catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values())
+    product = next((item for item in products if item.get("slug") == slug or item.get("id") == slug), None)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return {
@@ -334,7 +463,9 @@ def get_stripe_checkout(request: Request) -> StripeCheckout:
 
 @api_router.post("/payments/checkout")
 async def create_checkout_session(payload: CheckoutCreate, request: Request):
-    product = PRODUCTS.get(payload.product_id)
+    catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
+    products = catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values())
+    product = next((item for item in products if item.get("id") == payload.product_id or item.get("slug") == payload.product_id), None)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     if not payload.origin_url.startswith("http"):
