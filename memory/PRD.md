@@ -87,6 +87,13 @@ Build a professional, premium, futuristic website for Evolvix Tech Media using t
 - Added a Custom tab in `/admin` for creating any new website section without code changes.
 - Verified official header logo, custom section rendering, admin custom section editor, and backend regression tests.
 
+
+## Implemented — 2026-06-19 Logo Replacement and Animation Polish
+- Replaced the header and footer logo with the newly attached Evolvix logo asset without the blank rectangular spacing issue.
+- Updated social preview image to use the new logo asset.
+- Added premium animation polish: logo breathing glow, soft reveal entrances, hero floating motion, trust-chip motion, button shine hover, wave glow pulse, and reduced-motion support.
+- Verified new logo appears in both header and footer.
+
 ## Prioritized Backlog
 ### P0 Remaining
 - Replace placeholder contact details with final email, WhatsApp, and social URLs when available.

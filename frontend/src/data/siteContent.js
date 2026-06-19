@@ -1,6 +1,6 @@
 export const logos = {
   circular: "https://customer-assets.emergentagent.com/job_bcabf990-5ebd-4edc-8af2-8a7a2d447789/artifacts/ru37gizu_ChatGPT%20Image%20May%2013%2C%202026%2C%2001_31_02%20PM.png",
-  horizontal: "https://customer-assets.emergentagent.com/job_digital-forward-2/artifacts/q4zhe0ea_ChatGPT%20Image%20May%2013%2C%202026%2C%2001_28_03%20PM.png",
+  horizontal: "https://customer-assets.emergentagent.com/job_digital-forward-2/artifacts/hgz9bgfb_ChatGPT%20Image%20Jun%2019%2C%202026%2C%2005_36_06%20PM.png",
   icon: "https://customer-assets.emergentagent.com/job_bcabf990-5ebd-4edc-8af2-8a7a2d447789/artifacts/cfnxszjf_ChatGPT%20Image%20May%2013%2C%202026%2C%2001_29_17%20PM.png",
 };
 
