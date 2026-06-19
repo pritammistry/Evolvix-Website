@@ -17,6 +17,7 @@ export default function Home() {
   const ecosystem = content.ecosystem || [];
   const whyChoose = content.why_choose || [];
   const trust = content.trust_strip || [];
+  const customSections = (content.custom_sections || []).filter((section) => section.visible !== false);
   const buyProduct = async (productId) => {
     try {
       const { data } = await createCheckout({ product_id: productId, origin_url: window.location.origin });
@@ -83,6 +84,7 @@ export default function Home() {
         <Link to="/contact" className="primary-btn" data-testid="home-start-project-cta">Start a Project <ArrowRight size={18} /></Link>
       </section>
       <section className="section contact-cta-band" data-testid="home-contact-cta-section"><h2>Ready to create, innovate, and elevate?</h2><p>Tell Evolvix what you want to build, learn, automate, design, or launch.</p><Link to="/contact" className="primary-btn" data-testid="home-final-contact-cta">Contact Us <ArrowRight size={18} /></Link></section>
+      {customSections.map((section, index) => <section className="section custom-public-section" key={`${section.title}-${index}`} data-testid={`custom-section-${index}`}><SectionHeader eyebrow={section.eyebrow || "Custom"} title={section.title} text={section.description} /><div className="custom-card-grid" data-testid={`custom-section-cards-${index}`}>{(section.cards || []).map((card, cardIndex) => <article className="pillar-card" key={`${card.title}-${cardIndex}`} data-testid={`custom-section-${index}-card-${cardIndex}`}><Sparkles size={24} /><h3>{card.title}</h3><p>{card.text}</p></article>)}</div>{section.cta_label && <Link to={section.cta_url || "/contact"} className="primary-btn" data-testid={`custom-section-${index}-cta`}>{section.cta_label} <ArrowRight size={18} /></Link>}</section>)}
       <section className="section trust-newsletter" data-testid="home-newsletter-section">
         <div><span className="eyebrow">Trust & updates</span><h2 data-testid="home-newsletter-title">Stay close to launches, resources, and new creative drops.</h2><p data-testid="home-newsletter-text">Room for future testimonials, client wins, reviews, and credibility markers is built into the brand system.</p></div>
         <form onSubmit={join} className="newsletter-form" data-testid="newsletter-form"><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" data-testid="newsletter-email-input" /><button type="submit" data-testid="newsletter-submit-button">Join Updates</button></form>

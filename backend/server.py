@@ -98,6 +98,20 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
     ],
     "learning_categories": ["AI Prompt Packs", "Business Prompt Packs", "Career Prompt Packs", "Student Prompt Packs", "Creator Prompt Packs", "Productivity Prompt Packs", "Marketing Prompt Packs", "Coding Prompt Packs", "AI Learning Guides", "AI Cheat Sheets", "AI Templates", "AI Workbooks", "AI Support for Everyday Learning", "Grow Yourself Using AI", "AI Learning for Beginners", "Smart AI Routines", "Future AI Courses", "Future Certifications"],
     "music_services": ["AI Background Music for Reels", "Social Media Creator Music Packs", "Mood-Based Background Tracks", "AI Music for Videos", "Short-form Content Music", "Brand Theme Music", "Podcast Intros", "Ambient Music", "Sound Design", "Creator Audio Branding"],
+    "custom_sections": [
+        {
+            "title": "Custom Evolvix Section",
+            "eyebrow": "Editable Section",
+            "description": "Use the admin dashboard to create any new website section, update its cards, or hide it whenever needed.",
+            "cta_label": "Contact Evolvix",
+            "cta_url": "/contact",
+            "visible": True,
+            "cards": [
+                {"title": "Fully editable", "text": "Create custom cards, service groups, offers, or announcements from the admin panel."},
+                {"title": "Backend controlled", "text": "Changes are stored in MongoDB and reflected on the public website."},
+            ],
+        }
+    ],
     "why_choose": ["AI-first approach", "Personalized solutions", "Future-ready technology", "Business-focused innovation", "Creative excellence", "End-to-end support"],
 }
 
