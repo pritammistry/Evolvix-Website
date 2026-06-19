@@ -108,6 +108,7 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
         {"id": "mp-cinematic", "mood": "Cinematic", "title": "Cinematic creator preview", "description": "Wide builds, dramatic transitions, and story-first scale.", "audio_url": "", "visible": True},
         {"id": "mp-focused", "mood": "Focused", "title": "Focused creator preview", "description": "Minimal textures, clean tempo, and productive atmosphere.", "audio_url": "", "visible": True},
     ],
+    "analytics_report_settings": {"enabled": False, "frequency": "weekly", "owner": "", "sections": "Visits, clicks, forms, sections, products"},
     "custom_sections": [
         {
             "title": "Custom Evolvix Section",
@@ -135,6 +136,7 @@ def merged_site_content(custom_content: Optional[Dict[str, Any]]) -> Dict[str, A
     merged = {**DEFAULT_SITE_CONTENT, **(custom_content or {})}
     merged["brand"] = {**DEFAULT_SITE_CONTENT["brand"], **(custom_content or {}).get("brand", {})}
     merged["contact"] = {**DEFAULT_SITE_CONTENT["contact"], **(custom_content or {}).get("contact", {})}
+    merged["analytics_report_settings"] = {**DEFAULT_SITE_CONTENT["analytics_report_settings"], **(custom_content or {}).get("analytics_report_settings", {})}
     for list_key in ["trust_strip", "creative_services", "technology_services", "ecosystem", "learning_categories", "music_services", "music_previews", "custom_sections", "testimonials", "why_choose"]:
         if not merged.get(list_key):
             merged[list_key] = DEFAULT_SITE_CONTENT[list_key]
@@ -371,7 +373,7 @@ async def get_site_content():
         **editable_content,
         "products": normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products"),
         "portfolio": catalog.get("portfolio", PORTFOLIO) if catalog else PORTFOLIO,
-        "blog": catalog.get("blog", BLOG_POSTS) if catalog else BLOG_POSTS,
+        "blog": normalize_catalog_items(catalog.get("blog", BLOG_POSTS) if catalog else BLOG_POSTS, "blog"),
     }
 
 
@@ -398,7 +400,7 @@ async def admin_dashboard(request: Request):
         "content": merged_site_content(custom.get("content") if custom else None),
         "products": normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products"),
         "portfolio": catalog.get("portfolio", PORTFOLIO) if catalog else PORTFOLIO,
-        "blog": catalog.get("blog", BLOG_POSTS) if catalog else BLOG_POSTS,
+        "blog": normalize_catalog_items(catalog.get("blog", BLOG_POSTS) if catalog else BLOG_POSTS, "blog"),
         "updated_at": max(custom.get("updated_at", "") if custom else "", catalog.get("updated_at", "") if catalog else ""),
     }
 
@@ -454,15 +456,15 @@ def normalize_catalog_items(items: List[Dict[str, Any]], kind: str) -> List[Dict
             clean.setdefault("summary", "Editable showcase item.")
             clean.setdefault("image", "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?auto=format&fit=crop&w=1200&q=80")
         if kind == "blog":
-            clean.setdefault("slug", slugify(title) or clean["id"])
-            clean.setdefault("category", "AI Tools")
-            clean.setdefault("excerpt", "Editable insight article summary.")
-            clean.setdefault("body", clean.get("excerpt", "Editable insight article summary."))
-            clean.setdefault("seo_title", clean.get("title", title))
-            clean.setdefault("seo_description", clean.get("excerpt", "Editable insight article summary."))
-            clean.setdefault("seo_keywords", "AI, Evolvix Tech Media, digital products, learning")
-            clean.setdefault("date", now_iso()[:10])
-            clean.setdefault("read_time", clean.get("readTime", "5 min"))
+            clean["slug"] = clean.get("slug") or slugify(title) or clean["id"]
+            clean["category"] = clean.get("category") or "AI Tools"
+            clean["excerpt"] = clean.get("excerpt") or "Editable insight article summary."
+            clean["body"] = clean.get("body") or clean.get("excerpt") or "Editable insight article summary."
+            clean["seo_title"] = clean.get("seo_title") or clean.get("title") or title
+            clean["seo_description"] = clean.get("seo_description") or clean.get("excerpt") or "Editable insight article summary."
+            clean["seo_keywords"] = clean.get("seo_keywords") or "AI, Evolvix Tech Media, digital products, learning"
+            clean["date"] = clean.get("date") or now_iso()[:10]
+            clean["read_time"] = clean.get("read_time") or clean.get("readTime") or "5 min"
         normalized.append(clean)
     return normalized
 
