@@ -289,6 +289,7 @@ class ProductResponse(BaseModel):
     delivery: str
     license: str
     image: str
+    images: List[str] = Field(default_factory=list)
     external_purchase_url: str
     file_slots: List[str] = Field(default_factory=list)
 
@@ -365,6 +366,10 @@ def normalize_catalog_items(items: List[Dict[str, Any]], kind: str) -> List[Dict
             clean.setdefault("delivery", "Digital delivery details are shown after checkout.")
             clean.setdefault("license", "Usage terms can be customized.")
             clean.setdefault("image", "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80")
+            images = clean.get("images") or ([clean.get("image")] if clean.get("image") else [])
+            clean["images"] = [image for image in images if image][:5]
+            if clean["images"]:
+                clean["image"] = clean["images"][0]
             clean.setdefault("external_purchase_url", "https://gumroad.com/")
             clean.setdefault("file_slots", [])
         if kind == "portfolio":
