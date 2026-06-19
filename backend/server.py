@@ -6,6 +6,8 @@ import os
 import logging
 import base64
 import io
+import csv
+import json
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Dict, Any, Optional
@@ -101,6 +103,11 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
     ],
     "learning_categories": ["AI Prompt Packs", "Business Prompt Packs", "Career Prompt Packs", "Student Prompt Packs", "Creator Prompt Packs", "Productivity Prompt Packs", "Marketing Prompt Packs", "Coding Prompt Packs", "AI Learning Guides", "AI Cheat Sheets", "AI Templates", "AI Workbooks", "AI Support for Everyday Learning", "Grow Yourself Using AI", "AI Learning for Beginners", "Smart AI Routines", "Future AI Courses", "Future Certifications"],
     "music_services": ["AI Background Music for Reels", "Social Media Creator Music Packs", "Mood-Based Background Tracks", "AI Music for Videos", "Short-form Content Music", "Brand Theme Music", "Podcast Intros", "Ambient Music", "Sound Design", "Creator Audio Branding"],
+    "music_previews": [
+        {"id": "mp-calm", "mood": "Calm", "title": "Calm creator preview", "description": "Soft pads, gentle pulses, and reflective movement for calmer edits.", "audio_url": "", "visible": True},
+        {"id": "mp-cinematic", "mood": "Cinematic", "title": "Cinematic creator preview", "description": "Wide builds, dramatic transitions, and story-first scale.", "audio_url": "", "visible": True},
+        {"id": "mp-focused", "mood": "Focused", "title": "Focused creator preview", "description": "Minimal textures, clean tempo, and productive atmosphere.", "audio_url": "", "visible": True},
+    ],
     "custom_sections": [
         {
             "title": "Custom Evolvix Section",
@@ -128,7 +135,7 @@ def merged_site_content(custom_content: Optional[Dict[str, Any]]) -> Dict[str, A
     merged = {**DEFAULT_SITE_CONTENT, **(custom_content or {})}
     merged["brand"] = {**DEFAULT_SITE_CONTENT["brand"], **(custom_content or {}).get("brand", {})}
     merged["contact"] = {**DEFAULT_SITE_CONTENT["contact"], **(custom_content or {}).get("contact", {})}
-    for list_key in ["trust_strip", "creative_services", "technology_services", "ecosystem", "learning_categories", "music_services", "custom_sections", "testimonials", "why_choose"]:
+    for list_key in ["trust_strip", "creative_services", "technology_services", "ecosystem", "learning_categories", "music_services", "music_previews", "custom_sections", "testimonials", "why_choose"]:
         if not merged.get(list_key):
             merged[list_key] = DEFAULT_SITE_CONTENT[list_key]
     return merged
@@ -451,6 +458,9 @@ def normalize_catalog_items(items: List[Dict[str, Any]], kind: str) -> List[Dict
             clean.setdefault("category", "AI Tools")
             clean.setdefault("excerpt", "Editable insight article summary.")
             clean.setdefault("body", clean.get("excerpt", "Editable insight article summary."))
+            clean.setdefault("seo_title", clean.get("title", title))
+            clean.setdefault("seo_description", clean.get("excerpt", "Editable insight article summary."))
+            clean.setdefault("seo_keywords", "AI, Evolvix Tech Media, digital products, learning")
             clean.setdefault("date", now_iso()[:10])
             clean.setdefault("read_time", clean.get("readTime", "5 min"))
         normalized.append(clean)
@@ -742,6 +752,35 @@ async def admin_analytics_options(request: Request):
         "pages": sorted([item for item in await db.analytics_events.distinct("path") if item]),
         "products": sorted([item for item in await db.analytics_events.distinct("product_id") if item]),
     }
+
+
+@api_router.get("/admin/analytics/export")
+async def admin_analytics_export(request: Request, format: str = "csv", start_date: Optional[str] = None, end_date: Optional[str] = None, event_type: Optional[str] = None, page: Optional[str] = None, product_id: Optional[str] = None):
+    verify_admin_request(request)
+    match = event_match_filter(start_date, end_date, event_type, page, product_id)
+    events = []
+    async for event in db.analytics_events.find(match, {"_id": 0}).sort("created_at", -1).limit(5000):
+        events.append(event)
+    if format.lower() == "json":
+        payload = json.dumps(events, ensure_ascii=False, indent=2).encode()
+        return StreamingResponse(io.BytesIO(payload), media_type="application/json", headers={"Content-Disposition": "attachment; filename=\"evolvix-analytics.json\""})
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=["created_at", "event_type", "path", "label", "section_id", "product_id", "session_id", "metadata", "user_agent"])
+    writer.writeheader()
+    for event in events:
+        writer.writerow({
+            "created_at": event.get("created_at", ""),
+            "event_type": event.get("event_type", ""),
+            "path": event.get("path", ""),
+            "label": event.get("label", ""),
+            "section_id": event.get("section_id", ""),
+            "product_id": event.get("product_id", ""),
+            "session_id": event.get("session_id", ""),
+            "metadata": json.dumps(event.get("metadata", {}), ensure_ascii=False),
+            "user_agent": event.get("user_agent", ""),
+        })
+    payload = output.getvalue().encode()
+    return StreamingResponse(io.BytesIO(payload), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=\"evolvix-analytics.csv\""})
 
 
 def get_stripe_checkout(request: Request) -> StripeCheckout:

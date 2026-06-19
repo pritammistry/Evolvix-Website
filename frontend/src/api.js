@@ -19,3 +19,5 @@ export const deleteProductFile = (token, productId, fileId) => axios.delete(`${A
 export const trackAnalyticsEvent = (payload) => axios.post(`${API}/analytics/events`, payload);
 export const fetchAdminAnalytics = (token, params) => axios.get(`${API}/admin/analytics`, { params, headers: { Authorization: `Bearer ${token}` } });
 export const fetchAdminAnalyticsOptions = (token) => axios.get(`${API}/admin/analytics/options`, { headers: { Authorization: `Bearer ${token}` } });
+export const adminAnalyticsExportUrl = (params = {}) => `${API}/admin/analytics/export?${new URLSearchParams(params).toString()}`;
+export const exportAdminAnalytics = (token, params) => axios.get(`${API}/admin/analytics/export`, { params, responseType: "blob", headers: { Authorization: `Bearer ${token}` } });
