@@ -142,6 +142,11 @@ Build a professional, premium, futuristic website for Evolvix Tech Media using t
 - Cleared the Suno music preview URL from Admin → Music → Audio Previews and restored public Music page placeholder cards.
 - Verified public product API, public site-content API, Admin Products file list, Admin Music URL field, and Music page placeholders. No APIs were mocked.
 
+## Fixed — 2026-06-19 Logo Distortion Regression
+- Removed the experimental logo blend/mask styling that distorted the left portion of the header and hero logos.
+- Restored clean logo rendering with normal blend mode, full opacity, no mask clipping, and original object-fit containment.
+- Verified via browser screenshot/computed styles: header and hero logos render with `mix-blend-mode: normal`, `opacity: 1`, `mask: none`, and `object-fit: contain`.
+
 ## Prioritized Backlog
 ### P0 Remaining
 - Replace placeholder contact details with final email, WhatsApp, and social URLs when available.
