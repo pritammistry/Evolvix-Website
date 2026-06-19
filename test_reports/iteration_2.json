@@ -1,0 +1,54 @@
+{
+  "summary": "Executed backend + frontend regression on public URL for content revamp. Backend APIs passed; one frontend-backend blog metadata integration bug found.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Blog listing metadata from /api/site-content",
+        "issue": "Read time is missing in UI because frontend reads post.readTime while backend provides read_time.",
+        "affected_selectors": [
+          "[data-testid^='blog-meta-']"
+        ]
+      },
+      {
+        "flow": "Product detail file slot rendering from /api/site-content",
+        "issue": "Frontend reads product.fileSlots while backend payload key is file_slots; backend-customized slot names may not render.",
+        "affected_selectors": [
+          "[data-testid^='product-file-slot-']"
+        ]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_public_api_flows.py",
+    "/app/backend/tests/test_site_content_and_regression.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "In Blog page, map backend read_time to UI (or normalize API response) so read time appears.",
+    "In ProductDetail page, map backend file_slots to frontend fileSlots (or normalize once in hook/API layer).",
+    "Retest Blog and ProductDetail on public URL after key normalization."
+  ],
+  "critical_code_review_comments": [
+    "Schema drift exists between backend snake_case fields and frontend camelCase usage for blog and product-detail display fields.",
+    "useSiteContent is called separately in Layout and each page, causing repeated /api/site-content fetches; central provider/state would reduce redundant network calls."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_site_content_and_regression.py",
+    "/app/test_reports/iteration_2.json"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "92%"
+  },
+  "seed_data_creation": "Created test contact/newsletter records through API during regression checks.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All required revamp sections/routes and site-content CRUD passed. Repro pending bug 1: Blog meta shows date only (no read time) on /blog. Repro pending bug 2: ProductDetail uses fileSlots key while API uses file_slots; confirm with products having custom file slots.",
+  "rca of the issue": "RCA-1: Backend returns blog entries with key read_time; frontend Blog.jsx renders post.readTime, so metadata prints as 'date •' without duration. RCA-2: Backend product payload uses file_slots, but ProductDetail.jsx reads product.fileSlots; this prevents backend-customized file slot labels from appearing and may fall back to generic values."
+}

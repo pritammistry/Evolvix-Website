@@ -5,6 +5,8 @@ import { Layout } from "./components/Layout";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Portfolio from "./pages/Portfolio";
+import Services from "./pages/Services";
+import Ecosystem from "./pages/Ecosystem";
 import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
 import CreativeLab from "./pages/CreativeLab";
@@ -21,6 +23,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/ecosystem" element={<Ecosystem />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/products/:slug" element={<ProductDetail />} />

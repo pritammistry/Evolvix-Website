@@ -3,10 +3,13 @@ import { ArrowRight, CheckCircle2, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { products } from "../data/siteContent";
 import { createCheckout } from "../api";
+import { useSiteContent } from "../hooks/useSiteContent";
 
 export default function ProductDetail() {
   const { slug } = useParams();
-  const product = products.find((item) => item.slug === slug) || products[0];
+  const { content } = useSiteContent();
+  const catalog = content.products || products;
+  const product = catalog.find((item) => item.slug === slug) || catalog[0] || products[0];
   const buyProduct = async () => { try { const { data } = await createCheckout({ product_id: product.id, origin_url: window.location.origin }); window.location.href = data.url; } catch (error) { toast.error("Checkout could not start. Please contact Evolvix for purchase help."); } };
   const benefits = product.benefits || ["Clear practical value", "Instant digital delivery", "Future-friendly creative use"];
   const included = product.included || ["Core product files", "Usage guide", "Support/contact pathway", "Update notes when available"];

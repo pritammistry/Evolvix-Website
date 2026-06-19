@@ -27,6 +27,54 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+DEFAULT_SITE_CONTENT: Dict[str, Any] = {
+    "brand": {
+        "name": "Evolvix Tech Media",
+        "tagline": "CREATE • INNOVATE • ELEVATE",
+        "headline": "Empowering People & Businesses Through AI.",
+        "subheadline": "AI-first digital, business, technology, and creative solutions for individuals, creators, startups, and growing businesses.",
+        "gstin": "19BVTPM1874M1ZK",
+        "core_areas": ["AI", "Digital", "Business", "Creative Solutions"],
+    },
+    "contact": {
+        "address": "Chhotonilpur, Bardhaman, West Bengal 713103",
+        "phone": "+91 98318 42869",
+        "whatsapp": "+91 98318 42869",
+        "email": "evolvixtech0pm@gmail.com",
+        "facebook": "https://facebook.com/evolvixtech",
+        "website_status": "Coming Soon",
+    },
+    "creative_services": [
+        {"title": "AI Resume & CV Design", "text": "Stand out. Get noticed."},
+        {"title": "Professional Portfolio Design", "text": "Showcase your best work."},
+        {"title": "Company Profile Design", "text": "Build trust. Create impact."},
+        {"title": "Logo & Brand Identity", "text": "Create identity. Build brand."},
+        {"title": "AI Photo Enhancement", "text": "Professional edits with AI and old photo restoration."},
+        {"title": "Posters, Banners & Social Media Creatives", "text": "Engage. Impress. Convert."},
+        {"title": "Product Catalog Design", "text": "Showcase your products beautifully."},
+        {"title": "Presentation & Pitch Deck Design", "text": "Present with impact. Win more."},
+    ],
+    "technology_services": [
+        {"title": "AI Business Consulting", "text": "Smart strategies. Real growth."},
+        {"title": "Digital Transformation", "text": "Transform ideas into digital reality."},
+        {"title": "Business Process Automation", "text": "Automate. Optimize. Scale."},
+        {"title": "AI Workflow Design", "text": "Work smarter. Save time."},
+        {"title": "Website Development", "text": "Business portfolio and e-commerce websites."},
+        {"title": "Web Applications", "text": "Custom, scalable, and secure applications."},
+        {"title": "Mobile Applications", "text": "Android, iOS, and cross-platform solutions."},
+        {"title": "SaaS & Business Software", "text": "Cloud-based, scalable, future-ready systems."},
+        {"title": "Digital Marketing", "text": "Grow online. Reach more."},
+    ],
+    "ecosystem": [
+        {"name": "EVOLVIX LearnAI", "status": "Now available on Gumroad", "description": "Prompt packs, learning resources, business packs, career packs, creator packs, and productivity packs.", "items": ["AI Prompt Packs", "Learning Resources", "Business Packs", "Career Packs", "Creator Packs", "Productivity Packs"]},
+        {"name": "EVOLVIX BuildX", "status": "On-demand", "description": "Custom technology products for web, mobile, business, SaaS, and AI-powered ideas.", "items": ["Web Applications", "Mobile Applications", "Business Software", "Enterprise SaaS", "AI Powered Products"]},
+        {"name": "EVOLVIX Creative", "status": "On-demand", "description": "Creative services for branding, identity, graphic design, assets, multimedia, and digital presentation.", "items": ["Branding & Identity", "Graphic Design", "Digital Assets", "Multimedia Design", "Creative Solutions"]},
+        {"name": "EVOLVIX Business", "status": "On-demand", "description": "AI consulting and business growth systems for automation, CRM, SaaS, digital transformation, and strategy.", "items": ["AI Business Consulting", "Business Automation", "CRM Solutions", "SaaS Solutions", "Digital Transformation", "Growth Strategy"]},
+    ],
+    "why_choose": ["AI-first approach", "Personalized solutions", "Future-ready technology", "Business-focused innovation", "Creative excellence", "End-to-end support"],
+}
+
+
 PRODUCTS: Dict[str, Dict[str, Any]] = {
     "ai-starter-kit": {
         "id": "ai-starter-kit", "slug": "ai-starter-kit", "title": "AI Starter Kit for Everyday Productivity",
@@ -162,6 +210,10 @@ class NewsletterCreate(BaseModel):
     email: EmailStr
 
 
+class SiteContentUpdate(BaseModel):
+    content: Dict[str, Any]
+
+
 class CheckoutCreate(BaseModel):
     product_id: str
     origin_url: str
@@ -192,13 +244,31 @@ async def root():
 
 @api_router.get("/site-content")
 async def get_site_content():
+    custom = await db.site_content.find_one({"id": "primary"}, {"_id": 0})
+    editable_content = custom.get("content", DEFAULT_SITE_CONTENT) if custom else DEFAULT_SITE_CONTENT
     return {
-        "brand": "Evolvix Tech Media",
-        "headline": "Create, innovate, and elevate in the AI era.",
+        **editable_content,
         "products": list(PRODUCTS.values()),
         "portfolio": PORTFOLIO,
         "blog": BLOG_POSTS,
     }
+
+
+@api_router.put("/site-content")
+async def update_site_content(payload: SiteContentUpdate):
+    doc = {"id": "primary", "content": payload.content, "updated_at": now_iso()}
+    await db.site_content.update_one({"id": "primary"}, {"$set": doc}, upsert=True)
+    return {"message": "Site content updated", "updated_at": doc["updated_at"]}
+
+
+@api_router.post("/site-content/reset")
+async def reset_site_content():
+    await db.site_content.update_one(
+        {"id": "primary"},
+        {"$set": {"id": "primary", "content": DEFAULT_SITE_CONTENT, "updated_at": now_iso()}},
+        upsert=True,
+    )
+    return {"message": "Site content reset to Evolvix defaults"}
 
 
 @api_router.get("/products", response_model=List[ProductResponse])

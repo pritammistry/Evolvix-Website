@@ -45,6 +45,16 @@ Build a professional, premium, futuristic website for Evolvix Tech Media using t
 - Fixed React hook dependency concerns in Shop filtering, checkout polling, and toast listener cleanup.
 - Verified Python/JavaScript lint checks and backend regression tests: 9 passed.
 
+
+## Implemented — 2026-06-19 Business Structure Revamp
+- Repositioned website around Evolvix Tech Media as an AI-first digital, business, technology, and creative solutions brand.
+- Added backend-editable site content via `/api/site-content`, `PUT /api/site-content`, and `/api/site-content/reset` using MongoDB `site_content`.
+- Added official business details: GSTIN, Bardhaman address, WhatsApp/phone, email, and Facebook.
+- Added Services page for Creative Digital Services and AI Business Consulting & Technology Solutions.
+- Added Product Ecosystem page for EVOLVIX LearnAI, BuildX, Creative, and Business verticals.
+- Updated homepage, navigation, footer, contact, and LearnAI shop positioning to match the PDF business scope.
+- Made homepage, shop, product detail, portfolio, blog, services, ecosystem, contact, and footer consume backend content where applicable.
+
 ## Prioritized Backlog
 ### P0 Remaining
 - Replace placeholder contact details with final email, WhatsApp, and social URLs when available.
