@@ -3,12 +3,17 @@ import { useLocation } from "react-router-dom";
 import { trackAnalyticsEvent } from "../api";
 
 const sessionKey = "evolvix_analytics_session";
+let memorySessionId = "";
 
 function getSessionId() {
-  const existing = localStorage.getItem(sessionKey);
-  if (existing) return existing;
+  const existing = sessionStorage.getItem(sessionKey) || memorySessionId;
+  if (existing) {
+    memorySessionId = existing;
+    return existing;
+  }
   const next = `evx-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  localStorage.setItem(sessionKey, next);
+  memorySessionId = next;
+  sessionStorage.setItem(sessionKey, next);
   return next;
 }
 

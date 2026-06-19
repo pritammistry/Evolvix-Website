@@ -147,6 +147,14 @@ Build a professional, premium, futuristic website for Evolvix Tech Media using t
 - Restored clean logo rendering with normal blend mode, full opacity, no mask clipping, and original object-fit containment.
 - Verified via browser screenshot/computed styles: header and hero logos render with `mix-blend-mode: normal`, `opacity: 1`, `mask: none`, and `object-fit: contain`.
 
+## Fixed — 2026-06-19 Code Review Security and Quality Findings
+- Removed hardcoded admin password constants from reviewed backend tests; tests now read `ADMIN_PASSWORD` from environment or `/app/backend/.env`.
+- Replaced admin token localStorage persistence with httpOnly cookie-based admin session support; backend still supports bearer fallback for compatibility.
+- Replaced analytics localStorage usage with sessionStorage plus in-memory fallback because analytics session IDs are non-sensitive and should not persist long-term.
+- Added defensive initialization/checking in `parse_data_url` and refactored catalog normalization into smaller helper functions.
+- Reduced nested ternary usage in ecosystem/music code, improved testimonial keys, tightened key hook dependencies, and kept admin/dashboard behavior intact.
+- Verified with lint, backend py_compile, cookie-auth API smoke, browser smoke, and targeted pytest: `8 passed`.
+
 ## Prioritized Backlog
 ### P0 Remaining
 - Replace placeholder contact details with final email, WhatsApp, and social URLs when available.

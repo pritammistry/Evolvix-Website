@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Lock, Save, RotateCcw, Plus, Trash2, Sparkles, Database, Layers3, Package, Newspaper, Image as ImageIcon, LogOut, UploadCloud, BarChart3, Star, DownloadCloud, FileDown } from "lucide-react";
 import { toast } from "sonner";
-import { adminLogin, deleteProductFile, exportAdminAnalytics, fetchAdminAnalytics, fetchAdminAnalyticsOptions, fetchAdminDashboard, resetAdminContent, saveAdminContent, saveAdminList, uploadProductFile } from "../api";
+import { adminLogin, adminLogout, deleteProductFile, exportAdminAnalytics, fetchAdminAnalytics, fetchAdminAnalyticsOptions, fetchAdminDashboard, resetAdminContent, saveAdminContent, saveAdminList, uploadProductFile } from "../api";
 
 const blankProduct = { title: "New Product", slug: "new-product", price: 0, category: "Learning and Growth", tag: "New", description: "Short product outcome.", image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80", images: [], benefits: [], included: [], file_slots: [] };
 const blankPortfolio = { title: "New Showcase", category: "Digital Products", summary: "Short showcase description.", image: "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?auto=format&fit=crop&w=1200&q=80" };
@@ -55,8 +55,14 @@ function compressImageFile(file, maxSize = 1200, quality = 0.82) {
   });
 }
 
+function getProductImages(product) {
+  if (product.images?.length) return product.images;
+  if (product.image) return [product.image];
+  return [];
+}
+
 function ProductImageUploader({ product, index, onUpdate }) {
-  const images = product.images?.length ? product.images : (product.image ? [product.image] : []);
+  const images = getProductImages(product);
   const handleFiles = async (files) => {
     const selected = Array.from(files || []).slice(0, Math.max(0, 5 - images.length));
     if (!selected.length) return;
@@ -71,7 +77,7 @@ function ProductImageUploader({ product, index, onUpdate }) {
   return <div className="admin-uploader" data-testid={`product-image-uploader-${index}`}><div className="admin-upload-head"><h4>Product photos / thumbnails</h4><span data-testid={`product-upload-count-${index}`}>{images.length}/5 uploaded</span></div><label className={`upload-dropzone ${images.length >= 5 ? "is-full" : ""}`} data-testid={`product-upload-label-${index}`}><UploadCloud size={24} /><strong>{images.length >= 5 ? "Maximum 5 photos uploaded" : "Upload up to 5 photos"}</strong><small>First image becomes product thumbnail. PNG/JPG/WebP supported.</small><input type="file" accept="image/*" multiple disabled={images.length >= 5} onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }} data-testid={`product-image-upload-${index}`} /></label>{images.length > 0 && <div className="admin-image-grid" data-testid={`product-image-grid-${index}`}>{images.slice(0, 5).map((image, imageIndex) => <div className="admin-image-preview" key={`${image.slice(0, 24)}-${imageIndex}`}><img src={image} alt={`Product ${index + 1} upload ${imageIndex + 1}`} data-testid={`product-upload-preview-${index}-${imageIndex}`} /><button type="button" onClick={() => removeImage(imageIndex)} aria-label={`Remove product ${index + 1} image ${imageIndex + 1}`} data-testid={`product-upload-remove-${index}-${imageIndex}`}><Trash2 size={14} /></button>{imageIndex === 0 && <span data-testid={`product-upload-thumbnail-badge-${index}`}>Thumbnail</span>}</div>)}</div>}</div>;
 }
 
-function ProductFileManager({ product, index, token, onRefresh }) {
+function ProductFileManager({ product, index, onRefresh }) {
   const [uploading, setUploading] = useState(false);
   const files = product.download_files || [];
   const handleFile = async (selectedFile) => {
@@ -83,7 +89,7 @@ function ProductFileManager({ product, index, token, onRefresh }) {
     setUploading(true);
     try {
       const dataUrl = await fileToDataUrl(selectedFile);
-      await uploadProductFile(token, product.id || product.slug, { filename: selectedFile.name, content_type: selectedFile.type || "application/octet-stream", data_url: dataUrl });
+      await uploadProductFile(product.id || product.slug, { filename: selectedFile.name, content_type: selectedFile.type || "application/octet-stream", data_url: dataUrl });
       toast.success("Download file attached");
       await onRefresh();
     } catch (error) {
@@ -94,7 +100,7 @@ function ProductFileManager({ product, index, token, onRefresh }) {
   };
   const removeFile = async (fileId) => {
     try {
-      await deleteProductFile(token, product.id || product.slug, fileId);
+      await deleteProductFile(product.id || product.slug, fileId);
       toast.success("Download file removed");
       await onRefresh();
     } catch (error) {
@@ -137,22 +143,22 @@ function MusicPreviewsEditor({ items, onChange }) {
   return <section className="admin-editor-card" data-testid="music-previews-editor"><h3><FileDown size={20} /> Audio Previews</h3>{previews.map((item, index) => <div className="admin-pair" key={`${item.title}-${index}`}><div className="admin-form-grid"><TextField label="Mood" value={item.mood} onChange={(value) => update(index, "mood", value)} testId={`music-preview-mood-${index}`} /><TextField label="Title" value={item.title} onChange={(value) => update(index, "title", value)} testId={`music-preview-title-${index}`} /><TextField label="Audio URL" value={item.audio_url} onChange={(value) => update(index, "audio_url", value)} testId={`music-preview-url-${index}`} /><TextField label="Description" value={item.description} onChange={(value) => update(index, "description", value)} testId={`music-preview-description-${index}`} multiline /></div><label className="admin-check"><input type="checkbox" checked={item.visible !== false} onChange={(event) => update(index, "visible", event.target.checked)} data-testid={`music-preview-visible-${index}`} /> Visible on website</label><button type="button" className="danger-btn" onClick={() => onChange(previews.filter((_, i) => i !== index))} data-testid={`music-preview-delete-${index}`}><Trash2 size={16} /> Remove</button></div>)}<button type="button" className="admin-mini-btn" onClick={() => onChange([...previews, { ...blankMusicPreview, id: `music-preview-${Date.now()}` }])} data-testid="music-preview-add-button"><Plus size={16} /> Add Audio Preview</button></section>;
 }
 
-function AnalyticsPanel({ token, reportSettings, onReportChange }) {
+function AnalyticsPanel({ reportSettings, onReportChange }) {
   const [filters, setFilters] = useState({ start_date: "", end_date: "", event_type: "all", page: "all", product_id: "all" });
   const [analytics, setAnalytics] = useState(null);
   const [options, setOptions] = useState({ event_types: [], pages: [], products: [] });
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     const params = Object.fromEntries(Object.entries(filters).filter(([, value]) => value && value !== "all"));
-    const [{ data }, { data: optionData }] = await Promise.all([fetchAdminAnalytics(token, params), fetchAdminAnalyticsOptions(token)]);
+    const [{ data }, { data: optionData }] = await Promise.all([fetchAdminAnalytics(params), fetchAdminAnalyticsOptions()]);
     setAnalytics(data);
     setOptions(optionData);
-  };
-  useEffect(() => { if (token) loadAnalytics().catch(() => toast.error("Could not load analytics")); }, [token]);
+  }, [filters]);
+  useEffect(() => { loadAnalytics().catch(() => toast.error("Could not load analytics")); }, [loadAnalytics]);
   const updateFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
   const exportAnalytics = async (format) => {
     const params = Object.fromEntries(Object.entries({ ...filters, format }).filter(([, value]) => value && value !== "all"));
     try {
-      const { data } = await exportAdminAnalytics(token, params);
+      const { data } = await exportAdminAnalytics(params);
       const url = URL.createObjectURL(data);
       const link = document.createElement("a");
       link.href = url;
@@ -215,20 +221,32 @@ function BlogSeoTools({ post, index }) {
   return <div className="seo-tools" data-testid={`blog-seo-tools-${index}`}><div className="seo-score" data-testid={`blog-seo-score-${index}`}><span>SEO score</span><strong>{score}/100</strong></div><div className="seo-snippet" data-testid={`blog-seo-snippet-${index}`}><span data-testid={`blog-seo-url-${index}`}>evolvixtechmedia.com/blog/{post.slug || post.id}</span><h4 data-testid={`blog-seo-preview-title-${index}`}>{post.seo_title || post.title}</h4><p data-testid={`blog-seo-preview-description-${index}`}>{post.seo_description || post.excerpt}</p></div><div className="seo-suggestions" data-testid={`blog-seo-suggestions-${index}`}>{suggestions.map((suggestion, suggestionIndex) => <p key={suggestion} data-testid={`blog-seo-suggestion-${index}-${suggestionIndex}`}>{suggestion}</p>)}</div></div>;
 }
 
-function CatalogEditor({ title, icon: Icon, items, onChange, kind, token, onRefresh }) {
-  const template = kind === "products" ? blankProduct : kind === "portfolio" ? blankPortfolio : blankBlog;
-  const fields = kind === "products" ? ["title", "slug", "category", "tag", "price", "description", "external_purchase_url"] : kind === "portfolio" ? ["title", "category", "summary", "image"] : ["title", "slug", "category", "excerpt", "body", "seo_title", "seo_description", "seo_keywords", "date", "read_time"];
+function getCatalogTemplate(kind) {
+  if (kind === "products") return blankProduct;
+  if (kind === "portfolio") return blankPortfolio;
+  return blankBlog;
+}
+
+function getCatalogFields(kind) {
+  if (kind === "products") return ["title", "slug", "category", "tag", "price", "description", "external_purchase_url"];
+  if (kind === "portfolio") return ["title", "category", "summary", "image"];
+  return ["title", "slug", "category", "excerpt", "body", "seo_title", "seo_description", "seo_keywords", "date", "read_time"];
+}
+
+function CatalogEditor({ title, icon: Icon, items, onChange, kind, onRefresh }) {
+  const template = getCatalogTemplate(kind);
+  const fields = getCatalogFields(kind);
   const update = (index, key, value) => onChange(items.map((item, i) => {
     if (i !== index) return item;
     if (typeof key === "object") return { ...item, ...key };
     return { ...item, [key]: key === "price" ? Number(value) : value };
   }));
-  return <section className="admin-editor-card catalog-card" data-testid={`${kind}-editor`}><h3><Icon size={20} /> {title}</h3>{items.map((item, index) => <details className="admin-catalog-item" key={`${item.id || item.title}-${index}`} open={index === 0}><summary data-testid={`${kind}-summary-${index}`}>{item.title || `Item ${index + 1}`}</summary>{kind === "products" && <ProductImageUploader product={item} index={index} onUpdate={update} />}{kind === "products" && <ProductFileManager product={item} index={index} token={token} onRefresh={onRefresh} />}<div className="admin-form-grid">{fields.map((field) => <TextField key={field} label={field.replaceAll("_", " ")} value={item[field]} onChange={(value) => update(index, field, value)} testId={`${kind}-${field}-${index}`} multiline={field === "description" || field === "summary" || field === "excerpt" || field === "body" || field === "seo_description"} />)}</div>{kind === "blog" && <BlogSeoTools post={item} index={index} />}{kind === "products" && <><ArrayEditor title="Benefits" items={item.benefits || []} onChange={(value) => update(index, "benefits", value)} placeholder="Benefit" testPrefix={`${kind}-benefits-${index}`} /><ArrayEditor title="Included" items={item.included || []} onChange={(value) => update(index, "included", value)} placeholder="Included item" testPrefix={`${kind}-included-${index}`} /><ArrayEditor title="File slots" items={item.file_slots || item.fileSlots || []} onChange={(value) => update(index, "file_slots", value)} placeholder="Download file slot" testPrefix={`${kind}-files-${index}`} /></>}<button type="button" className="danger-btn" onClick={() => onChange(items.filter((_, i) => i !== index))} data-testid={`${kind}-delete-${index}`}><Trash2 size={16} /> Remove</button></details>)}<button type="button" className="admin-mini-btn" onClick={() => onChange([...items, { ...template, id: `${kind}-${Date.now()}` }])} data-testid={`${kind}-add-button`}><Plus size={16} /> Add {kind}</button></section>;
+  return <section className="admin-editor-card catalog-card" data-testid={`${kind}-editor`}><h3><Icon size={20} /> {title}</h3>{items.map((item, index) => <details className="admin-catalog-item" key={`${item.id || item.title}-${index}`} open={index === 0}><summary data-testid={`${kind}-summary-${index}`}>{item.title || `Item ${index + 1}`}</summary>{kind === "products" && <ProductImageUploader product={item} index={index} onUpdate={update} />}{kind === "products" && <ProductFileManager product={item} index={index} onRefresh={onRefresh} />}<div className="admin-form-grid">{fields.map((field) => <TextField key={field} label={field.replaceAll("_", " ")} value={item[field]} onChange={(value) => update(index, field, value)} testId={`${kind}-${field}-${index}`} multiline={field === "description" || field === "summary" || field === "excerpt" || field === "body" || field === "seo_description"} />)}</div>{kind === "blog" && <BlogSeoTools post={item} index={index} />}{kind === "products" && <><ArrayEditor title="Benefits" items={item.benefits || []} onChange={(value) => update(index, "benefits", value)} placeholder="Benefit" testPrefix={`${kind}-benefits-${index}`} /><ArrayEditor title="Included" items={item.included || []} onChange={(value) => update(index, "included", value)} placeholder="Included item" testPrefix={`${kind}-included-${index}`} /><ArrayEditor title="File slots" items={item.file_slots || item.fileSlots || []} onChange={(value) => update(index, "file_slots", value)} placeholder="Download file slot" testPrefix={`${kind}-files-${index}`} /></>}<button type="button" className="danger-btn" onClick={() => onChange(items.filter((_, i) => i !== index))} data-testid={`${kind}-delete-${index}`}><Trash2 size={16} /> Remove</button></details>)}<button type="button" className="admin-mini-btn" onClick={() => onChange([...items, { ...template, id: `${kind}-${Date.now()}` }])} data-testid={`${kind}-add-button`}><Plus size={16} /> Add {kind}</button></section>;
 }
 
 export default function AdminDashboard() {
   const [password, setPassword] = useState("");
-  const [token, setToken] = useState(() => localStorage.getItem("evolvix_admin_token") || "");
+  const [authenticated, setAuthenticated] = useState(false);
   const [content, setContent] = useState(null);
   const [products, setProducts] = useState([]);
   const [portfolio, setPortfolio] = useState([]);
@@ -236,20 +254,19 @@ export default function AdminDashboard() {
   const [active, setActive] = useState("brand");
   const tabs = useMemo(() => ["brand", "services", "ecosystem", "learning", "music", "custom", "products", "portfolio", "blog", "testimonials", "analytics"], []);
 
-  const loadDashboard = async (authToken = token) => {
-    if (!authToken) return;
-    const { data } = await fetchAdminDashboard(authToken);
+  const loadDashboard = useCallback(async () => {
+    const { data } = await fetchAdminDashboard();
     setContent(data.content);
     setProducts(data.products || []);
     setPortfolio(data.portfolio || []);
     setBlog(data.blog || []);
-  };
+  }, []);
 
-  useEffect(() => { if (token) loadDashboard().catch(() => localStorage.removeItem("evolvix_admin_token")); }, [token]);
+  useEffect(() => { loadDashboard().then(() => setAuthenticated(true)).catch(() => setAuthenticated(false)); }, [loadDashboard]);
 
   const login = async (event) => {
     event.preventDefault();
-    try { const { data } = await adminLogin({ password }); localStorage.setItem("evolvix_admin_token", data.token); setToken(data.token); toast.success("Admin unlocked"); } catch { toast.error("Invalid admin password"); }
+    try { await adminLogin({ password }); await loadDashboard(); setAuthenticated(true); toast.success("Admin unlocked"); } catch { toast.error("Invalid admin password"); }
   };
 
   const updateContent = (path, value) => {
@@ -263,24 +280,24 @@ export default function AdminDashboard() {
   };
 
   const saveAll = async () => {
-    try { await saveAdminContent(token, content); await saveAdminList(token, "products", products); await saveAdminList(token, "portfolio", portfolio); await saveAdminList(token, "blog", blog); toast.success("Admin content saved"); } catch { toast.error("Could not save admin content"); }
+    try { await saveAdminContent(content); await saveAdminList("products", products); await saveAdminList("portfolio", portfolio); await saveAdminList("blog", blog); toast.success("Admin content saved"); } catch { toast.error("Could not save admin content"); }
   };
 
   const resetAll = async () => {
-    try { await resetAdminContent(token); await loadDashboard(token); toast.success("Defaults restored"); } catch { toast.error("Could not reset content"); }
+    try { await resetAdminContent(); await loadDashboard(); toast.success("Defaults restored"); } catch { toast.error("Could not reset content"); }
   };
 
   const logout = () => {
-    localStorage.removeItem("evolvix_admin_token");
-    setToken("");
+    adminLogout().catch(() => {});
+    setAuthenticated(false);
     setContent(null);
     setPassword("");
     toast.success("Logged out");
   };
 
-  if (!token || !content) {
+  if (!authenticated || !content) {
     return <section className="admin-login-shell" data-testid="admin-login-page"><div className="admin-login-card"><Sparkles size={34} /><span>EVOLVIX OS</span><h1>Admin Command Center</h1><p>Secure content control for the AI-first brand ecosystem.</p><form onSubmit={login} data-testid="admin-login-form"><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Admin password" data-testid="admin-password-input" /><button type="submit" data-testid="admin-login-button"><Lock size={18} /> Unlock Dashboard</button></form></div></section>;
   }
 
-  return <section className="admin-shell" data-testid="admin-dashboard-page"><aside className="admin-sidebar"><h2>EVOLVIX OS</h2><p>3D Content Control</p>{tabs.map((tab) => <button key={tab} className={active === tab ? "active" : ""} onClick={() => setActive(tab)} data-testid={`admin-tab-${tab}`}>{tab}</button>)}</aside><main className="admin-main"><div className="admin-topbar" data-testid="admin-action-bar"><div><span>Admin Dashboard</span><h1>Manage every Evolvix section from one command center.</h1></div><div className="admin-action-buttons"><button className="admin-save" onClick={saveAll} data-testid="admin-save-all-button"><Save size={16} /> Save Changes</button><button className="admin-reset" onClick={resetAll} data-testid="admin-reset-button"><RotateCcw size={16} /> Reset</button><button className="admin-logout" onClick={logout} data-testid="admin-logout-button"><LogOut size={16} /> Logout</button></div></div>{active === "brand" && <section className="admin-editor-card"><h3><Database size={20} /> Brand, Contact & Trust</h3><div className="admin-form-grid"><TextField label="Brand Name" value={content.brand.name} onChange={(value) => updateContent(["brand", "name"], value)} testId="admin-brand-name" /><TextField label="Headline" value={content.brand.headline} onChange={(value) => updateContent(["brand", "headline"], value)} testId="admin-brand-headline" /><TextField label="Subheadline" value={content.brand.subheadline} onChange={(value) => updateContent(["brand", "subheadline"], value)} testId="admin-brand-subheadline" /><TextField label="GSTIN" value={content.brand.gstin} onChange={(value) => updateContent(["brand", "gstin"], value)} testId="admin-brand-gstin" /><TextField label="Email" value={content.contact.email} onChange={(value) => updateContent(["contact", "email"], value)} testId="admin-contact-email" /><TextField label="Phone" value={content.contact.phone} onChange={(value) => updateContent(["contact", "phone"], value)} testId="admin-contact-phone" /><TextField label="WhatsApp" value={content.contact.whatsapp} onChange={(value) => updateContent(["contact", "whatsapp"], value)} testId="admin-contact-whatsapp" /><TextField label="Address" value={content.contact.address} onChange={(value) => updateContent(["contact", "address"], value)} testId="admin-contact-address" /><TextField label="Facebook" value={content.contact.facebook} onChange={(value) => updateContent(["contact", "facebook"], value)} testId="admin-contact-facebook" /><TextField label="Google Location" value={content.contact.google_location} onChange={(value) => updateContent(["contact", "google_location"], value)} testId="admin-contact-google" /><TextField label="Gumroad" value={content.contact.gumroad} onChange={(value) => updateContent(["contact", "gumroad"], value)} testId="admin-contact-gumroad" /></div><ArrayEditor title="Trust Strip" items={content.trust_strip || []} onChange={(value) => updateContent(["trust_strip"], value)} placeholder="Trust item" testPrefix="admin-trust" /></section>}{active === "services" && <><ServiceListEditor title="Creative Digital Services" items={content.creative_services || []} onChange={(value) => updateContent(["creative_services"], value)} testPrefix="admin-creative" /><ServiceListEditor title="AI Business & Technology Services" items={content.technology_services || []} onChange={(value) => updateContent(["technology_services"], value)} testPrefix="admin-technology" /></>}{active === "ecosystem" && <EcosystemEditor items={content.ecosystem || []} onChange={(value) => updateContent(["ecosystem"], value)} />}{active === "learning" && <section className="admin-editor-card"><h3><Layers3 size={20} /> Learning and Growth Categories</h3><ArrayEditor title="Categories" items={content.learning_categories || []} onChange={(value) => updateContent(["learning_categories"], value)} placeholder="Learning category" testPrefix="admin-learning" /></section>}{active === "music" && <><section className="admin-editor-card"><h3><Sparkles size={20} /> Music Services</h3><ArrayEditor title="Music Services" items={content.music_services || []} onChange={(value) => updateContent(["music_services"], value)} placeholder="Music service" testPrefix="admin-music" /></section><MusicPreviewsEditor items={content.music_previews || []} onChange={(value) => updateContent(["music_previews"], value)} /></>}{active === "custom" && <CustomSectionsEditor items={content.custom_sections || []} onChange={(value) => updateContent(["custom_sections"], value)} />}{active === "products" && <CatalogEditor title="Products" icon={Package} items={products} onChange={setProducts} kind="products" token={token} onRefresh={() => loadDashboard(token)} />}{active === "portfolio" && <CatalogEditor title="Portfolio / Showcase" icon={ImageIcon} items={portfolio} onChange={setPortfolio} kind="portfolio" />}{active === "blog" && <CatalogEditor title="Blog / Insights" icon={Newspaper} items={blog} onChange={setBlog} kind="blog" />}{active === "testimonials" && <TestimonialsEditor items={content.testimonials || []} onChange={(value) => updateContent(["testimonials"], value)} />}{active === "analytics" && <AnalyticsPanel token={token} reportSettings={content.analytics_report_settings || {}} onReportChange={(value) => updateContent(["analytics_report_settings"], value)} />}</main></section>;
+  return <section className="admin-shell" data-testid="admin-dashboard-page"><aside className="admin-sidebar"><h2>EVOLVIX OS</h2><p>3D Content Control</p>{tabs.map((tab) => <button key={tab} className={active === tab ? "active" : ""} onClick={() => setActive(tab)} data-testid={`admin-tab-${tab}`}>{tab}</button>)}</aside><main className="admin-main"><div className="admin-topbar" data-testid="admin-action-bar"><div><span>Admin Dashboard</span><h1>Manage every Evolvix section from one command center.</h1></div><div className="admin-action-buttons"><button className="admin-save" onClick={saveAll} data-testid="admin-save-all-button"><Save size={16} /> Save Changes</button><button className="admin-reset" onClick={resetAll} data-testid="admin-reset-button"><RotateCcw size={16} /> Reset</button><button className="admin-logout" onClick={logout} data-testid="admin-logout-button"><LogOut size={16} /> Logout</button></div></div>{active === "brand" && <section className="admin-editor-card"><h3><Database size={20} /> Brand, Contact & Trust</h3><div className="admin-form-grid"><TextField label="Brand Name" value={content.brand.name} onChange={(value) => updateContent(["brand", "name"], value)} testId="admin-brand-name" /><TextField label="Headline" value={content.brand.headline} onChange={(value) => updateContent(["brand", "headline"], value)} testId="admin-brand-headline" /><TextField label="Subheadline" value={content.brand.subheadline} onChange={(value) => updateContent(["brand", "subheadline"], value)} testId="admin-brand-subheadline" /><TextField label="GSTIN" value={content.brand.gstin} onChange={(value) => updateContent(["brand", "gstin"], value)} testId="admin-brand-gstin" /><TextField label="Email" value={content.contact.email} onChange={(value) => updateContent(["contact", "email"], value)} testId="admin-contact-email" /><TextField label="Phone" value={content.contact.phone} onChange={(value) => updateContent(["contact", "phone"], value)} testId="admin-contact-phone" /><TextField label="WhatsApp" value={content.contact.whatsapp} onChange={(value) => updateContent(["contact", "whatsapp"], value)} testId="admin-contact-whatsapp" /><TextField label="Address" value={content.contact.address} onChange={(value) => updateContent(["contact", "address"], value)} testId="admin-contact-address" /><TextField label="Facebook" value={content.contact.facebook} onChange={(value) => updateContent(["contact", "facebook"], value)} testId="admin-contact-facebook" /><TextField label="Google Location" value={content.contact.google_location} onChange={(value) => updateContent(["contact", "google_location"], value)} testId="admin-contact-google" /><TextField label="Gumroad" value={content.contact.gumroad} onChange={(value) => updateContent(["contact", "gumroad"], value)} testId="admin-contact-gumroad" /></div><ArrayEditor title="Trust Strip" items={content.trust_strip || []} onChange={(value) => updateContent(["trust_strip"], value)} placeholder="Trust item" testPrefix="admin-trust" /></section>}{active === "services" && <><ServiceListEditor title="Creative Digital Services" items={content.creative_services || []} onChange={(value) => updateContent(["creative_services"], value)} testPrefix="admin-creative" /><ServiceListEditor title="AI Business & Technology Services" items={content.technology_services || []} onChange={(value) => updateContent(["technology_services"], value)} testPrefix="admin-technology" /></>}{active === "ecosystem" && <EcosystemEditor items={content.ecosystem || []} onChange={(value) => updateContent(["ecosystem"], value)} />}{active === "learning" && <section className="admin-editor-card"><h3><Layers3 size={20} /> Learning and Growth Categories</h3><ArrayEditor title="Categories" items={content.learning_categories || []} onChange={(value) => updateContent(["learning_categories"], value)} placeholder="Learning category" testPrefix="admin-learning" /></section>}{active === "music" && <><section className="admin-editor-card"><h3><Sparkles size={20} /> Music Services</h3><ArrayEditor title="Music Services" items={content.music_services || []} onChange={(value) => updateContent(["music_services"], value)} placeholder="Music service" testPrefix="admin-music" /></section><MusicPreviewsEditor items={content.music_previews || []} onChange={(value) => updateContent(["music_previews"], value)} /></>}{active === "custom" && <CustomSectionsEditor items={content.custom_sections || []} onChange={(value) => updateContent(["custom_sections"], value)} />}{active === "products" && <CatalogEditor title="Products" icon={Package} items={products} onChange={setProducts} kind="products" onRefresh={loadDashboard} />}{active === "portfolio" && <CatalogEditor title="Portfolio / Showcase" icon={ImageIcon} items={portfolio} onChange={setPortfolio} kind="portfolio" />}{active === "blog" && <CatalogEditor title="Blog / Insights" icon={Newspaper} items={blog} onChange={setBlog} kind="blog" />}{active === "testimonials" && <TestimonialsEditor items={content.testimonials || []} onChange={(value) => updateContent(["testimonials"], value)} />}{active === "analytics" && <AnalyticsPanel reportSettings={content.analytics_report_settings || {}} onReportChange={(value) => updateContent(["analytics_report_settings"], value)} />}</main></section>;
 }

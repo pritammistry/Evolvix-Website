@@ -21,8 +21,20 @@ def _resolve_base_url() -> str | None:
 
 
 BASE_URL = _resolve_base_url()
-ADMIN_PASSWORD = "EvolvixAdmin#2026"
 TARGET_SLUG = "digital-forward-2"
+
+
+def _resolve_admin_password() -> str | None:
+    env_password = os.environ.get("ADMIN_PASSWORD")
+    if env_password:
+        return env_password
+    backend_env = Path("/app/backend/.env")
+    if not backend_env.exists():
+        return None
+    for line in backend_env.read_text().splitlines():
+        if line.startswith("ADMIN_PASSWORD="):
+            return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return None
 
 
 @pytest.fixture(scope="session")
@@ -42,8 +54,11 @@ def api_client():
 @pytest.fixture(scope="module")
 def admin_token(api_client, api_base_url):
     # Admin auth flow for protected catalog endpoints
+    admin_password = _resolve_admin_password()
+    if not admin_password:
+        pytest.skip("ADMIN_PASSWORD is not set")
     response = api_client.post(
-        f"{api_base_url}/api/admin/login", json={"password": ADMIN_PASSWORD}
+        f"{api_base_url}/api/admin/login", json={"password": admin_password}
     )
     if response.status_code != 200:
         pytest.skip("Admin login failed; skipping admin image persistence tests")

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Request
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -45,7 +45,8 @@ def admin_token() -> str:
 def verify_admin_request(request: Request) -> None:
     header = request.headers.get("Authorization", "")
     expected = f"Bearer {admin_token()}"
-    if header != expected:
+    cookie_token = request.cookies.get("evolvix_admin_token")
+    if header != expected and cookie_token != admin_token():
         raise HTTPException(status_code=401, detail="Admin authentication required")
 
 
@@ -339,6 +340,7 @@ class ProductResponse(BaseModel):
 
 
 def parse_data_url(data_url: str) -> tuple[bytes, str]:
+    file_bytes: Optional[bytes] = None
     if "," not in data_url:
         raise HTTPException(status_code=400, detail="Invalid file data")
     header, encoded = data_url.split(",", 1)
@@ -349,6 +351,8 @@ def parse_data_url(data_url: str) -> tuple[bytes, str]:
         file_bytes = base64.b64decode(encoded, validate=True)
     except Exception as exc:
         raise HTTPException(status_code=400, detail="File data must be base64 encoded") from exc
+    if file_bytes is None:
+        raise HTTPException(status_code=400, detail="File data could not be decoded")
     if len(file_bytes) > 8 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="File is too large for MongoDB storage")
     return file_bytes, content_type
@@ -385,10 +389,18 @@ async def update_site_content(payload: SiteContentUpdate):
 
 
 @api_router.post("/admin/login")
-async def admin_login(payload: AdminLogin):
+async def admin_login(payload: AdminLogin, response: Response):
     if payload.password != os.environ["ADMIN_PASSWORD"]:
         raise HTTPException(status_code=401, detail="Invalid admin password")
-    return {"token": admin_token(), "message": "Admin login successful"}
+    token = admin_token()
+    response.set_cookie(key="evolvix_admin_token", value=token, httponly=True, secure=True, samesite="lax", max_age=60 * 60 * 8, path="/")
+    return {"token": token, "message": "Admin login successful"}
+
+
+@api_router.post("/admin/logout")
+async def admin_logout(response: Response):
+    response.delete_cookie(key="evolvix_admin_token", path="/")
+    return {"message": "Admin session cleared"}
 
 
 @api_router.get("/admin/dashboard")
@@ -413,60 +425,81 @@ async def admin_update_content(payload: AdminContentUpdate, request: Request):
     return {"message": "Content sections saved", "updated_at": doc["updated_at"]}
 
 
+def normalize_download_files(files: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    normalized_files = []
+    for file_item in files or []:
+        if not file_item.get("id"):
+            continue
+        normalized_files.append(
+            {
+                "id": str(file_item.get("id")),
+                "filename": safe_filename(str(file_item.get("filename") or "Evolvix download")),
+                "content_type": str(file_item.get("content_type") or "application/octet-stream"),
+                "size": int(file_item.get("size") or 0),
+                "uploaded_at": str(file_item.get("uploaded_at") or now_iso()),
+            }
+        )
+    return normalized_files
+
+
+def normalize_product_item(clean: Dict[str, Any], title: str) -> Dict[str, Any]:
+    clean.setdefault("slug", slugify(title) or clean["id"])
+    clean["price"] = float(clean.get("price") or 0)
+    clean.setdefault("currency", "usd")
+    clean.setdefault("category", "Learning and Growth")
+    clean.setdefault("tag", "Available")
+    clean.setdefault("description", "Editable Evolvix product.")
+    clean.setdefault("benefits", [])
+    clean.setdefault("included", [])
+    clean.setdefault("delivery", "Digital delivery details are shown after checkout.")
+    clean.setdefault("license", "Usage terms can be customized.")
+    clean.setdefault("image", "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80")
+    images = clean.get("images") or ([clean.get("image")] if clean.get("image") else [])
+    clean["images"] = [image for image in images if image][:5]
+    if clean["images"]:
+        clean["image"] = clean["images"][0]
+    clean.setdefault("external_purchase_url", "https://gumroad.com/")
+    if "example.com" in str(clean.get("external_purchase_url", "")):
+        clean["external_purchase_url"] = "https://gumroad.com/"
+    clean.setdefault("file_slots", [])
+    clean["download_files"] = normalize_download_files(clean.get("download_files", []))
+    return clean
+
+
+def normalize_portfolio_item(clean: Dict[str, Any]) -> Dict[str, Any]:
+    clean.setdefault("category", "Digital Products")
+    clean.setdefault("summary", "Editable showcase item.")
+    clean.setdefault("image", "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?auto=format&fit=crop&w=1200&q=80")
+    return clean
+
+
+def normalize_blog_item(clean: Dict[str, Any], title: str) -> Dict[str, Any]:
+    clean["slug"] = clean.get("slug") or slugify(title) or clean["id"]
+    clean["category"] = clean.get("category") or "AI Tools"
+    clean["excerpt"] = clean.get("excerpt") or "Editable insight article summary."
+    clean["body"] = clean.get("body") or clean.get("excerpt") or "Editable insight article summary."
+    clean["seo_title"] = clean.get("seo_title") or clean.get("title") or title
+    clean["seo_description"] = clean.get("seo_description") or clean.get("excerpt") or "Editable insight article summary."
+    clean["seo_keywords"] = clean.get("seo_keywords") or "AI, Evolvix Tech Media, digital products, learning"
+    clean["date"] = clean.get("date") or now_iso()[:10]
+    clean["read_time"] = clean.get("read_time") or clean.get("readTime") or "5 min"
+    return clean
+
+
+def normalize_catalog_item(item: Dict[str, Any], kind: str, index: int) -> Dict[str, Any]:
+    clean = {**item}
+    title = str(clean.get("title") or clean.get("name") or f"{kind}-{index + 1}")
+    clean.setdefault("id", slugify(title) or f"{kind}-{index + 1}")
+    normalizers = {
+        "products": lambda value: normalize_product_item(value, title),
+        "portfolio": normalize_portfolio_item,
+        "blog": lambda value: normalize_blog_item(value, title),
+    }
+    return normalizers.get(kind, lambda value: value)(clean)
+
+
 def normalize_catalog_items(items: List[Dict[str, Any]], kind: str) -> List[Dict[str, Any]]:
-    normalized = []
-    for index, item in enumerate(items):
-        clean = {**item}
-        title = str(clean.get("title") or clean.get("name") or f"{kind}-{index + 1}")
-        clean.setdefault("id", slugify(title) or f"{kind}-{index + 1}")
-        if kind == "products":
-            clean.setdefault("slug", slugify(title) or clean["id"])
-            clean["price"] = float(clean.get("price") or 0)
-            clean.setdefault("currency", "usd")
-            clean.setdefault("category", "Learning and Growth")
-            clean.setdefault("tag", "Available")
-            clean.setdefault("description", "Editable Evolvix product.")
-            clean.setdefault("benefits", [])
-            clean.setdefault("included", [])
-            clean.setdefault("delivery", "Digital delivery details are shown after checkout.")
-            clean.setdefault("license", "Usage terms can be customized.")
-            clean.setdefault("image", "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80")
-            images = clean.get("images") or ([clean.get("image")] if clean.get("image") else [])
-            clean["images"] = [image for image in images if image][:5]
-            if clean["images"]:
-                clean["image"] = clean["images"][0]
-            clean.setdefault("external_purchase_url", "https://gumroad.com/")
-            if "example.com" in str(clean.get("external_purchase_url", "")):
-                clean["external_purchase_url"] = "https://gumroad.com/"
-            clean.setdefault("file_slots", [])
-            clean.setdefault("download_files", [])
-            clean["download_files"] = [
-                {
-                    "id": str(file_item.get("id") or uuid.uuid4()),
-                    "filename": safe_filename(str(file_item.get("filename") or "Evolvix download")),
-                    "content_type": str(file_item.get("content_type") or "application/octet-stream"),
-                    "size": int(file_item.get("size") or 0),
-                    "uploaded_at": str(file_item.get("uploaded_at") or now_iso()),
-                }
-                for file_item in clean.get("download_files", [])
-                if file_item.get("id")
-            ]
-        if kind == "portfolio":
-            clean.setdefault("category", "Digital Products")
-            clean.setdefault("summary", "Editable showcase item.")
-            clean.setdefault("image", "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?auto=format&fit=crop&w=1200&q=80")
-        if kind == "blog":
-            clean["slug"] = clean.get("slug") or slugify(title) or clean["id"]
-            clean["category"] = clean.get("category") or "AI Tools"
-            clean["excerpt"] = clean.get("excerpt") or "Editable insight article summary."
-            clean["body"] = clean.get("body") or clean.get("excerpt") or "Editable insight article summary."
-            clean["seo_title"] = clean.get("seo_title") or clean.get("title") or title
-            clean["seo_description"] = clean.get("seo_description") or clean.get("excerpt") or "Editable insight article summary."
-            clean["seo_keywords"] = clean.get("seo_keywords") or "AI, Evolvix Tech Media, digital products, learning"
-            clean["date"] = clean.get("date") or now_iso()[:10]
-            clean["read_time"] = clean.get("read_time") or clean.get("readTime") or "5 min"
-        normalized.append(clean)
-    return normalized
+    return [normalize_catalog_item(item, kind, index) for index, item in enumerate(items)]
 
 
 def event_match_filter(start_date: Optional[str], end_date: Optional[str], event_type: Optional[str], page: Optional[str], product_id: Optional[str]) -> Dict[str, Any]:

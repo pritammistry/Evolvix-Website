@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { fetchSiteContent } from "../api";
 import { fallbackSiteContent } from "../data/siteContent";
 
+const siteContentFallback = fallbackSiteContent;
+
 export function useSiteContent() {
   const [content, setContent] = useState(fallbackSiteContent);
   const [loading, setLoading] = useState(true);
@@ -13,7 +15,7 @@ export function useSiteContent() {
         if (active) setContent(data);
       })
       .catch(() => {
-        if (active) setContent(fallbackSiteContent);
+        if (active) setContent(siteContentFallback);
       })
       .finally(() => {
         if (active) setLoading(false);
