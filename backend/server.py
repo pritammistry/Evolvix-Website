@@ -799,13 +799,17 @@ async def get_payment_status(session_id: str, request: Request):
         status = await get_stripe_checkout(request).get_checkout_status(session_id)
     except Exception as exc:
         logger.warning("Stripe status lookup failed for %s: %s", session_id, exc)
-        fallback_status = "open"
-        fallback_payment_status = "unpaid"
+        existing_payment_status = transaction.get("payment_status") or "pending"
+        existing_status = transaction.get("status") or "initiated"
+        fallback_payment_status = "paid" if existing_payment_status == "paid" or transaction.get("processed") else existing_payment_status
+        fallback_status = "complete" if fallback_payment_status == "paid" else existing_status
         await db.payment_transactions.update_one(
             {"session_id": session_id},
             {"$set": {"status": fallback_status, "payment_status": fallback_payment_status, "provider_status_error": str(exc), "updated_at": now_iso()}},
         )
-        product = PRODUCTS.get(transaction.get("product_id"), {})
+        catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
+        products = normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products")
+        product = next((item for item in products if item.get("id") == transaction.get("product_id") or item.get("slug") == transaction.get("product_id")), {})
         return {
             "status": fallback_status,
             "payment_status": fallback_payment_status,

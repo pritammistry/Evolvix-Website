@@ -136,7 +136,7 @@ def test_payment_status_for_created_session(api_client, api_base_url):
     assert status_response.status_code == 200
 
     data = status_response.json()
-    assert data["status"] in ["open", "complete", "expired"]
-    assert data["payment_status"] in ["paid", "unpaid", "no_payment_required"]
+    assert data["status"] in ["initiated", "open", "complete", "expired"]
+    assert data["payment_status"] in ["pending", "paid", "unpaid", "no_payment_required"]
     assert isinstance(data["currency"], str)
     assert isinstance(data["delivery"], str)
