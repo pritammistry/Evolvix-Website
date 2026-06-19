@@ -4,12 +4,15 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import base64
+import io
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Dict, Any, Optional
 import uuid
 import hashlib
 from datetime import datetime, timezone
+from starlette.responses import StreamingResponse
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest
 
 
@@ -112,8 +115,23 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
             ],
         }
     ],
+    "testimonials": [
+        {"id": "t1", "name": "Local Business Owner", "role": "Small Business", "quote": "Evolvix makes AI and digital growth feel practical, clear, and business-ready.", "rating": 5, "visible": True},
+        {"id": "t2", "name": "Creator Client", "role": "Digital Creator", "quote": "The creative direction feels premium, futuristic, and easy to turn into real content.", "rating": 5, "visible": True},
+        {"id": "t3", "name": "Learning User", "role": "AI Beginner", "quote": "The learning resources are structured in a simple way that builds confidence step by step.", "rating": 5, "visible": True},
+    ],
     "why_choose": ["AI-first approach", "Personalized solutions", "Future-ready technology", "Business-focused innovation", "Creative excellence", "End-to-end support"],
 }
+
+
+def merged_site_content(custom_content: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    merged = {**DEFAULT_SITE_CONTENT, **(custom_content or {})}
+    merged["brand"] = {**DEFAULT_SITE_CONTENT["brand"], **(custom_content or {}).get("brand", {})}
+    merged["contact"] = {**DEFAULT_SITE_CONTENT["contact"], **(custom_content or {}).get("contact", {})}
+    for list_key in ["trust_strip", "creative_services", "technology_services", "ecosystem", "learning_categories", "music_services", "custom_sections", "testimonials", "why_choose"]:
+        if not merged.get(list_key):
+            merged[list_key] = DEFAULT_SITE_CONTENT[list_key]
+    return merged
 
 
 PRODUCTS: Dict[str, Dict[str, Any]] = {
@@ -126,7 +144,7 @@ PRODUCTS: Dict[str, Dict[str, Any]] = {
         "delivery": "Instant digital delivery after successful checkout.",
         "license": "Personal and small-team use. Redistribution is not included.",
         "image": "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80",
-        "external_purchase_url": "https://example.com/evolvix-ai-starter-kit"
+        "external_purchase_url": "https://gumroad.com/"
     },
     "creator-assets-bundle": {
         "id": "creator-assets-bundle", "slug": "creator-assets-bundle", "title": "Creator Assets Glow Bundle",
@@ -137,7 +155,7 @@ PRODUCTS: Dict[str, Dict[str, Any]] = {
         "delivery": "Download link delivered after payment confirmation.",
         "license": "Commercial use for your own brand or client work; resale as a template pack is not included.",
         "image": "https://images.unsplash.com/photo-1635776063043-ab23b4c226f6?auto=format&fit=crop&w=1200&q=80",
-        "external_purchase_url": "https://example.com/evolvix-creator-assets"
+        "external_purchase_url": "https://gumroad.com/"
     },
     "mood-music-pack": {
         "id": "mood-music-pack", "slug": "mood-music-pack", "title": "Mood Music Prompt Pack",
@@ -148,7 +166,7 @@ PRODUCTS: Dict[str, Dict[str, Any]] = {
         "delivery": "Digital PDF and editable notes delivered after checkout.",
         "license": "Personal creative use. Generated outputs belong to the user subject to platform terms.",
         "image": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=1200&q=80",
-        "external_purchase_url": "https://example.com/evolvix-mood-music"
+        "external_purchase_url": "https://gumroad.com/"
     },
     "digital-brand-audit": {
         "id": "digital-brand-audit", "slug": "digital-brand-audit", "title": "Digital Brand Audit Template",
@@ -159,7 +177,7 @@ PRODUCTS: Dict[str, Dict[str, Any]] = {
         "delivery": "Instant digital delivery after payment confirmation.",
         "license": "Use internally or with clients. Public resale is not included.",
         "image": "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80",
-        "external_purchase_url": "https://example.com/evolvix-brand-audit"
+        "external_purchase_url": "https://gumroad.com/"
     },
     "digital-forward-2": {
         "id": "digital-forward-2", "slug": "digital-forward-2", "title": "Digital Forward 2.0 Bundle",
@@ -170,7 +188,7 @@ PRODUCTS: Dict[str, Dict[str, Any]] = {
         "delivery": "Digital bundle delivery details are shown after payment confirmation.",
         "license": "Personal, creator, and small-business use. Resale as a standalone bundle is not included.",
         "image": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80",
-        "external_purchase_url": "https://example.com/evolvix-digital-forward-2",
+        "external_purchase_url": "https://gumroad.com/",
         "file_slots": ["Digital Forward Workbook PDF", "Creator Planner Spreadsheet", "Support Script Library"]
     },
     "ai-confidence-workbook": {
@@ -182,7 +200,7 @@ PRODUCTS: Dict[str, Dict[str, Any]] = {
         "delivery": "Digital workbook delivery details are shown after payment confirmation.",
         "license": "Personal and family learning use. Redistribution is not included.",
         "image": "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=1200&q=80",
-        "external_purchase_url": "https://example.com/evolvix-ai-confidence-workbook",
+        "external_purchase_url": "https://gumroad.com/",
         "file_slots": ["AI Confidence Workbook PDF", "Safe AI Checklist PDF", "Family Help Cards PDF"]
     },
     "mood-to-music-creation-kit": {
@@ -194,7 +212,7 @@ PRODUCTS: Dict[str, Dict[str, Any]] = {
         "delivery": "Creative kit delivery details are shown after payment confirmation.",
         "license": "Personal creative use and client ideation use. Resale is not included.",
         "image": "https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1200&q=80",
-        "external_purchase_url": "https://example.com/evolvix-mood-to-music-kit",
+        "external_purchase_url": "https://gumroad.com/",
         "file_slots": ["Mood Map PDF", "Sound Palette Card Deck", "Story-to-Song Worksheet"]
     },
     "creator-store-launch-vault": {
@@ -206,7 +224,7 @@ PRODUCTS: Dict[str, Dict[str, Any]] = {
         "delivery": "Launch vault delivery details are shown after payment confirmation.",
         "license": "Personal creator and small-business use. Resale as a vault is not included.",
         "image": "https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=1200&q=80",
-        "external_purchase_url": "https://example.com/evolvix-creator-store-vault",
+        "external_purchase_url": "https://gumroad.com/",
         "file_slots": ["Launch Planner PDF", "Product Copy Templates DOCX", "30-Day Promo Calendar Spreadsheet"]
     }
 }
@@ -270,6 +288,22 @@ class AdminListUpdate(BaseModel):
     items: List[Dict[str, Any]]
 
 
+class ProductFileUpload(BaseModel):
+    filename: str = Field(..., min_length=1, max_length=180)
+    content_type: str = Field(default="application/octet-stream", max_length=120)
+    data_url: str = Field(..., min_length=20)
+
+
+class AnalyticsEventCreate(BaseModel):
+    event_type: str = Field(..., min_length=2, max_length=80)
+    path: str = Field(..., min_length=1, max_length=400)
+    label: Optional[str] = Field(default=None, max_length=220)
+    section_id: Optional[str] = Field(default=None, max_length=180)
+    product_id: Optional[str] = Field(default=None, max_length=180)
+    session_id: str = Field(..., min_length=8, max_length=120)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
 class CheckoutCreate(BaseModel):
     product_id: str
     origin_url: str
@@ -292,6 +326,28 @@ class ProductResponse(BaseModel):
     images: List[str] = Field(default_factory=list)
     external_purchase_url: str
     file_slots: List[str] = Field(default_factory=list)
+    download_files: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+def parse_data_url(data_url: str) -> tuple[bytes, str]:
+    if "," not in data_url:
+        raise HTTPException(status_code=400, detail="Invalid file data")
+    header, encoded = data_url.split(",", 1)
+    content_type = "application/octet-stream"
+    if header.startswith("data:") and ";" in header:
+        content_type = header[5:].split(";", 1)[0] or content_type
+    try:
+        file_bytes = base64.b64decode(encoded, validate=True)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="File data must be base64 encoded") from exc
+    if len(file_bytes) > 8 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File is too large for MongoDB storage")
+    return file_bytes, content_type
+
+
+def safe_filename(filename: str) -> str:
+    clean = "".join(ch for ch in filename.strip() if ch.isalnum() or ch in {".", "-", "_", " "}).strip()
+    return clean[:180] or "evolvix-download.bin"
 
 
 @api_router.get("/")
@@ -302,11 +358,11 @@ async def root():
 @api_router.get("/site-content")
 async def get_site_content():
     custom = await db.site_content.find_one({"id": "primary"}, {"_id": 0})
-    editable_content = custom.get("content", DEFAULT_SITE_CONTENT) if custom else DEFAULT_SITE_CONTENT
+    editable_content = merged_site_content(custom.get("content") if custom else None)
     catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
     return {
         **editable_content,
-        "products": catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()),
+        "products": normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products"),
         "portfolio": catalog.get("portfolio", PORTFOLIO) if catalog else PORTFOLIO,
         "blog": catalog.get("blog", BLOG_POSTS) if catalog else BLOG_POSTS,
     }
@@ -332,8 +388,8 @@ async def admin_dashboard(request: Request):
     custom = await db.site_content.find_one({"id": "primary"}, {"_id": 0})
     catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
     return {
-        "content": custom.get("content", DEFAULT_SITE_CONTENT) if custom else DEFAULT_SITE_CONTENT,
-        "products": catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()),
+        "content": merged_site_content(custom.get("content") if custom else None),
+        "products": normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products"),
         "portfolio": catalog.get("portfolio", PORTFOLIO) if catalog else PORTFOLIO,
         "blog": catalog.get("blog", BLOG_POSTS) if catalog else BLOG_POSTS,
         "updated_at": max(custom.get("updated_at", "") if custom else "", catalog.get("updated_at", "") if catalog else ""),
@@ -371,7 +427,21 @@ def normalize_catalog_items(items: List[Dict[str, Any]], kind: str) -> List[Dict
             if clean["images"]:
                 clean["image"] = clean["images"][0]
             clean.setdefault("external_purchase_url", "https://gumroad.com/")
+            if "example.com" in str(clean.get("external_purchase_url", "")):
+                clean["external_purchase_url"] = "https://gumroad.com/"
             clean.setdefault("file_slots", [])
+            clean.setdefault("download_files", [])
+            clean["download_files"] = [
+                {
+                    "id": str(file_item.get("id") or uuid.uuid4()),
+                    "filename": safe_filename(str(file_item.get("filename") or "Evolvix download")),
+                    "content_type": str(file_item.get("content_type") or "application/octet-stream"),
+                    "size": int(file_item.get("size") or 0),
+                    "uploaded_at": str(file_item.get("uploaded_at") or now_iso()),
+                }
+                for file_item in clean.get("download_files", [])
+                if file_item.get("id")
+            ]
         if kind == "portfolio":
             clean.setdefault("category", "Digital Products")
             clean.setdefault("summary", "Editable showcase item.")
@@ -380,10 +450,45 @@ def normalize_catalog_items(items: List[Dict[str, Any]], kind: str) -> List[Dict
             clean.setdefault("slug", slugify(title) or clean["id"])
             clean.setdefault("category", "AI Tools")
             clean.setdefault("excerpt", "Editable insight article summary.")
+            clean.setdefault("body", clean.get("excerpt", "Editable insight article summary."))
             clean.setdefault("date", now_iso()[:10])
             clean.setdefault("read_time", clean.get("readTime", "5 min"))
         normalized.append(clean)
     return normalized
+
+
+def event_match_filter(start_date: Optional[str], end_date: Optional[str], event_type: Optional[str], page: Optional[str], product_id: Optional[str]) -> Dict[str, Any]:
+    match: Dict[str, Any] = {}
+    if start_date or end_date:
+        created_range: Dict[str, str] = {}
+        if start_date:
+            created_range["$gte"] = start_date
+        if end_date:
+            created_range["$lte"] = f"{end_date}T23:59:59.999999+00:00" if len(end_date) == 10 else end_date
+        match["created_at"] = created_range
+    if event_type and event_type != "all":
+        match["event_type"] = event_type
+    if page and page != "all":
+        match["path"] = page
+    if product_id and product_id != "all":
+        match["product_id"] = product_id
+    return match
+
+
+async def record_analytics_event(event_type: str, path: str, session_id: str, request: Request, label: Optional[str] = None, section_id: Optional[str] = None, product_id: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None) -> None:
+    doc = {
+        "id": str(uuid.uuid4()),
+        "event_type": event_type,
+        "path": path,
+        "label": label,
+        "section_id": section_id,
+        "product_id": product_id,
+        "session_id": session_id,
+        "metadata": metadata or {},
+        "user_agent": request.headers.get("user-agent", "")[:500],
+        "created_at": now_iso(),
+    }
+    await db.analytics_events.insert_one(doc)
 
 
 @api_router.put("/admin/{kind}")
@@ -398,6 +503,66 @@ async def admin_update_catalog(kind: str, payload: AdminListUpdate, request: Req
         upsert=True,
     )
     return {"message": f"{kind.title()} saved", "count": len(items)}
+
+
+@api_router.post("/admin/products/{product_id}/files")
+async def admin_upload_product_file(product_id: str, payload: ProductFileUpload, request: Request):
+    verify_admin_request(request)
+    file_bytes, detected_content_type = parse_data_url(payload.data_url)
+    file_id = str(uuid.uuid4())
+    content_type = payload.content_type or detected_content_type
+    file_doc = {
+        "id": file_id,
+        "product_id": product_id,
+        "filename": safe_filename(payload.filename),
+        "content_type": content_type,
+        "data_base64": base64.b64encode(file_bytes).decode(),
+        "size": len(file_bytes),
+        "uploaded_at": now_iso(),
+    }
+    await db.product_files.insert_one(file_doc)
+
+    catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
+    products = catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values())
+    file_meta = {key: file_doc[key] for key in ["id", "filename", "content_type", "size", "uploaded_at"]}
+    for product in products:
+        if product.get("id") == product_id or product.get("slug") == product_id:
+            existing_files = [item for item in product.get("download_files", []) if item.get("id") != file_id]
+            product["download_files"] = [*existing_files, file_meta]
+            product.setdefault("file_slots", [])
+            if file_meta["filename"] not in product["file_slots"]:
+                product["file_slots"] = [*product["file_slots"], file_meta["filename"]]
+            break
+    else:
+        raise HTTPException(status_code=404, detail="Product not found")
+    await db.editable_catalog.update_one(
+        {"id": "primary"},
+        {"$set": {"id": "primary", "products": normalize_catalog_items(products, "products"), "updated_at": now_iso()}},
+        upsert=True,
+    )
+    return {"message": "Product file uploaded", "file": file_meta}
+
+
+@api_router.delete("/admin/products/{product_id}/files/{file_id}")
+async def admin_delete_product_file(product_id: str, file_id: str, request: Request):
+    verify_admin_request(request)
+    catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
+    products = catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values())
+    found_product = False
+    for product in products:
+        if product.get("id") == product_id or product.get("slug") == product_id:
+            found_product = True
+            product["download_files"] = [item for item in product.get("download_files", []) if item.get("id") != file_id]
+            break
+    if not found_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    await db.product_files.delete_one({"id": file_id, "product_id": product_id})
+    await db.editable_catalog.update_one(
+        {"id": "primary"},
+        {"$set": {"id": "primary", "products": normalize_catalog_items(products, "products"), "updated_at": now_iso()}},
+        upsert=True,
+    )
+    return {"message": "Product file removed"}
 
 
 @api_router.post("/admin/reset")
@@ -430,13 +595,13 @@ async def reset_site_content():
 @api_router.get("/products", response_model=List[ProductResponse])
 async def get_products():
     catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
-    return catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values())
+    return normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products")
 
 
 @api_router.get("/products/{slug}", response_model=ProductResponse)
 async def get_product(slug: str):
     catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
-    products = catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values())
+    products = normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products")
     product = next((item for item in products if item.get("slug") == slug or item.get("id") == slug), None)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -446,7 +611,7 @@ async def get_product(slug: str):
 @api_router.get("/products/{slug}/delivery-slots")
 async def get_product_delivery_slots(slug: str):
     catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
-    products = catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values())
+    products = normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products")
     product = next((item for item in products if item.get("slug") == slug or item.get("id") == slug), None)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -457,6 +622,56 @@ async def get_product_delivery_slots(slug: str):
         "file_slots": product.get("file_slots", ["Main download file", "Usage guide", "Bonus resource"]),
         "note": "Attach final files to these slots when real product assets are ready.",
     }
+
+
+@api_router.get("/payments/{session_id}/downloads")
+async def get_payment_downloads(session_id: str):
+    transaction = await db.payment_transactions.find_one({"session_id": session_id}, {"_id": 0})
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Payment transaction not found")
+    if transaction.get("payment_status") != "paid":
+        return {"payment_status": transaction.get("payment_status", "pending"), "downloads": [], "message": "Downloads unlock after payment confirmation."}
+    catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
+    products = normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products")
+    product = next((item for item in products if item.get("id") == transaction.get("product_id") or item.get("slug") == transaction.get("product_id")), None)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    downloads = [
+        {
+            "id": file_item["id"],
+            "filename": file_item["filename"],
+            "size": file_item.get("size", 0),
+            "content_type": file_item.get("content_type", "application/octet-stream"),
+            "url": f"/api/payments/{session_id}/downloads/{file_item['id']}",
+        }
+        for file_item in product.get("download_files", [])
+        if file_item.get("id")
+    ]
+    return {"payment_status": "paid", "product_title": product.get("title"), "downloads": downloads, "message": "Your Evolvix digital files are ready."}
+
+
+@api_router.get("/payments/{session_id}/downloads/{file_id}")
+async def download_paid_file(session_id: str, file_id: str, request: Request):
+    transaction = await db.payment_transactions.find_one({"session_id": session_id}, {"_id": 0})
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Payment transaction not found")
+    if transaction.get("payment_status") != "paid":
+        raise HTTPException(status_code=403, detail="Downloads unlock after payment confirmation")
+    file_doc = await db.product_files.find_one({"id": file_id, "product_id": transaction.get("product_id")}, {"_id": 0})
+    if not file_doc:
+        raise HTTPException(status_code=404, detail="Download file not found")
+    file_bytes = base64.b64decode(file_doc["data_base64"])
+    await record_analytics_event(
+        event_type="download",
+        path="/checkout/success",
+        session_id=session_id,
+        request=request,
+        label=file_doc.get("filename"),
+        product_id=transaction.get("product_id"),
+        metadata={"file_id": file_id},
+    )
+    headers = {"Content-Disposition": f"attachment; filename=\"{safe_filename(file_doc['filename'])}\""}
+    return StreamingResponse(io.BytesIO(file_bytes), media_type=file_doc.get("content_type", "application/octet-stream"), headers=headers)
 
 
 @api_router.post("/contact")
@@ -474,6 +689,61 @@ async def create_newsletter_signup(payload: NewsletterCreate):
     return {"message": "You’re on the Evolvix update list."}
 
 
+@api_router.post("/analytics/events")
+async def create_analytics_event(payload: AnalyticsEventCreate, request: Request):
+    await record_analytics_event(
+        event_type=payload.event_type,
+        path=payload.path,
+        session_id=payload.session_id,
+        request=request,
+        label=payload.label,
+        section_id=payload.section_id,
+        product_id=payload.product_id,
+        metadata=payload.metadata,
+    )
+    return {"message": "Analytics event recorded"}
+
+
+@api_router.get("/admin/analytics")
+async def admin_analytics(request: Request, start_date: Optional[str] = None, end_date: Optional[str] = None, event_type: Optional[str] = None, page: Optional[str] = None, product_id: Optional[str] = None):
+    verify_admin_request(request)
+    match = event_match_filter(start_date, end_date, event_type, page, product_id)
+    total_events = await db.analytics_events.count_documents(match)
+    unique_users = len(await db.analytics_events.distinct("session_id", match))
+    visits = await db.analytics_events.count_documents({**match, "event_type": "page_view"})
+    clicks = await db.analytics_events.count_documents({**match, "event_type": "click"})
+    forms = await db.analytics_events.count_documents({**match, "event_type": {"$in": ["form_submit", "newsletter_submit"]}})
+
+    async def aggregate_group(field: str, limit: int = 12):
+        pipeline = [{"$match": match}, {"$group": {"_id": f"${field}", "events": {"$sum": 1}, "users": {"$addToSet": "$session_id"}}}, {"$sort": {"events": -1}}, {"$limit": limit}]
+        rows = []
+        async for row in db.analytics_events.aggregate(pipeline):
+            rows.append({"name": row.get("_id") or "Unknown", "events": row.get("events", 0), "users": len(row.get("users", []))})
+        return rows
+
+    recent = []
+    async for event in db.analytics_events.find(match, {"_id": 0}).sort("created_at", -1).limit(25):
+        recent.append(event)
+    return {
+        "summary": {"total_events": total_events, "unique_users": unique_users, "visits": visits, "clicks": clicks, "forms": forms},
+        "by_event_type": await aggregate_group("event_type"),
+        "by_page": await aggregate_group("path"),
+        "by_section": await aggregate_group("section_id"),
+        "by_product": await aggregate_group("product_id"),
+        "recent_events": recent,
+    }
+
+
+@api_router.get("/admin/analytics/options")
+async def admin_analytics_options(request: Request):
+    verify_admin_request(request)
+    return {
+        "event_types": sorted([item for item in await db.analytics_events.distinct("event_type") if item]),
+        "pages": sorted([item for item in await db.analytics_events.distinct("path") if item]),
+        "products": sorted([item for item in await db.analytics_events.distinct("product_id") if item]),
+    }
+
+
 def get_stripe_checkout(request: Request) -> StripeCheckout:
     api_key = os.environ["STRIPE_API_KEY"]
     webhook_url = f"{str(request.base_url)}api/webhook/stripe"
@@ -483,7 +753,7 @@ def get_stripe_checkout(request: Request) -> StripeCheckout:
 @api_router.post("/payments/checkout")
 async def create_checkout_session(payload: CheckoutCreate, request: Request):
     catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
-    products = catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values())
+    products = normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products")
     product = next((item for item in products if item.get("id") == payload.product_id or item.get("slug") == payload.product_id), None)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")

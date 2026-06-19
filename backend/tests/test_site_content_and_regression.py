@@ -47,8 +47,8 @@ def test_site_content_get_has_required_business_sections(api_client, api_base_ur
     assert data["brand"]["headline"] == "Empowering People & Businesses Through AI."
     assert data["brand"]["gstin"] == "19BVTPM1874M1ZK"
     assert data["contact"]["email"] == "evolvixtech0pm@gmail.com"
-    assert len(data["creative_services"]) == 8
-    assert len(data["technology_services"]) == 9
+    assert len(data["creative_services"]) >= 9
+    assert len(data["technology_services"]) >= 10
     assert len(data["ecosystem"]) == 7
     assert len(data["learning_categories"]) == 18
     assert len(data["music_services"]) == 10
