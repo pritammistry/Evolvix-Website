@@ -55,6 +55,11 @@ Build a professional, premium, futuristic website for Evolvix Tech Media using t
 - Updated homepage, navigation, footer, contact, and LearnAI shop positioning to match the PDF business scope.
 - Made homepage, shop, product detail, portfolio, blog, services, ecosystem, contact, and footer consume backend content where applicable.
 
+
+## Implemented — 2026-06-19 Schema Alignment Fix
+- Fixed frontend display mapping for backend `read_time` blog metadata and `file_slots` product delivery slots.
+- Verified Blog metadata and Product Detail file slots render correctly from backend-provided content.
+
 ## Prioritized Backlog
 ### P0 Remaining
 - Replace placeholder contact details with final email, WhatsApp, and social URLs when available.
