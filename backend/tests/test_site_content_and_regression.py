@@ -1,11 +1,27 @@
 import os
 import uuid
+from pathlib import Path
 
 import pytest
 import requests
 
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL")
+def _resolve_base_url() -> str | None:
+    env_url = os.environ.get("REACT_APP_BACKEND_URL")
+    if env_url:
+        return env_url
+
+    frontend_env = Path("/app/frontend/.env")
+    if not frontend_env.exists():
+        return None
+
+    for line in frontend_env.read_text().splitlines():
+        if line.startswith("REACT_APP_BACKEND_URL="):
+            return line.split("=", 1)[1].strip()
+    return None
+
+
+BASE_URL = _resolve_base_url()
 
 
 @pytest.fixture(scope="session")
@@ -33,7 +49,9 @@ def test_site_content_get_has_required_business_sections(api_client, api_base_ur
     assert data["contact"]["email"] == "evolvixtech0pm@gmail.com"
     assert len(data["creative_services"]) == 8
     assert len(data["technology_services"]) == 9
-    assert len(data["ecosystem"]) == 4
+    assert len(data["ecosystem"]) == 7
+    assert len(data["learning_categories"]) == 18
+    assert len(data["music_services"]) == 10
     assert isinstance(data["products"], list)
     assert isinstance(data["portfolio"], list)
     assert isinstance(data["blog"], list)

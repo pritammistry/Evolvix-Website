@@ -2,6 +2,7 @@ import "@/App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { Layout } from "./components/Layout";
+import { ScrollToTop } from "./components/ScrollToTop";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Portfolio from "./pages/Portfolio";
@@ -19,6 +20,7 @@ import CheckoutResult from "./pages/CheckoutResult";
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Layout>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -26,8 +28,10 @@ function App() {
           <Route path="/services" element={<Services />} />
           <Route path="/ecosystem" element={<Ecosystem />} />
           <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/learning-growth" element={<Shop />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/products/:slug" element={<ProductDetail />} />
+          <Route path="/music" element={<CreativeLab />} />
           <Route path="/creative-lab" element={<CreativeLab />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/faq" element={<FAQ />} />

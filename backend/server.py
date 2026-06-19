@@ -32,7 +32,7 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
         "name": "Evolvix Tech Media",
         "tagline": "CREATE • INNOVATE • ELEVATE",
         "headline": "Empowering People & Businesses Through AI.",
-        "subheadline": "AI-first digital, business, technology, and creative solutions for individuals, creators, startups, and growing businesses.",
+        "subheadline": "From creative digital services to intelligent business solutions.",
         "gstin": "19BVTPM1874M1ZK",
         "core_areas": ["AI", "Digital", "Business", "Creative Solutions"],
     },
@@ -42,8 +42,11 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
         "whatsapp": "+91 98318 42869",
         "email": "evolvixtech0pm@gmail.com",
         "facebook": "https://facebook.com/evolvixtech",
+        "google_location": "https://maps.google.com/?q=Bardhaman%2C%20West%20Bengal%20713103",
+        "gumroad": "https://gumroad.com/",
         "website_status": "Coming Soon",
     },
+    "trust_strip": ["GST Registered Business", "Udyam Registered MSME", "IEC Registered", "Facebook", "Google Location", "Bardhaman, West Bengal"],
     "creative_services": [
         {"title": "AI Resume & CV Design", "text": "Stand out. Get noticed."},
         {"title": "Professional Portfolio Design", "text": "Showcase your best work."},
@@ -66,11 +69,16 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
         {"title": "Digital Marketing", "text": "Grow online. Reach more."},
     ],
     "ecosystem": [
-        {"name": "EVOLVIX LearnAI", "status": "Now available on Gumroad", "description": "Prompt packs, learning resources, business packs, career packs, creator packs, and productivity packs.", "items": ["AI Prompt Packs", "Learning Resources", "Business Packs", "Career Packs", "Creator Packs", "Productivity Packs"]},
-        {"name": "EVOLVIX BuildX", "status": "On-demand", "description": "Custom technology products for web, mobile, business, SaaS, and AI-powered ideas.", "items": ["Web Applications", "Mobile Applications", "Business Software", "Enterprise SaaS", "AI Powered Products"]},
-        {"name": "EVOLVIX Creative", "status": "On-demand", "description": "Creative services for branding, identity, graphic design, assets, multimedia, and digital presentation.", "items": ["Branding & Identity", "Graphic Design", "Digital Assets", "Multimedia Design", "Creative Solutions"]},
-        {"name": "EVOLVIX Business", "status": "On-demand", "description": "AI consulting and business growth systems for automation, CRM, SaaS, digital transformation, and strategy.", "items": ["AI Business Consulting", "Business Automation", "CRM Solutions", "SaaS Solutions", "Digital Transformation", "Growth Strategy"]},
+        {"name": "Learning and Growth", "status": "Now Available", "description": "AI prompt packs, learning guides, cheat sheets, workbooks, smart routines, and future courses.", "items": ["AI Prompt Packs", "Career Packs", "Student Packs", "Creator Packs", "AI Workbooks", "Future Courses"]},
+        {"name": "BuildX", "status": "On-Demand", "description": "Custom technology products for web, mobile, business software, SaaS, and AI-powered ideas.", "items": ["Web Applications", "Mobile Applications", "Business Software", "SaaS", "AI Powered Products"]},
+        {"name": "Creative", "status": "On-Demand", "description": "Branding, identity, graphic design, social creatives, presentations, catalogs, and digital assets.", "items": ["Branding", "Design", "Digital Assets", "Pitch Decks", "Social Creatives"]},
+        {"name": "Business", "status": "On-Demand", "description": "AI consulting, automation, CRM thinking, digital transformation, and growth strategy.", "items": ["AI Consulting", "Automation", "CRM Solutions", "Digital Transformation", "Growth Strategy"]},
+        {"name": "Accessibility", "status": "On-Demand", "description": "Simple digital support, beginner-friendly AI guidance, and accessible resources for everyday users.", "items": ["Beginner Guides", "Family Support", "Elder-Friendly Tech", "Simple AI Help"]},
+        {"name": "Music", "status": "On-Demand", "description": "AI background music, mood-based tracks, creator music packs, podcast intros, and audio branding.", "items": ["Reels Music", "Shorts Audio", "Mood Tracks", "Podcast Intros", "Brand Music"]},
+        {"name": "Brand Assets", "status": "On-Demand", "description": "Premium identity kits, creator assets, launch visuals, product mockups, and brand-ready design systems.", "items": ["Logo Systems", "Mockups", "Launch Assets", "Creator Kits"]},
     ],
+    "learning_categories": ["AI Prompt Packs", "Business Prompt Packs", "Career Prompt Packs", "Student Prompt Packs", "Creator Prompt Packs", "Productivity Prompt Packs", "Marketing Prompt Packs", "Coding Prompt Packs", "AI Learning Guides", "AI Cheat Sheets", "AI Templates", "AI Workbooks", "AI Support for Everyday Learning", "Grow Yourself Using AI", "AI Learning for Beginners", "Smart AI Routines", "Future AI Courses", "Future Certifications"],
+    "music_services": ["AI Background Music for Reels", "Social Media Creator Music Packs", "Mood-Based Background Tracks", "AI Music for Videos", "Short-form Content Music", "Brand Theme Music", "Podcast Intros", "Ambient Music", "Sound Design", "Creator Audio Branding"],
     "why_choose": ["AI-first approach", "Personalized solutions", "Future-ready technology", "Business-focused innovation", "Creative excellence", "End-to-end support"],
 }
 
@@ -78,7 +86,7 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
 PRODUCTS: Dict[str, Dict[str, Any]] = {
     "ai-starter-kit": {
         "id": "ai-starter-kit", "slug": "ai-starter-kit", "title": "AI Starter Kit for Everyday Productivity",
-        "price": 29.00, "currency": "usd", "category": "Learning", "tag": "Best Seller",
+        "price": 29.00, "currency": "usd", "category": "Learning and Growth", "tag": "Best Seller",
         "description": "Simple prompt systems, checklists, and workflows for students, professionals, parents, and beginners.",
         "benefits": ["Understand AI without overwhelm", "Save hours on common tasks", "Use plain-language templates"],
         "included": ["Prompt library", "Beginner guide", "Productivity checklist", "Update notes"],
@@ -89,7 +97,7 @@ PRODUCTS: Dict[str, Dict[str, Any]] = {
     },
     "creator-assets-bundle": {
         "id": "creator-assets-bundle", "slug": "creator-assets-bundle", "title": "Creator Assets Glow Bundle",
-        "price": 39.00, "currency": "usd", "category": "Assets", "tag": "Featured",
+        "price": 39.00, "currency": "usd", "category": "Brand Assets", "tag": "Featured",
         "description": "Premium digital overlays, launch graphics, and brand blocks for social posts and digital products.",
         "benefits": ["Build a polished visual presence", "Speed up product launches", "Reusable across campaigns"],
         "included": ["Editable graphics", "Social templates", "Cover art textures", "Usage guide"],
@@ -134,7 +142,7 @@ PRODUCTS: Dict[str, Dict[str, Any]] = {
     },
     "ai-confidence-workbook": {
         "id": "ai-confidence-workbook", "slug": "ai-confidence-workbook", "title": "AI Confidence Workbook",
-        "price": 24.00, "currency": "usd", "category": "Learning", "tag": "New",
+        "price": 24.00, "currency": "usd", "category": "Learning and Growth", "tag": "New",
         "description": "A gentle step-by-step workbook for beginners, parents, and elderly users learning AI safely.",
         "benefits": ["Learn AI at a calm pace", "Understand everyday use cases", "Reduce fear around new tools"],
         "included": ["Guided workbook", "Safety checklist", "Family support prompts"],
@@ -171,14 +179,14 @@ PRODUCTS: Dict[str, Dict[str, Any]] = {
 }
 
 PORTFOLIO = [
-    {"id": "p1", "title": "AI Learning Journey", "category": "Learning", "summary": "Beginner-friendly AI education system for everyday users.", "image": "https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=1200&q=80"},
+    {"id": "p1", "title": "AI Learning Journey", "category": "Learning and Growth", "summary": "Beginner-friendly AI education system for everyday users.", "image": "https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=1200&q=80"},
     {"id": "p2", "title": "Mood Sound Worlds", "category": "Music", "summary": "Emotion-based concept collections for AI-assisted music storytelling.", "image": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1200&q=80"},
     {"id": "p3", "title": "Creator Launch Kit", "category": "Digital Products", "summary": "Reusable creator assets and store-ready product visuals.", "image": "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?auto=format&fit=crop&w=1200&q=80"},
     {"id": "p4", "title": "Small Business Tech Clarity", "category": "Business", "summary": "Practical digital transformation support for non-technical teams.", "image": "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=80"},
     {"id": "p5", "title": "Accessible AI Guides", "category": "Accessibility", "summary": "Warm, readable guides designed for older users and families.", "image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80"},
     {"id": "p6", "title": "Brand Identity Lab", "category": "Brand Assets", "summary": "Futuristic visual systems for high-trust creator brands.", "image": "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?auto=format&fit=crop&w=1200&q=80"},
     {"id": "p7", "title": "Evolvix Brand Launch System", "category": "Brand Assets", "summary": "A polished identity rollout framework for logo usage, color, tone, and premium trust signals.", "image": "https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80"},
-    {"id": "p8", "title": "Student AI Productivity Map", "category": "Learning", "summary": "A practical study workflow concept that turns assignments, revision, and planning into guided AI routines.", "image": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80"},
+    {"id": "p8", "title": "Student AI Productivity Map", "category": "Learning and Growth", "summary": "A practical study workflow concept that turns assignments, revision, and planning into guided AI routines.", "image": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80"},
     {"id": "p9", "title": "Creator Storefront Blueprint", "category": "Digital Products", "summary": "Product packaging, pricing, and sales-page structure for creators selling digital downloads.", "image": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80"},
     {"id": "p10", "title": "Calm Focus Mood Collection", "category": "Music", "summary": "A mood-first creative direction set for calm, focused, reflective, and late-night AI-assisted sound worlds.", "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80"},
     {"id": "p11", "title": "Elder-Friendly Tech Support Kit", "category": "Accessibility", "summary": "Simple scripts, visual aids, and confidence-building support flows for older users navigating digital tools.", "image": "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1200&q=80"},
@@ -195,7 +203,10 @@ BLOG_POSTS = [
     {"id": "b7", "slug": "mood-memory-and-music-prompts", "title": "Mood, Memory, and Music Prompts", "category": "Music Creativity", "excerpt": "How nostalgia, calm, focus, and cinematic emotion can become stronger creative briefs.", "read_time": "4 min", "date": "2026-04-30"},
     {"id": "b8", "slug": "creator-productivity-without-burnout", "title": "Creator Productivity Without Burnout", "category": "Productivity", "excerpt": "A practical operating rhythm for creators balancing learning, content, products, and rest.", "read_time": "5 min", "date": "2026-04-28"},
     {"id": "b9", "slug": "trust-signals-every-small-digital-brand-needs", "title": "Trust Signals Every Small Digital Brand Needs", "category": "Creator Resources", "excerpt": "The visual, copy, support, and policy details that help visitors feel safe buying from you.", "read_time": "6 min", "date": "2026-04-25"},
-    {"id": "b10", "slug": "from-prompt-to-product", "title": "From Prompt to Product", "category": "Digital Creativity", "excerpt": "A simple framework for turning AI-assisted ideas into useful templates, kits, and content systems.", "read_time": "8 min", "date": "2026-04-22"}
+    {"id": "b10", "slug": "from-prompt-to-product", "title": "From Prompt to Product", "category": "Digital Creativity", "excerpt": "A simple framework for turning AI-assisted ideas into useful templates, kits, and content systems.", "read_time": "8 min", "date": "2026-04-22"},
+    {"id": "b11", "slug": "grow-yourself-using-ai", "title": "Grow Yourself Using AI", "category": "Learning and Growth", "excerpt": "A practical path for using AI to improve learning, career planning, creativity, and daily routines.", "read_time": "5 min", "date": "2026-04-20"},
+    {"id": "b12", "slug": "ai-consulting-for-small-business", "title": "AI Consulting for Small Business", "category": "Business Consulting", "excerpt": "How small businesses can start with AI workflows, automation, digital tools, and better customer systems.", "read_time": "6 min", "date": "2026-04-18"},
+    {"id": "b13", "slug": "accessible-ai-for-everyday-users", "title": "Accessible AI for Everyday Users", "category": "Accessibility", "excerpt": "Why AI support should feel simple, safe, and useful for beginners, families, and older users.", "read_time": "4 min", "date": "2026-04-16"}
 ]
 
 

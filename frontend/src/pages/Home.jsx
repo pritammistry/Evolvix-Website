@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BrainCircuit, BriefcaseBusiness, Download, Palette, Rocket, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { ArrowRight, BrainCircuit, BriefcaseBusiness, Download, MapPin, Music2, Palette, Rocket, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { toast } from "sonner";
 import { logos } from "../data/siteContent";
 import { SectionHeader } from "../components/SectionHeader";
@@ -16,6 +16,7 @@ export default function Home() {
   const portfolioItems = content.portfolio || [];
   const ecosystem = content.ecosystem || [];
   const whyChoose = content.why_choose || [];
+  const trust = content.trust_strip || [];
   const buyProduct = async (productId) => {
     try {
       const { data } = await createCheckout({ product_id: productId, origin_url: window.location.origin });
@@ -38,41 +39,42 @@ export default function Home() {
     <>
       <section className="hero-section" data-testid="home-hero-section">
         <div className="hero-copy">
+          <img className="hero-mini-logo" src={logos.horizontal} alt="Evolvix Tech Media" data-testid="home-large-logo" />
           <span className="eyebrow" data-testid="home-hero-eyebrow">{brand.tagline}</span>
           <h1 data-testid="home-hero-headline">{brand.headline}</h1>
           <p data-testid="home-hero-subheadline">{brand.subheadline}</p>
           <div className="hero-actions" data-testid="home-hero-actions">
             <Link className="primary-btn" to="/services" data-testid="home-services-cta">Explore Services <ArrowRight size={18} /></Link>
-            <Link className="secondary-btn" to="/ecosystem" data-testid="home-ecosystem-cta">Product Ecosystem</Link>
-            <Link className="text-btn" to="/contact" data-testid="home-contact-cta">Get in Touch</Link>
-          </div>
-          <div className="trust-strip" data-testid="home-trust-strip">
-            {(brand.core_areas || []).map((area) => <span key={area} data-testid={`trust-item-${area.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><Sparkles size={16} /> {area}</span>)}
-            <span data-testid="trust-item-gstin"><ShieldCheck size={16} /> GSTIN: {brand.gstin}</span>
+            <Link className="secondary-btn" to="/learning-growth" data-testid="home-learning-cta">View Learning and Growth</Link>
+            <Link className="secondary-btn" to="/shop" data-testid="home-products-cta">Browse Products</Link>
+            <Link className="text-btn" to="/contact" data-testid="home-contact-cta">Contact Us</Link>
           </div>
         </div>
         <div className="hero-logo-stage" data-testid="home-hero-logo-stage"><img src={logos.circular} alt="Evolvix Tech Media circular logo" data-testid="home-hero-logo-image" /></div>
       </section>
+      <section className="section trust-rail" data-testid="home-trust-strip">
+        {trust.map((item) => <span key={item} data-testid={`trust-item-${item.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><ShieldCheck size={16} /> {item}</span>)}
+      </section>
       <section className="section split-section" data-testid="home-intro-section">
-        <SectionHeader eyebrow="AI • Digital • Business • Creative" title="One brand for digital products, custom services, and future-ready transformation." text="Evolvix combines AI consulting, creative design, productized learning, software development, automation, and digital growth support." />
-        <div className="mission-panel" data-testid="home-vision-panel"><p data-testid="home-vision-text">Let’s build a smarter future together — from resumes and portfolios to SaaS, automation, business software, and AI-powered products.</p></div>
+        <SectionHeader eyebrow="Bardhaman + beyond" title="AI-powered solutions for students, professionals, creators, and local businesses." text="Evolvix helps Bardhaman and nearby users grow with creative services, business consulting, learning products, software solutions, and creator-focused audio." />
+        <div className="mission-panel" data-testid="home-local-value-panel"><p data-testid="home-local-value-text"><MapPin size={24} /> Students • professionals • social media creators • small businesses • local entrepreneurs</p></div>
       </section>
       <section className="section" data-testid="home-pillars-section">
         <SectionHeader eyebrow="Core service pillars" title="Creative services, technology solutions, digital products, and business consulting." />
         <div className="pillar-grid">
-          {[[Palette, "Creative Digital Services", "Resumes, portfolios, company profiles, branding, catalogs, pitch decks, and social creatives."], [BrainCircuit, "AI Business Consulting", "AI strategy, workflows, process automation, CRM thinking, and transformation support."], [Rocket, "Technology Solutions", "Websites, e-commerce, web apps, mobile apps, SaaS, and business software."], [Download, "LearnAI Products", "Prompt packs, learning resources, business packs, career packs, creator packs, and productivity packs."]].map(([Icon, title, text]) => <article className="pillar-card" key={title} data-testid={`home-pillar-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><Icon size={28} /><h3>{title}</h3><p>{text}</p></article>)}
+          {[[Palette, "Creative Digital Services", "Resumes, portfolios, branding, catalogs, presentations, and social creatives.", "/services"], [BrainCircuit, "AI Business Consulting & Technology", "AI strategy, workflows, automation, websites, apps, SaaS, and business software.", "/services"], [Download, "Learning and Growth", "Prompt packs, AI guides, cheat sheets, workbooks, routines, and future courses.", "/learning-growth"], [Rocket, "Product Ecosystem", "Learning, BuildX, Creative, Business, Accessibility, Music, and Brand Assets.", "/ecosystem"]].map(([Icon, title, text, href]) => <article className="pillar-card" key={title} data-testid={`home-pillar-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><Icon size={28} /><h3>{title}</h3><p>{text}</p><Link to={href} className="icon-link" data-testid={`home-pillar-link-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}>Explore <ArrowRight size={16} /></Link></article>)}
         </div>
       </section>
       <section className="section" data-testid="home-ecosystem-preview-section">
-        <SectionHeader eyebrow="Product ecosystem" title="Four Evolvix verticals built for different needs." />
-        <div className="ecosystem-grid" data-testid="home-ecosystem-grid">{ecosystem.map((item) => <article className="ecosystem-card" key={item.name} data-testid={`home-ecosystem-${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><span>{item.status}</span><h3>{item.name}</h3><p>{item.description}</p></article>)}</div>
+        <SectionHeader eyebrow="Product ecosystem" title="A scalable AI-first architecture for learning, building, creativity, business, access, music, and assets." />
+        <div className="ecosystem-grid" data-testid="home-ecosystem-grid">{ecosystem.slice(0, 4).map((item) => <article className="ecosystem-card" key={item.name} data-testid={`home-ecosystem-${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><span>{item.status}</span><h3>{item.name}</h3><p>{item.description}</p></article>)}</div>
       </section>
       <section className="section" data-testid="home-portfolio-preview-section">
         <SectionHeader eyebrow="Portfolio preview" title="Selected work with a clear future-facing point of view." />
         <div className="preview-grid">{portfolioItems.slice(0, 3).map((item) => <article className="visual-card" key={item.id} data-testid={`home-portfolio-card-${item.id}`}><img src={item.image} alt={item.title} /><span>{item.category}</span><h3>{item.title}</h3><p>{item.summary}</p></article>)}</div>
       </section>
       <section className="section" data-testid="home-shop-preview-section">
-        <SectionHeader eyebrow="LearnAI preview" title="Digital resources for prompts, careers, creators, business, and productivity." />
+        <SectionHeader eyebrow="Featured products / services" title="Actionable AI resources and creator-ready digital products." />
         <div className="product-grid">{products.slice(0, 3).map((product) => <ProductCard key={product.id} product={product} onBuy={buyProduct} />)}</div>
       </section>
       <section className="section mood-band" data-testid="home-why-choose-section">
@@ -80,6 +82,7 @@ export default function Home() {
         <div className="mood-row" data-testid="home-why-row">{whyChoose.map((item) => <span key={item} data-testid={`home-why-${item.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><BriefcaseBusiness size={15} /> {item}</span>)}</div>
         <Link to="/contact" className="primary-btn" data-testid="home-start-project-cta">Start a Project <ArrowRight size={18} /></Link>
       </section>
+      <section className="section contact-cta-band" data-testid="home-contact-cta-section"><h2>Ready to create, innovate, and elevate?</h2><p>Tell Evolvix what you want to build, learn, automate, design, or launch.</p><Link to="/contact" className="primary-btn" data-testid="home-final-contact-cta">Contact Us <ArrowRight size={18} /></Link></section>
       <section className="section trust-newsletter" data-testid="home-newsletter-section">
         <div><span className="eyebrow">Trust & updates</span><h2 data-testid="home-newsletter-title">Stay close to launches, resources, and new creative drops.</h2><p data-testid="home-newsletter-text">Room for future testimonials, client wins, reviews, and credibility markers is built into the brand system.</p></div>
         <form onSubmit={join} className="newsletter-form" data-testid="newsletter-form"><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" data-testid="newsletter-email-input" /><button type="submit" data-testid="newsletter-submit-button">Join Updates</button></form>
