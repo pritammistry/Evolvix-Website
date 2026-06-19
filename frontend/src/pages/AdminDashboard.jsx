@@ -25,22 +25,42 @@ function fileToDataUrl(file) {
   });
 }
 
+function compressImageFile(file, maxSize = 1200, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      image.onerror = reject;
+      image.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function ProductImageUploader({ product, index, onUpdate }) {
   const images = product.images?.length ? product.images : (product.image ? [product.image] : []);
   const handleFiles = async (files) => {
     const selected = Array.from(files || []).slice(0, Math.max(0, 5 - images.length));
     if (!selected.length) return;
-    const encoded = await Promise.all(selected.map(fileToDataUrl));
+    const encoded = await Promise.all(selected.map((file) => compressImageFile(file).catch(() => fileToDataUrl(file))));
     const nextImages = [...images, ...encoded].slice(0, 5);
-    onUpdate(index, "images", nextImages);
-    onUpdate(index, "image", nextImages[0] || "");
+    onUpdate(index, { images: nextImages, image: nextImages[0] || "" });
   };
   const removeImage = (imageIndex) => {
     const nextImages = images.filter((_, i) => i !== imageIndex).slice(0, 5);
-    onUpdate(index, "images", nextImages);
-    onUpdate(index, "image", nextImages[0] || "");
+    onUpdate(index, { images: nextImages, image: nextImages[0] || "" });
   };
-  return <div className="admin-uploader" data-testid={`product-image-uploader-${index}`}><div className="admin-upload-head"><h4>Product photos / thumbnails</h4><span>{images.length}/5 uploaded</span></div><label className="upload-dropzone" data-testid={`product-upload-label-${index}`}><UploadCloud size={24} /><strong>Upload up to 5 photos</strong><small>First image becomes product thumbnail. PNG/JPG/WebP supported.</small><input type="file" accept="image/*" multiple onChange={(e) => handleFiles(e.target.files)} data-testid={`product-image-upload-${index}`} /></label>{images.length > 0 && <div className="admin-image-grid" data-testid={`product-image-grid-${index}`}>{images.slice(0, 5).map((image, imageIndex) => <div className="admin-image-preview" key={`${image.slice(0, 24)}-${imageIndex}`}><img src={image} alt={`Product ${index + 1} upload ${imageIndex + 1}`} data-testid={`product-upload-preview-${index}-${imageIndex}`} /><button type="button" onClick={() => removeImage(imageIndex)} data-testid={`product-upload-remove-${index}-${imageIndex}`}><Trash2 size={14} /></button>{imageIndex === 0 && <span>Thumbnail</span>}</div>)}</div>}</div>;
+  return <div className="admin-uploader" data-testid={`product-image-uploader-${index}`}><div className="admin-upload-head"><h4>Product photos / thumbnails</h4><span data-testid={`product-upload-count-${index}`}>{images.length}/5 uploaded</span></div><label className={`upload-dropzone ${images.length >= 5 ? "is-full" : ""}`} data-testid={`product-upload-label-${index}`}><UploadCloud size={24} /><strong>{images.length >= 5 ? "Maximum 5 photos uploaded" : "Upload up to 5 photos"}</strong><small>First image becomes product thumbnail. PNG/JPG/WebP supported.</small><input type="file" accept="image/*" multiple disabled={images.length >= 5} onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }} data-testid={`product-image-upload-${index}`} /></label>{images.length > 0 && <div className="admin-image-grid" data-testid={`product-image-grid-${index}`}>{images.slice(0, 5).map((image, imageIndex) => <div className="admin-image-preview" key={`${image.slice(0, 24)}-${imageIndex}`}><img src={image} alt={`Product ${index + 1} upload ${imageIndex + 1}`} data-testid={`product-upload-preview-${index}-${imageIndex}`} /><button type="button" onClick={() => removeImage(imageIndex)} aria-label={`Remove product ${index + 1} image ${imageIndex + 1}`} data-testid={`product-upload-remove-${index}-${imageIndex}`}><Trash2 size={14} /></button>{imageIndex === 0 && <span data-testid={`product-upload-thumbnail-badge-${index}`}>Thumbnail</span>}</div>)}</div>}</div>;
 }
 
 function ServiceListEditor({ title, items, onChange, testPrefix }) {
@@ -67,7 +87,11 @@ function CustomSectionsEditor({ items, onChange }) {
 function CatalogEditor({ title, icon: Icon, items, onChange, kind }) {
   const template = kind === "products" ? blankProduct : kind === "portfolio" ? blankPortfolio : blankBlog;
   const fields = kind === "products" ? ["title", "slug", "category", "tag", "price", "description"] : kind === "portfolio" ? ["title", "category", "summary", "image"] : ["title", "category", "excerpt", "date", "read_time"];
-  const update = (index, key, value) => onChange(items.map((item, i) => i === index ? { ...item, [key]: key === "price" ? Number(value) : value } : item));
+  const update = (index, key, value) => onChange(items.map((item, i) => {
+    if (i !== index) return item;
+    if (typeof key === "object") return { ...item, ...key };
+    return { ...item, [key]: key === "price" ? Number(value) : value };
+  }));
   return <section className="admin-editor-card catalog-card" data-testid={`${kind}-editor`}><h3><Icon size={20} /> {title}</h3>{items.map((item, index) => <details className="admin-catalog-item" key={`${item.id || item.title}-${index}`} open={index === 0}><summary data-testid={`${kind}-summary-${index}`}>{item.title || `Item ${index + 1}`}</summary>{kind === "products" && <ProductImageUploader product={item} index={index} onUpdate={update} />}<div className="admin-form-grid">{fields.map((field) => <TextField key={field} label={field.replaceAll("_", " ")} value={item[field]} onChange={(value) => update(index, field, value)} testId={`${kind}-${field}-${index}`} multiline={field === "description" || field === "summary" || field === "excerpt"} />)}</div>{kind === "products" && <><ArrayEditor title="Benefits" items={item.benefits || []} onChange={(value) => update(index, "benefits", value)} placeholder="Benefit" testPrefix={`${kind}-benefits-${index}`} /><ArrayEditor title="Included" items={item.included || []} onChange={(value) => update(index, "included", value)} placeholder="Included item" testPrefix={`${kind}-included-${index}`} /><ArrayEditor title="File slots" items={item.file_slots || item.fileSlots || []} onChange={(value) => update(index, "file_slots", value)} placeholder="Download file slot" testPrefix={`${kind}-files-${index}`} /></>}<button type="button" className="danger-btn" onClick={() => onChange(items.filter((_, i) => i !== index))} data-testid={`${kind}-delete-${index}`}><Trash2 size={16} /> Remove</button></details>)}<button type="button" className="admin-mini-btn" onClick={() => onChange([...items, { ...template, id: `${kind}-${Date.now()}` }])} data-testid={`${kind}-add-button`}><Plus size={16} /> Add {kind}</button></section>;
 }
 
