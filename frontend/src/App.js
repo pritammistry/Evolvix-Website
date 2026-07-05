@@ -12,6 +12,7 @@ import Ecosystem from "./pages/Ecosystem";
 import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
 import CreativeLab from "./pages/CreativeLab";
+import Demo from "./pages/Demo";
 import Playground from "./pages/Playground";
 import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
@@ -37,6 +38,7 @@ function AppRoutes() {
       <Route path="/learning-growth" element={<Shop />} />
       <Route path="/shop" element={<Shop />} />
       <Route path="/products/:slug" element={<ProductDetail />} />
+      <Route path="/demo" element={<Demo />} />
       <Route path="/music" element={<CreativeLab />} />
       <Route path="/creative-lab" element={<CreativeLab />} />
       <Route path="/blog" element={<Blog />} />
