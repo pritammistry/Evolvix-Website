@@ -6,7 +6,7 @@ import { BrandLogo } from "./BrandLogo";
 import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
 
-const navItems = [["Home", "/"], ["About", "/about"], ["Services", "/services"], ["Ecosystem", "/ecosystem"], ["Learning", "/learning-growth"], ["Music", "/music"], ["Showcase", "/portfolio"], ["Blog", "/blog"], ["FAQ", "/faq"], ["Contact", "/contact"]];
+const navItems = [["Home", "/"], ["About", "/about"], ["Services", "/services"], ["Ecosystem", "/ecosystem"], ["Playground", "/playground"], ["Music", "/music"], ["Showcase", "/portfolio"], ["Blog", "/blog"], ["FAQ", "/faq"], ["Contact", "/contact"]];
 
 export function Layout({ children }) {
   const [open, setOpen] = useState(false);
