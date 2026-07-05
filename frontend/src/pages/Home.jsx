@@ -66,15 +66,17 @@ export default function Home() {
     <>
       <section className="hero-section" data-testid="home-hero-section">
         <div className="hero-copy">
-          <img className="hero-mini-logo" src={logos.horizontal} alt="Evolvix Tech Media" data-testid="home-large-logo" />
-          <span className="eyebrow" data-testid="home-hero-eyebrow">{brand.tagline}</span>
+          <div className="hero-logo-block">
+            <img className="hero-mini-logo" src={logos.horizontal} alt="Evolvix Tech Media" data-testid="home-large-logo" />
+            <span className="eyebrow" data-testid="home-hero-eyebrow">{brand.tagline}</span>
+          </div>
           <h1 data-testid="home-hero-headline">{brand.headline}</h1>
-          <p data-testid="home-hero-subheadline">{brand.subheadline}</p>
+          <p className="hero-subline" data-testid="home-hero-subheadline">{brand.subheadline}</p>
+          <p className="hero-vision" data-testid="home-hero-vision">{brand.vision}</p>
           <div className="hero-actions" data-testid="home-hero-actions">
             <Link className="primary-btn" to="/services" data-testid="home-services-cta">Explore Services <ArrowRight size={18} /></Link>
-            <Link className="secondary-btn" to="/learning-growth" data-testid="home-learning-cta">View Learning and Growth</Link>
             <Link className="secondary-btn" to="/shop" data-testid="home-products-cta">Browse Products</Link>
-            <Link className="text-btn" to="/contact" data-testid="home-contact-cta">Contact Us</Link>
+            <Link className="text-btn" to="/contact" data-testid="home-contact-cta">Talk to Us</Link>
           </div>
         </div>
         <div className="hero-logo-stage" data-testid="home-hero-logo-stage"><img src={logos.circular} alt="Evolvix Tech Media circular logo" data-testid="home-hero-logo-image" /></div>
@@ -115,6 +117,9 @@ export default function Home() {
       <section className="section trust-newsletter" data-testid="home-newsletter-section">
         <div><span className="eyebrow">Trust & updates</span><h2 data-testid="home-newsletter-title">Stay close to launches, resources, and new creative drops.</h2><p data-testid="home-newsletter-text">Room for future testimonials, client wins, reviews, and credibility markers is built into the brand system.</p></div>
         <form onSubmit={join} className="newsletter-form" data-testid="newsletter-form"><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" data-testid="newsletter-email-input" /><button type="submit" data-testid="newsletter-submit-button">Join Updates</button></form>
+      </section>
+      <section className="section home-micro-strip" data-testid="home-micro-strip">
+        {["Innovate", "Automate", "Transform", "Grow"].map((word) => <span key={word} data-testid={`home-micro-strip-${word.toLowerCase()}`}>{word}</span>)}
       </section>
     </>
   );

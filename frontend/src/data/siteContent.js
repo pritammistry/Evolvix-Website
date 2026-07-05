@@ -10,7 +10,7 @@ export const contactDetails = {
   whatsapp: "+91 98318 42869",
   email: "evolvixtech0pm@gmail.com",
   facebook: "https://facebook.com/evolvixtech",
-  google_location: "https://maps.google.com/?q=Bardhaman%2C%20West%20Bengal%20713103",
+  google_location: "https://www.google.com/maps?cid=2428437874850568706",
   gumroad: "https://gumroad.com/",
 };
 
@@ -340,6 +340,11 @@ export const faqs = [
   ["Do you support business clients?", "Yes. Evolvix supports business clients with AI consulting, digital transformation, automation, websites, software, SaaS thinking, and marketing support."],
   ["Are you GST registered?", "Yes. Evolvix Tech Media displays its GSTIN in the footer and trust sections."],
   ["How do I contact Evolvix?", "Use the Contact page for phone, WhatsApp, email, Facebook, Google location, Gumroad, and the inquiry form."],
+  ["Do I need to create an account to buy something?", "Yes. Browsing the Store is open to everyone, but you'll need a free account (email and password, verified once by a code sent to your inbox) before checkout — this is what lets us deliver your files and invoice to the right place."],
+  ["How do I get my GST invoice after purchase?", "A GST-compliant invoice is generated automatically the moment your payment is confirmed, with the correct CGST+SGST or IGST split based on your billing state. You'll find a link to view and download it on your order confirmation page."],
+  ["What if I don't receive my verification code or download email?", "Check your spam or promotions folder first — verification codes and delivery emails are sent from our domain via Resend. You can request a new code from the login screen if a few minutes pass with nothing in your inbox. If it still doesn't arrive, contact us and we'll sort it out directly."],
+  ["Is my payment information stored on Evolvix's servers?", "No. Payments are handled entirely by Razorpay — Evolvix never sees or stores your card, UPI, or bank details. See our Privacy Policy for the full details on what we do and don't store."],
+  ["What's your refund policy for digital products?", "Our Refund & Cancellation Policy covers exactly when refunds apply for digital products — since files are delivered instantly, refund eligibility is generally limited to genuine access or delivery failures on our end. Read the full policy for specifics before purchasing."],
 ];
 
 export const fallbackSiteContent = {
@@ -357,7 +362,7 @@ export const fallbackSiteContent = {
     whatsapp: "+91 98318 42869",
     email: "evolvixtech0pm@gmail.com",
     facebook: "https://facebook.com/evolvixtech",
-    google_location: "https://maps.google.com/?q=Bardhaman%2C%20West%20Bengal%20713103",
+    google_location: "https://www.google.com/maps?cid=2428437874850568706",
     gumroad: "https://gumroad.com/",
     website_status: "Coming Soon",
   },
