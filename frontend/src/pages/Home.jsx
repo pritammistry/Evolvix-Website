@@ -75,7 +75,7 @@ export default function Home() {
           <p className="hero-vision" data-testid="home-hero-vision">{brand.vision}</p>
           <div className="hero-actions" data-testid="home-hero-actions">
             <Link className="primary-btn" to="/services" data-testid="home-services-cta">Explore Services <ArrowRight size={18} /></Link>
-            <Link className="secondary-btn" to="/shop" data-testid="home-products-cta">Browse Products</Link>
+            <Link className="secondary-btn" to="/playground" data-testid="home-products-cta">Browse Free Resources</Link>
             <Link className="text-btn" to="/contact" data-testid="home-contact-cta">Talk to Us</Link>
           </div>
         </div>
@@ -91,7 +91,7 @@ export default function Home() {
       <section className="section" data-testid="home-pillars-section">
         <SectionHeader eyebrow="Core service pillars" title="Creative services, technology solutions, digital products, and business consulting." />
         <div className="pillar-grid">
-          {[[Palette, "Creative Digital Services", "Resumes, portfolios, branding, catalogs, presentations, and social creatives.", "/services"], [BrainCircuit, "AI Business Consulting & Technology", "AI strategy, workflows, automation, websites, apps, SaaS, and business software.", "/services"], [Download, "Learning and Growth", "Prompt packs, AI guides, cheat sheets, workbooks, routines, and future courses.", "/learning-growth"], [Rocket, "Product Ecosystem", "Learning, BuildX, Creative, Business, Accessibility, Music, and Brand Assets.", "/ecosystem"]].map(([Icon, title, text, href]) => <article className="pillar-card" key={title} data-testid={`home-pillar-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><Icon size={28} /><h3>{title}</h3><p>{text}</p><Link to={href} className="icon-link" data-testid={`home-pillar-link-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}>Explore <ArrowRight size={16} /></Link></article>)}
+          {[[Palette, "Creative Digital Services", "Resumes, portfolios, branding, catalogs, presentations, and social creatives.", "/services"], [BrainCircuit, "AI Business Consulting & Technology", "AI strategy, workflows, automation, websites, apps, SaaS, and business software.", "/services"], [Download, "Learning and Growth", "Prompt packs, AI guides, cheat sheets, workbooks, routines, and future courses.", "/playground"], [Rocket, "Product Ecosystem", "Learning, BuildX, Creative, Business, Accessibility, Music, and Brand Assets.", "/ecosystem"]].map(([Icon, title, text, href]) => <article className="pillar-card" key={title} data-testid={`home-pillar-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><Icon size={28} /><h3>{title}</h3><p>{text}</p><Link to={href} className="icon-link" data-testid={`home-pillar-link-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}>Explore <ArrowRight size={16} /></Link></article>)}
         </div>
       </section>
       <section className="section" data-testid="home-ecosystem-preview-section">
