@@ -78,6 +78,17 @@ def auth_headers(api_client, api_base_url, admin_password):
 
 
 @pytest.fixture(scope="module")
+def logged_in_visitor(api_client, api_base_url):
+    # Bearer header, not cookie: the session cookie is Secure-flagged and requests won't resend it over plain http
+    email = f"pytest-visitor-{uuid.uuid4().hex[:10]}@example.com"
+    response = api_client.post(f"{api_base_url}/api/auth/signup", json={"email": email, "password": "TestPassword123!", "state": "West Bengal"})
+    assert response.status_code == 200
+    data = response.json()
+    api_client.headers.update({"Authorization": f"Bearer {data['token']}"})
+    return data["user"]
+
+
+@pytest.fixture(scope="module")
 def mongo_db():
     # Mongo verification for persisted payment status state before/after provider fallback
     mongo_url = os.environ.get("MONGO_URL")
@@ -118,7 +129,7 @@ def seeded_paid_session(api_client, api_base_url, auth_headers, mongo_db):
             "session_id": session_id,
             "product_id": PRODUCT_ID,
             "amount": 59.0,
-            "currency": "usd",
+            "currency": "inr",
             "metadata": {"source": "pytest-fallback-regression"},
             "status": "complete",
             "payment_status": "paid",
@@ -181,7 +192,7 @@ def test_paid_downloads_still_available_after_status_poll(api_client, api_base_u
     assert any(item.get("id") == file_id for item in downloads_data.get("downloads", []))
 
 
-def test_unpaid_session_still_has_no_download_links(api_client, api_base_url):
+def test_unpaid_session_still_has_no_download_links(api_client, api_base_url, logged_in_visitor):
     # Unpaid checkout should continue to return no downloads
     checkout = api_client.post(
         f"{api_base_url}/api/payments/checkout",

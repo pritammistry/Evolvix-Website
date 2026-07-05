@@ -38,6 +38,18 @@ def api_client():
     return session
 
 
+@pytest.fixture(scope="session")
+def logged_in_visitor(api_client, api_base_url):
+    # Signs up a throwaway visitor account; the session token is set as a Bearer header on api_client
+    # (not relying on the cookie, since it's Secure-flagged and requests won't resend Secure cookies over plain http)
+    email = f"pytest-visitor-{uuid.uuid4().hex[:10]}@example.com"
+    response = api_client.post(f"{api_base_url}/api/auth/signup", json={"email": email, "password": "TestPassword123!", "state": "West Bengal"})
+    assert response.status_code == 200
+    data = response.json()
+    api_client.headers.update({"Authorization": f"Bearer {data['token']}"})
+    return data["user"]
+
+
 # Core health and product catalog endpoints
 def test_api_root_ready(api_client, api_base_url):
     response = api_client.get(f"{api_base_url}/api/")
@@ -95,8 +107,17 @@ def test_newsletter_submit_success(api_client, api_base_url):
     assert data["message"] == "You’re on the Evolvix update list."
 
 
-# Stripe checkout and payment status endpoints
-def test_checkout_invalid_product_returns_404(api_client, api_base_url):
+# Razorpay checkout and payment status endpoints
+def test_checkout_requires_login(api_client, api_base_url):
+    # A brand-new, unauthenticated session must be rejected before any product/origin validation
+    anon_session = requests.Session()
+    anon_session.headers.update({"Content-Type": "application/json"})
+    payload = {"product_id": "ai-starter-kit", "origin_url": api_base_url}
+    response = anon_session.post(f"{api_base_url}/api/payments/checkout", json=payload)
+    assert response.status_code == 401
+
+
+def test_checkout_invalid_product_returns_404(api_client, api_base_url, logged_in_visitor):
     payload = {"product_id": "missing-product", "origin_url": api_base_url}
     response = api_client.post(f"{api_base_url}/api/payments/checkout", json=payload)
     assert response.status_code == 404
@@ -105,7 +126,7 @@ def test_checkout_invalid_product_returns_404(api_client, api_base_url):
     assert data["detail"] == "Product not found"
 
 
-def test_checkout_invalid_origin_returns_400(api_client, api_base_url):
+def test_checkout_invalid_origin_returns_400(api_client, api_base_url, logged_in_visitor):
     payload = {"product_id": "ai-starter-kit", "origin_url": "invalid-origin"}
     response = api_client.post(f"{api_base_url}/api/payments/checkout", json=payload)
     assert response.status_code == 400
@@ -114,7 +135,7 @@ def test_checkout_invalid_origin_returns_400(api_client, api_base_url):
     assert data["detail"] == "Invalid origin URL"
 
 
-def test_checkout_create_session_success(api_client, api_base_url):
+def test_checkout_create_session_success(api_client, api_base_url, logged_in_visitor):
     payload = {"product_id": "ai-starter-kit", "origin_url": api_base_url}
     response = api_client.post(f"{api_base_url}/api/payments/checkout", json=payload)
     assert response.status_code == 200
@@ -122,11 +143,13 @@ def test_checkout_create_session_success(api_client, api_base_url):
     data = response.json()
     assert isinstance(data["session_id"], str)
     assert len(data["session_id"]) > 0
-    assert isinstance(data["url"], str)
-    assert data["url"].startswith("http")
+    assert data["order_id"] == data["session_id"]
+    assert isinstance(data["key_id"], str) and len(data["key_id"]) > 0
+    assert isinstance(data["amount"], int) and data["amount"] > 0
+    assert isinstance(data["currency"], str)
 
 
-def test_payment_status_for_created_session(api_client, api_base_url):
+def test_payment_status_for_created_session(api_client, api_base_url, logged_in_visitor):
     checkout_payload = {"product_id": "creator-assets-bundle", "origin_url": api_base_url}
     checkout_response = api_client.post(f"{api_base_url}/api/payments/checkout", json=checkout_payload)
     assert checkout_response.status_code == 200

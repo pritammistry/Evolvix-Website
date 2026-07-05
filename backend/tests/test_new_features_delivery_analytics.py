@@ -73,6 +73,17 @@ def auth_headers(admin_token):
 
 
 @pytest.fixture(scope="module")
+def logged_in_visitor(api_client, api_base_url):
+    # Bearer header, not cookie: the session cookie is Secure-flagged and requests won't resend it over plain http
+    email = f"pytest-visitor-{uuid.uuid4().hex[:10]}@example.com"
+    response = api_client.post(f"{api_base_url}/api/auth/signup", json={"email": email, "password": "TestPassword123!", "state": "West Bengal"})
+    assert response.status_code == 200
+    data = response.json()
+    api_client.headers.update({"Authorization": f"Bearer {data['token']}"})
+    return data["user"]
+
+
+@pytest.fixture(scope="module")
 def mongo_db():
     # Method-level verification fixture for payment transaction state setup
     mongo_url = os.environ.get("MONGO_URL")
@@ -131,7 +142,7 @@ def test_admin_product_file_upload_and_public_metadata_sanitized(api_client, api
     assert delete_response.status_code == 200
 
 
-def test_downloads_api_blocks_unpaid_session(api_client, api_base_url):
+def test_downloads_api_blocks_unpaid_session(api_client, api_base_url, logged_in_visitor):
     # Unpaid checkout session should not expose file links
     checkout = api_client.post(
         f"{api_base_url}/api/payments/checkout",
@@ -169,7 +180,7 @@ def test_downloads_api_returns_links_for_paid_and_file_bytes(api_client, api_bas
             "session_id": session_id,
             "product_id": PRODUCT_ID,
             "amount": 59.0,
-            "currency": "usd",
+            "currency": "inr",
             "metadata": {"source": "pytest"},
             "status": "complete",
             "payment_status": "paid",

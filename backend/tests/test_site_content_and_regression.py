@@ -38,6 +38,17 @@ def api_client():
     return session
 
 
+@pytest.fixture(scope="session")
+def logged_in_visitor(api_client, api_base_url):
+    # Bearer header, not cookie: the session cookie is Secure-flagged and requests won't resend it over plain http
+    email = f"pytest-visitor-{uuid.uuid4().hex[:10]}@example.com"
+    response = api_client.post(f"{api_base_url}/api/auth/signup", json={"email": email, "password": "TestPassword123!", "state": "West Bengal"})
+    assert response.status_code == 200
+    data = response.json()
+    api_client.headers.update({"Authorization": f"Bearer {data['token']}"})
+    return data["user"]
+
+
 # Site content endpoints (GET/PUT/reset) + critical content shape
 def test_site_content_get_has_required_business_sections(api_client, api_base_url):
     response = api_client.get(f"{api_base_url}/api/site-content")
@@ -123,10 +134,11 @@ def test_contact_and_newsletter_regression(api_client, api_base_url):
     assert newsletter_data["message"] == "You’re on the Evolvix update list."
 
 
-def test_checkout_session_creation_regression(api_client, api_base_url):
+def test_checkout_session_creation_regression(api_client, api_base_url, logged_in_visitor):
     payload = {"product_id": "ai-starter-kit", "origin_url": api_base_url}
     response = api_client.post(f"{api_base_url}/api/payments/checkout", json=payload)
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data["session_id"], str)
-    assert data["url"].startswith("http")
+    assert data["order_id"] == data["session_id"]
+    assert isinstance(data["key_id"], str) and len(data["key_id"]) > 0

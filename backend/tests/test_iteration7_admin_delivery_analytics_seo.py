@@ -72,6 +72,17 @@ def auth_headers(admin_token):
 
 
 @pytest.fixture(scope="module")
+def logged_in_visitor(api_client, api_base_url):
+    # Bearer header, not cookie: the session cookie is Secure-flagged and requests won't resend it over plain http
+    email = f"pytest-visitor-{uuid.uuid4().hex[:10]}@example.com"
+    response = api_client.post(f"{api_base_url}/api/auth/signup", json={"email": email, "password": "TestPassword123!", "state": "West Bengal"})
+    assert response.status_code == 200
+    data = response.json()
+    api_client.headers.update({"Authorization": f"Bearer {data['token']}"})
+    return data["user"]
+
+
+@pytest.fixture(scope="module")
 def mongo_db():
     # Seed-only fixture for paid download gating verification
     backend_env = _read_env_file("/app/backend/.env")
@@ -181,21 +192,21 @@ def test_blog_seo_fields_exist_in_admin_payload(api_client, api_base_url, auth_h
     assert isinstance(first.get("seo_keywords"), str)
 
 
-def test_music_previews_placeholder_visibility(api_client, api_base_url):
-    # Music preview placeholder data remains visible with empty audio URLs
+def test_music_previews_have_real_links(api_client, api_base_url):
+    # Music previews are visible with real external links (YouTube/Facebook), not empty placeholders
     response = api_client.get(f"{api_base_url}/api/site-content")
     assert response.status_code == 200
     previews = response.json().get("music_previews", [])
     assert isinstance(previews, list)
     assert len(previews) >= 1
 
-    visible_placeholders = [
-        item for item in previews if item.get("visible") is not False and not (item.get("audio_url") or "").strip()
+    visible_with_links = [
+        item for item in previews if item.get("visible") is not False and (item.get("audio_url") or "").strip()
     ]
-    assert len(visible_placeholders) >= 1
+    assert len(visible_with_links) >= 1
 
 
-def test_paid_download_gating_unpaid_and_seeded_paid(api_client, api_base_url, mongo_db):
+def test_paid_download_gating_unpaid_and_seeded_paid(api_client, api_base_url, mongo_db, logged_in_visitor):
     # Paid download gating: unpaid blocked, paid seeded session unlocked
     checkout = api_client.post(
         f"{api_base_url}/api/payments/checkout",
@@ -221,7 +232,7 @@ def test_paid_download_gating_unpaid_and_seeded_paid(api_client, api_base_url, m
         "session_id": paid_session_id,
         "product_id": target["id"],
         "amount": float(target.get("price", 0)),
-        "currency": target.get("currency", "usd"),
+        "currency": target.get("currency", "inr"),
         "metadata": {"source": "pytest-iteration7"},
         "status": "complete",
         "payment_status": "paid",
