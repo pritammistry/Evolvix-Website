@@ -175,3 +175,13 @@ Build a professional, premium, futuristic website for Evolvix Tech Media using t
 2. Replace remaining SAMPLE PLACEHOLDER product files with real downloadable files in the admin dashboard.
 3. Add any additional real music/audio preview URLs in Admin → Music → Audio Previews.
 4. Expand product catalog and portfolio with real brand work.
+
+## Implemented — 2026-07-04 Stripe to Razorpay Migration
+- Replaced Stripe Checkout (`emergentintegrations`) with Razorpay Orders API + webhook signature verification, since Stripe is invite-only for new India-based businesses.
+- `/api/payments/checkout` now creates a Razorpay order and returns `order_id`/`key_id`/`amount`/`currency` instead of a hosted redirect `url`; `session_id` (mapped to the Razorpay order id) is preserved for compatibility with the existing gated-download/status architecture.
+- `/api/payments/status/{session_id}` now calls Razorpay's Order/Payments API directly (`order.fetch` + `order.payments`) instead of Stripe's checkout-status lookup, with the same non-destructive fallback behavior if the provider lookup fails.
+- Replaced `/api/webhook/stripe` with `/api/webhook/razorpay`, verifying `X-Razorpay-Signature` via `razorpay.utility.verify_webhook_signature`.
+- Frontend now opens the Razorpay Checkout.js modal (`src/lib/razorpay.js`) instead of redirecting to a Stripe-hosted page; on success it navigates to the existing `/checkout/success` polling page unchanged.
+- Requires new env vars `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` in `backend/.env` (replacing `STRIPE_API_KEY`).
+- Updated `test_checkout_create_session_success` and `test_checkout_session_creation_regression` to assert the new order-based response shape instead of a hosted checkout `url`.
+- Note: product prices/currency were left as-is (still tagged `usd`); Razorpay standard India accounts settle in INR, so switching product currency to INR is a follow-up business decision, not part of this swap.

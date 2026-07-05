@@ -65,7 +65,7 @@ def main():
             "session_id": session_id,
             "product_id": product_id,
             "amount": 59.0,
-            "currency": "usd",
+            "currency": "inr",
             "metadata": {"source": "ui-test"},
             "status": "complete",
             "payment_status": "paid",
