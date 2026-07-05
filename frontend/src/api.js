@@ -43,3 +43,8 @@ export const fetchAdminAnalytics = (params) => axios.get(`${API}/admin/analytics
 export const fetchAdminAnalyticsOptions = () => axios.get(`${API}/admin/analytics/options`);
 export const adminAnalyticsExportUrl = (params = {}) => `${API}/admin/analytics/export?${new URLSearchParams(params).toString()}`;
 export const exportAdminAnalytics = (params) => axios.get(`${API}/admin/analytics/export`, { params, responseType: "blob" });
+export const fetchPlayground = () => axios.get(`${API}/playground`);
+export const fetchAdminPlayground = () => axios.get(`${API}/admin/playground`);
+export const createPlaygroundItem = (payload) => axios.post(`${API}/admin/playground`, payload);
+export const updatePlaygroundItem = (id, payload) => axios.put(`${API}/admin/playground/${id}`, payload);
+export const deletePlaygroundItem = (id) => axios.delete(`${API}/admin/playground/${id}`);

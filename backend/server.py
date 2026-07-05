@@ -1134,6 +1134,80 @@ async def admin_analytics_export(request: Request, format: str = "csv", start_da
     return StreamingResponse(io.BytesIO(payload), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=\"evolvix-analytics.csv\""})
 
 
+
+# --- Playground ---
+
+class PlaygroundItemCreate(BaseModel):
+    category: str  # "music" | "freebie" | "game"
+    title: str
+    description: str
+    url: str
+    thumbnail: str = ""
+    visible: bool = True
+
+
+@api_router.get("/playground")
+async def get_playground_items():
+    items = []
+    async for doc in db.playground_items.find({"visible": True}, {"_id": 0}).sort("created_at", 1):
+        items.append(doc)
+    return {"items": items}
+
+
+@api_router.get("/admin/playground")
+async def admin_get_playground(request: Request):
+    verify_admin_request(request)
+    items = []
+    async for doc in db.playground_items.find({}, {"_id": 0}).sort("created_at", 1):
+        items.append(doc)
+    return {"items": items}
+
+
+@api_router.post("/admin/playground")
+async def admin_create_playground_item(payload: PlaygroundItemCreate, request: Request):
+    verify_admin_request(request)
+    item = {
+        "id": f"pg-{uuid.uuid4().hex[:10]}",
+        "category": payload.category,
+        "title": payload.title,
+        "description": payload.description,
+        "url": payload.url,
+        "thumbnail": payload.thumbnail,
+        "visible": payload.visible,
+        "created_at": now_iso(),
+    }
+    await db.playground_items.insert_one(item)
+    item.pop("_id", None)
+    return {"item": item}
+
+
+@api_router.put("/admin/playground/{item_id}")
+async def admin_update_playground_item(item_id: str, payload: PlaygroundItemCreate, request: Request):
+    verify_admin_request(request)
+    update = {
+        "category": payload.category,
+        "title": payload.title,
+        "description": payload.description,
+        "url": payload.url,
+        "thumbnail": payload.thumbnail,
+        "visible": payload.visible,
+        "updated_at": now_iso(),
+    }
+    result = await db.playground_items.update_one({"id": item_id}, {"$set": update})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"message": "Item updated"}
+
+
+@api_router.delete("/admin/playground/{item_id}")
+async def admin_delete_playground_item(item_id: str, request: Request):
+    verify_admin_request(request)
+    result = await db.playground_items.delete_one({"id": item_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"message": "Item deleted"}
+
+
 def get_razorpay_client() -> razorpay.Client:
     return razorpay.Client(auth=(os.environ["RAZORPAY_KEY_ID"], os.environ["RAZORPAY_KEY_SECRET"]))
 
