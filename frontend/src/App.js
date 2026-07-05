@@ -19,6 +19,8 @@ import Contact from "./pages/Contact";
 import Legal from "./pages/Legal";
 import CheckoutResult from "./pages/CheckoutResult";
 import AdminDashboard from "./pages/AdminDashboard";
+import Login from "./pages/Login";
+import { AuthProvider } from "./hooks/useAuth";
 
 function AppRoutes() {
   const location = useLocation();
@@ -43,6 +45,7 @@ function AppRoutes() {
       <Route path="/privacy" element={<Legal type="privacy" />} />
       <Route path="/refund" element={<Legal type="refund" />} />
       <Route path="/checkout/success" element={<CheckoutResult />} />
+      <Route path="/login" element={<Login />} />
       <Route path="/admin" element={<AdminDashboard />} />
     </Routes>
   );
@@ -53,12 +56,14 @@ function AppRoutes() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <AnalyticsTracker />
-      <AppRoutes />
-      <Toaster richColors position="bottom-right" />
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <AnalyticsTracker />
+        <AppRoutes />
+        <Toaster richColors position="bottom-right" />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

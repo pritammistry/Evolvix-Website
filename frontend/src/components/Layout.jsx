@@ -1,15 +1,24 @@
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
-import { Facebook, Menu, Phone, X, Mail } from "lucide-react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Facebook, Menu, Phone, X, Mail, User } from "lucide-react";
+import { toast } from "sonner";
 import { BrandLogo } from "./BrandLogo";
 import { useSiteContent } from "../hooks/useSiteContent";
+import { useAuth } from "../hooks/useAuth";
 
 const navItems = [["Home", "/"], ["Services", "/services"], ["Ecosystem", "/ecosystem"], ["Learning", "/learning-growth"], ["Music", "/music"], ["Showcase", "/portfolio"], ["Blog", "/blog"], ["FAQ", "/faq"], ["Contact", "/contact"]];
 
 export function Layout({ children }) {
   const [open, setOpen] = useState(false);
   const { content } = useSiteContent();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const contact = content.contact || {};
+  const handleLogout = async () => {
+    await logout();
+    toast.success("Logged out.");
+    navigate("/");
+  };
   return (
     <div className="site-shell" data-testid="site-shell">
       <header className="topbar" data-testid="site-header">
@@ -17,6 +26,11 @@ export function Layout({ children }) {
         <nav className="desktop-nav" aria-label="Primary navigation" data-testid="desktop-navigation">
           {navItems.map(([label, path]) => <NavLink key={path} to={path} data-testid={`nav-link-${label.toLowerCase().replaceAll(" ", "-")}`}>{label}</NavLink>)}
         </nav>
+        {user ? (
+          <button className="text-btn account-link" onClick={handleLogout} data-testid="header-account-logout-button"><User size={16} /> {user.name || user.email} · Logout</button>
+        ) : (
+          <Link to="/login" className="text-btn account-link" data-testid="header-login-link"><User size={16} /> Log In</Link>
+        )}
         <Link to="/contact" className="nav-cta" data-testid="header-contact-cta-link">Start a Project</Link>
         <button className="mobile-toggle" onClick={() => setOpen(!open)} aria-label="Toggle menu" data-testid="mobile-menu-toggle-button">{open ? <X size={22} /> : <Menu size={22} />}</button>
       </header>

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight, BrainCircuit, BriefcaseBusiness, Download, MapPin, Palette, Rocket, ShieldCheck, Sparkles, Star } from "lucide-react";
 import { toast } from "sonner";
 import { logos } from "../data/siteContent";
@@ -8,10 +8,16 @@ import { ProductCard } from "../components/ProductCard";
 import { trackNewsletterSubmit } from "../components/AnalyticsTracker";
 import { submitNewsletter, createCheckout } from "../api";
 import { useSiteContent } from "../hooks/useSiteContent";
+import { useAuth } from "../hooks/useAuth";
+import { openRazorpayCheckout } from "../lib/razorpay";
+import { redirectToLoginForBuy, consumePendingBuyProductId } from "../lib/authRedirect";
 
 export default function Home() {
   const [email, setEmail] = useState("");
   const { content } = useSiteContent();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const brand = content.brand || {};
   const products = content.products || [];
   const portfolioItems = content.portfolio || [];
@@ -21,13 +27,30 @@ export default function Home() {
   const testimonials = (content.testimonials || []).filter((item) => item.visible !== false);
   const customSections = (content.custom_sections || []).filter((section) => section.visible !== false);
   const buyProduct = async (productId) => {
+    if (!user) {
+      redirectToLoginForBuy(navigate, productId, `${location.pathname}${location.search}`);
+      return;
+    }
     try {
-      const { data } = await createCheckout({ product_id: productId, origin_url: window.location.origin });
-      window.location.href = data.url;
+      const { data: order } = await createCheckout({ product_id: productId, origin_url: window.location.origin });
+      const product = products.find((item) => item.id === productId) || {};
+      await openRazorpayCheckout({
+        order,
+        product,
+        onSuccess: () => { window.location.href = `/checkout/success?session_id=${order.session_id}&product=${product.slug || productId}`; },
+        onDismiss: () => toast.error("Checkout was cancelled."),
+      });
     } catch (error) {
+      console.error("Checkout failed:", error);
       toast.error("Checkout could not start. Please try again or contact Evolvix.");
     }
   };
+  useEffect(() => {
+    if (!user) return;
+    const pendingProductId = consumePendingBuyProductId();
+    if (pendingProductId) buyProduct(pendingProductId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
   const join = async (event) => {
     event.preventDefault();
     try {

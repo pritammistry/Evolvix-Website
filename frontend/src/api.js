@@ -4,11 +4,31 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
 axios.defaults.withCredentials = true;
 
+// Belt-and-suspenders alongside the httpOnly session cookie: some browsers (notably Safari,
+// due to cross-site cookie/tracking-prevention policies) won't reliably resend a Secure cookie
+// on the very next cross-port request right after signup/login. An explicit Bearer header,
+// held in memory only (not persisted), works regardless of cookie policy.
+export function setVisitorAuthToken(token) {
+  if (token) {
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  } else {
+    delete axios.defaults.headers.common["Authorization"];
+  }
+}
+
+export const fetchIndianStates = () => axios.get(`${API}/meta/states`);
+export const signupVisitor = (payload) => axios.post(`${API}/auth/signup`, payload);
+export const loginVisitor = (payload) => axios.post(`${API}/auth/login`, payload);
+export const verifyVisitorOtp = (payload) => axios.post(`${API}/auth/verify-email`, payload);
+export const resendVisitorOtp = (payload) => axios.post(`${API}/auth/resend-otp`, payload);
+export const logoutVisitor = () => axios.post(`${API}/auth/logout`);
+export const fetchCurrentVisitor = () => axios.get(`${API}/auth/me`);
 export const submitContact = (payload) => axios.post(`${API}/contact`, payload);
 export const submitNewsletter = (payload) => axios.post(`${API}/newsletter`, payload);
 export const createCheckout = (payload) => axios.post(`${API}/payments/checkout`, payload);
 export const fetchPaymentStatus = (sessionId) => axios.get(`${API}/payments/status/${sessionId}`);
 export const fetchPaymentDownloads = (sessionId) => axios.get(`${API}/payments/${sessionId}/downloads`);
+export const paymentInvoiceUrl = (sessionId) => `${API}/payments/${sessionId}/invoice`;
 export const fetchSiteContent = () => axios.get(`${API}/site-content`);
 export const adminLogin = (payload) => axios.post(`${API}/admin/login`, payload);
 export const adminLogout = () => axios.post(`${API}/admin/logout`);
