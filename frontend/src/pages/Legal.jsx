@@ -1,12 +1,27 @@
 import { SectionHeader } from "../components/SectionHeader";
-
-const copy = {
-  terms: ["Terms and Conditions", "Use this website and its digital products respectfully. Product files, templates, and resources are provided for the license stated on each product page."],
-  privacy: ["Privacy Policy", "Contact forms and newsletter signups collect only the details needed to respond, provide updates, or support customer requests."],
-  refund: ["Refund Policy", "Digital products are generally non-refundable after delivery. If access fails, a duplicate purchase occurs, or support is needed, contact Evolvix Tech Media for assistance."],
-};
+import { legalContent } from "../data/siteContent";
 
 export default function Legal({ type }) {
-  const [title, text] = copy[type] || copy.terms;
-  return <section className="section page-section legal-page" data-testid={`${type}-page`}><SectionHeader eyebrow="Policy" title={title} /><article className="legal-copy" data-testid={`${type}-copy`}><p>{text}</p><p>This page is a launch-ready template and can be updated with final business, jurisdiction, and compliance details.</p></article></section>;
+  const content = legalContent[type] || legalContent.terms;
+  return (
+    <section className="section page-section legal-page" data-testid={`${type}-page`}>
+      <SectionHeader eyebrow="Policy" title={content.title} />
+      <article className="legal-copy" data-testid={`${type}-copy`}>
+        <p className="legal-updated" data-testid={`${type}-last-updated`}>{content.lastUpdated}</p>
+        {content.intro.map((paragraph, index) => <p key={`intro-${index}`} data-testid={`${type}-intro-${index}`}>{paragraph}</p>)}
+        {content.sections.map((section, sectionIndex) => (
+          <div className="legal-section" key={section.heading} data-testid={`${type}-section-${sectionIndex}`}>
+            <h2 data-testid={`${type}-section-heading-${sectionIndex}`}>{section.heading}</h2>
+            {section.blocks.map((block, blockIndex) => block.type === "list" ? (
+              <ul key={`block-${blockIndex}`} data-testid={`${type}-section-${sectionIndex}-list-${blockIndex}`}>
+                {block.items.map((item, itemIndex) => <li key={itemIndex} data-testid={`${type}-section-${sectionIndex}-item-${itemIndex}`}>{item}</li>)}
+              </ul>
+            ) : (
+              <p key={`block-${blockIndex}`} data-testid={`${type}-section-${sectionIndex}-p-${blockIndex}`}>{block.text}</p>
+            ))}
+          </div>
+        ))}
+      </article>
+    </section>
+  );
 }

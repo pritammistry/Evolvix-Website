@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mic2, Music2, Play, Radio, WandSparkles } from "lucide-react";
+import { ExternalLink, Mic2, Music2, Play, Radio, WandSparkles } from "lucide-react";
 import { musicMoods } from "../data/siteContent";
 import { SectionHeader } from "../components/SectionHeader";
 import { useSiteContent } from "../hooks/useSiteContent";
@@ -15,7 +15,12 @@ function AudioPreviewControl({ preview, index }) {
   if (isDirectAudio(preview.audio_url)) {
     return <audio controls src={preview.audio_url} data-testid={`audio-preview-player-${index}`}>Audio preview</audio>;
   }
-  return <a className="audio-preview-placeholder" href={preview.audio_url} target="_blank" rel="noreferrer" data-testid={`audio-preview-external-link-${index}`}><Play size={18} /> Open music preview</a>;
+  return (
+    <div className="audio-preview-links" data-testid={`audio-preview-links-${index}`}>
+      <a className="audio-preview-placeholder" href={preview.audio_url} target="_blank" rel="noreferrer" data-testid={`audio-preview-external-link-${index}`}><Play size={18} /> Open music preview</a>
+      {preview.secondary_url && <a className="audio-preview-placeholder" href={preview.secondary_url} target="_blank" rel="noreferrer" data-testid={`audio-preview-secondary-link-${index}`}><ExternalLink size={18} /> {preview.secondary_label || "More"}</a>}
+    </div>
+  );
 }
 
 export default function CreativeLab() {

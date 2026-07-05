@@ -5,12 +5,13 @@ export const logos = {
 };
 
 export const contactDetails = {
-  email: "hello@evolvixtechmedia.com",
-  whatsapp: "+1 000 000 0000",
-  instagram: "https://instagram.com/evolvixtechmedia",
-  youtube: "https://youtube.com/@evolvixtechmedia",
-  linkedin: "https://linkedin.com/company/evolvixtechmedia",
-  tiktok: "https://tiktok.com/@evolvixtechmedia",
+  address: "Chhotonilpur, Bardhaman, West Bengal 713103",
+  phone: "+91 98318 42869",
+  whatsapp: "+91 98318 42869",
+  email: "evolvixtech0pm@gmail.com",
+  facebook: "https://facebook.com/evolvixtech",
+  google_location: "https://maps.google.com/?q=Bardhaman%2C%20West%20Bengal%20713103",
+  gumroad: "https://gumroad.com/",
 };
 
 export const products = [
@@ -63,6 +64,271 @@ export const blogPosts = [
   { id: "b12", slug: "ai-consulting-for-small-business", title: "AI Consulting for Small Business", category: "Business Consulting", excerpt: "How small businesses can start with AI workflows, automation, digital tools, and better customer systems.", body: "Small businesses should begin with time-consuming workflows: customer replies, content planning, internal checklists, reporting, and lead follow-up. AI consulting helps identify where automation can support real business outcomes without overwhelming the team.", readTime: "6 min", date: "April 18, 2026" },
   { id: "b13", slug: "accessible-ai-for-everyday-users", title: "Accessible AI for Everyday Users", category: "Accessibility", excerpt: "Why AI support should feel simple, safe, and useful for beginners, families, and older users.", body: "Accessible AI is about clarity, safety, and usefulness. Interfaces and learning resources should avoid intimidation and focus on everyday tasks. When support is patient and practical, more people can benefit from technology.", readTime: "4 min", date: "April 16, 2026" },
 ];
+
+export const legalContent = {
+  terms: {
+    title: "Terms of Service",
+    lastUpdated: "Last updated: [insert launch date]",
+    intro: [
+      "These Terms of Service (\"Terms\") govern your use of the website evolvixtech.in (\"Site\") and all products and services offered by Evolvix Tech Media (\"we,\" \"us,\" \"our\"), a sole proprietorship business operated by Pritam Mistry, registered address Chhotonilpur, Bardhaman, West Bengal 713103, India (GSTIN: 19BVTPM1874M1ZK).",
+      "By accessing or using the Site, creating an account, or purchasing any product or service from us, you agree to be bound by these Terms. If you do not agree, please do not use the Site.",
+    ],
+    sections: [
+      {
+        heading: "1. Who We Are and What We Offer",
+        blocks: [
+          { type: "p", text: "Evolvix Tech Media provides:" },
+          { type: "list", items: [
+            "Digital products sold directly through our Store (AI prompt packs, learning resources, eBooks, and similar downloadable products)",
+            "Custom digital and creative services (web/mobile application development, business software, branding and design, AI business consulting, and related work) delivered under a separate quote or scope of work agreed directly with you",
+            "Free resources (music, prompt samples, and interactive tools) made available through Evolvix Lab",
+          ] },
+        ],
+      },
+      {
+        heading: "2. Accounts",
+        blocks: [
+          { type: "p", text: "Some parts of the Site — including downloading free resources, viewing product demos, and purchasing from the Store — require creating an account. You agree to provide accurate information when registering and to keep your login credentials confidential. You're responsible for all activity under your account." },
+        ],
+      },
+      {
+        heading: "3. Digital Products and Licensing",
+        blocks: [
+          { type: "p", text: "When you purchase a digital product (such as a prompt pack or eBook) from our Store, you are granted a personal, non-exclusive, non-transferable license to use that product for your own personal or business purposes. Unless explicitly stated otherwise on the product page, you may not:" },
+          { type: "list", items: [
+            "Resell, redistribute, or share the product file itself with others",
+            "Repackage and resell the content as your own product",
+            "Claim authorship of the underlying prompt packs, templates, or creative assets",
+          ] },
+          { type: "p", text: "You may use outputs you personally generate using our prompt packs (e.g., content, resumes, or designs you create using our prompts) freely for your own purposes." },
+        ],
+      },
+      {
+        heading: "4. Custom Services",
+        blocks: [
+          { type: "p", text: "Services under Evolvix BuildX, Evolvix Creative, and Evolvix Business (web/mobile applications, business software, branding, consulting, etc.) are quoted and delivered individually and are governed by the specific scope, timeline, and payment terms agreed with you directly — typically over email or WhatsApp — rather than by these general Terms alone. In case of any conflict, the terms of your specific agreement with us take precedence over this document for that engagement." },
+        ],
+      },
+      {
+        heading: "5. Payments",
+        blocks: [
+          { type: "p", text: "All payments on the Site are processed securely through Razorpay. We do not store your card, UPI, or banking details ourselves — these are handled directly by Razorpay in accordance with their own security standards and privacy policy. Prices on the Site are listed in Indian Rupees (INR) and are inclusive/exclusive of applicable GST as indicated at checkout." },
+        ],
+      },
+      {
+        heading: "6. Prohibited Use",
+        blocks: [
+          { type: "p", text: "You agree not to use the Site to:" },
+          { type: "list", items: [
+            "Violate any applicable law or regulation",
+            "Attempt to gain unauthorized access to our systems, other users' accounts, or non-public areas of the Site",
+            "Upload or transmit malicious code",
+            "Use our free resources, demos, or products for any unlawful or harmful purpose",
+          ] },
+        ],
+      },
+      {
+        heading: "7. Intellectual Property",
+        blocks: [
+          { type: "p", text: "All content on the Site — including our logo, brand name, designs, written content, and software (excluding purchased digital products licensed to you under Section 3) — remains the property of Evolvix Tech Media and may not be copied or used without our written permission." },
+        ],
+      },
+      {
+        heading: "8. Disclaimer of Warranties",
+        blocks: [
+          { type: "p", text: "The Site and all products/services are provided \"as is.\" While we take care in what we build and sell, we do not guarantee that the Site will be uninterrupted, error-free, or that any digital product will meet every specific requirement you may have. Custom services carry their own specific deliverable expectations as set out in your individual agreement with us." },
+        ],
+      },
+      {
+        heading: "9. Limitation of Liability",
+        blocks: [
+          { type: "p", text: "To the maximum extent permitted by law, Evolvix Tech Media shall not be liable for any indirect, incidental, or consequential damages arising from your use of the Site or our products/services, beyond the amount you actually paid us for the specific product or service in question." },
+        ],
+      },
+      {
+        heading: "10. Governing Law",
+        blocks: [
+          { type: "p", text: "These Terms are governed by the laws of India. Any disputes arising from these Terms or your use of the Site shall be subject to the exclusive jurisdiction of the courts at Bardhaman, West Bengal." },
+        ],
+      },
+      {
+        heading: "11. Changes to These Terms",
+        blocks: [
+          { type: "p", text: "We may update these Terms from time to time. Continued use of the Site after changes are posted constitutes acceptance of the revised Terms." },
+        ],
+      },
+      {
+        heading: "12. Contact",
+        blocks: [
+          { type: "p", text: "Questions about these Terms can be sent to:" },
+          { type: "list", items: [
+            "Evolvix Tech Media",
+            "Chhotonilpur, Bardhaman, West Bengal 713103",
+            "Email: evolvixtech0pm@gmail.com",
+            "Phone/WhatsApp: +91 98318 42869",
+          ] },
+        ],
+      },
+    ],
+  },
+  privacy: {
+    title: "Privacy Policy",
+    lastUpdated: "Last updated: [insert launch date]",
+    intro: [
+      "Evolvix Tech Media (\"we,\" \"us,\" \"our\") respects your privacy. This Privacy Policy explains what personal data we collect through evolvixtech.in, why we collect it, and what rights you have over it.",
+    ],
+    sections: [
+      {
+        heading: "1. What We Collect",
+        blocks: [
+          { type: "list", items: [
+            "Account information: name, email address, and password (encrypted) when you sign up",
+            "Contact form submissions: name, email, phone number, and message content when you reach out to us or request a quote",
+            "Order information: what you purchased and when — we do not collect or store your card or bank details; these are handled directly by Razorpay",
+            "Usage data: pages visited, buttons clicked, and general site interactions, collected to understand how the Site is used and improve it",
+            "Cookies: small files used to keep you logged in and to power analytics (see Section 5)",
+          ] },
+        ],
+      },
+      {
+        heading: "2. How We Use Your Data",
+        blocks: [
+          { type: "p", text: "We use the information above to:" },
+          { type: "list", items: [
+            "Create and manage your account",
+            "Process and deliver your orders",
+            "Respond to enquiries and quote requests",
+            "Understand which parts of the Site are useful, so we can improve it",
+            "Send you updates about products or services you've shown interest in — only where you've consented to this",
+          ] },
+          { type: "p", text: "We do not sell your personal data to third parties." },
+        ],
+      },
+      {
+        heading: "3. Who We Share Data With",
+        blocks: [
+          { type: "p", text: "We share limited data with trusted service providers who help us run the Site:" },
+          { type: "list", items: [
+            "Razorpay — processes your payment directly; governed by Razorpay's own privacy policy",
+            "MongoDB Atlas — securely stores our application's data",
+            "Vercel / Render — host the Site's frontend and backend",
+            "Google Analytics (where enabled) — helps us understand aggregate site usage",
+          ] },
+          { type: "p", text: "We do not share your data with anyone else except where required by law." },
+        ],
+      },
+      {
+        heading: "4. Your Rights",
+        blocks: [
+          { type: "p", text: "You have the right to:" },
+          { type: "list", items: [
+            "Ask us what personal data we hold about you",
+            "Request correction of inaccurate data",
+            "Request deletion of your account and associated data",
+            "Withdraw consent for marketing communications at any time",
+          ] },
+          { type: "p", text: "To exercise any of these rights, email us at evolvixtech0pm@gmail.com. We'll respond within a reasonable time." },
+        ],
+      },
+      {
+        heading: "5. Cookies",
+        blocks: [
+          { type: "p", text: "We use cookies to keep you logged in and to understand site usage through analytics. You can control or disable cookies through your browser settings, though this may affect some site functionality (like staying logged in)." },
+        ],
+      },
+      {
+        heading: "6. Children's Privacy",
+        blocks: [
+          { type: "p", text: "Some of our products (such as kids' activity content) are intended for use by children under the guidance of a parent or guardian. Accounts and purchases on the Site must be made by an adult. We do not knowingly collect personal data directly from children without parental involvement." },
+        ],
+      },
+      {
+        heading: "7. Data Security",
+        blocks: [
+          { type: "p", text: "We take reasonable technical and organizational measures to protect your personal data, including encrypted connections and access controls on our systems. No online system can be guaranteed 100% secure, but we work to keep your data safe and will notify affected users promptly in the event of any data breach affecting their personal information." },
+        ],
+      },
+      {
+        heading: "8. Data Retention",
+        blocks: [
+          { type: "p", text: "We retain your personal data for as long as your account is active, or as needed to fulfill the purposes described in this policy, unless a longer retention period is required by law (for example, GST-related records)." },
+        ],
+      },
+      {
+        heading: "9. Grievance Officer",
+        blocks: [
+          { type: "p", text: "In accordance with Indian law, our Grievance Officer for privacy-related concerns is:" },
+          { type: "list", items: [
+            "Pritam Mistry",
+            "Evolvix Tech Media, Chhotonilpur, Bardhaman, West Bengal 713103",
+            "Email: evolvixtech0pm@gmail.com",
+          ] },
+        ],
+      },
+      {
+        heading: "10. Changes to This Policy",
+        blocks: [
+          { type: "p", text: "We may update this Privacy Policy periodically. Material changes will be reflected by an updated \"Last updated\" date at the top of this page." },
+        ],
+      },
+      {
+        heading: "11. Contact",
+        blocks: [
+          { type: "p", text: "For any privacy questions, reach us at evolvixtech0pm@gmail.com or +91 98318 42869." },
+        ],
+      },
+    ],
+  },
+  refund: {
+    title: "Refund & Cancellation Policy",
+    lastUpdated: "Last updated: [insert launch date]",
+    intro: [],
+    sections: [
+      {
+        heading: "1. Digital Products (Store)",
+        blocks: [
+          { type: "p", text: "Because digital products (prompt packs, eBooks, and similar downloads) are delivered instantly and cannot be \"returned\" in the traditional sense, all Store purchases are generally final and non-refundable once the product has been successfully delivered." },
+          { type: "p", text: "Exceptions — we will provide a full refund if:" },
+          { type: "list", items: [
+            "The file you received is corrupted, incomplete, or does not match the product description",
+            "A technical error on our end prevented delivery of the product you paid for",
+            "You were charged but did not receive access to the product due to a payment/webhook error",
+          ] },
+          { type: "p", text: "To request a refund under these circumstances, email evolvixtech0pm@gmail.com within 48 hours of your purchase, including your order ID and a description of the issue. We'll review and respond within 2-3 business days." },
+        ],
+      },
+      {
+        heading: "2. Custom Services (BuildX, Creative, Business Consulting)",
+        blocks: [
+          { type: "p", text: "Refunds and cancellations for custom, quoted work are governed by the specific agreement made with you at the time of engagement, since these involve individually scoped timelines, milestones, and deliverables. Please refer to your project agreement, or contact us directly to discuss." },
+        ],
+      },
+      {
+        heading: "3. Refund Processing",
+        blocks: [
+          { type: "p", text: "Approved refunds are processed back to your original payment method via Razorpay. Depending on your bank or payment provider, refunds typically reflect within 5-7 business days of approval." },
+        ],
+      },
+      {
+        heading: "4. Failed or Duplicate Transactions",
+        blocks: [
+          { type: "p", text: "If you were charged more than once for the same order, or a payment failed but funds were deducted, contact us immediately with your payment reference — we'll investigate and refund any erroneous charge promptly." },
+        ],
+      },
+      {
+        heading: "5. Contact for Refund Requests",
+        blocks: [
+          { type: "list", items: [
+            "Evolvix Tech Media",
+            "Email: evolvixtech0pm@gmail.com",
+            "Phone/WhatsApp: +91 98318 42869",
+            "Chhotonilpur, Bardhaman, West Bengal 713103",
+          ] },
+        ],
+      },
+    ],
+  },
+};
 
 export const faqs = [
   ["What does Evolvix Tech Media do?", "Evolvix provides AI learning products, creative digital services, business consulting, software solutions, and creator-focused music/audio services."],
