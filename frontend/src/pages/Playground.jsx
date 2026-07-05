@@ -6,6 +6,10 @@ import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
 import { fetchPlayground, trackAnalyticsEvent } from "../api";
 
+const MUSIC_MAX = 10;
+const FREEBIE_MAX = 6;
+const GAME_MAX = 4;
+
 function ArtistCard({ track, index }) {
   return (
     <article className="audio-preview-card" data-testid={`playground-artist-card-${index}`}>
@@ -26,18 +30,41 @@ function ArtistCard({ track, index }) {
   );
 }
 
-function DownloadCard({ item, onDownload }) {
+function MusicTrackRow({ item, index, onDownload }) {
   return (
-    <article className="ecosystem-card playground-prompt-card" data-testid={`playground-item-${item.id}`}>
-      {item.thumbnail && <img src={item.thumbnail} alt={item.title} className="playground-item-thumb" data-testid={`playground-item-thumb-${item.id}`} />}
-      {item.category === "music" && <Music2 size={26} />}
-      {item.category === "freebie" && <BookOpen size={26} />}
-      {item.category === "game" && <Gamepad2 size={26} />}
-      <h3 data-testid={`playground-item-title-${item.id}`}>{item.title}</h3>
-      <p data-testid={`playground-item-desc-${item.id}`}>{item.description}</p>
-      <button className="primary-btn" onClick={() => onDownload(item)} data-testid={`playground-item-btn-${item.id}`}>
-        <Download size={15} /> Download Free
+    <div className="playground-track-row" data-testid={`playground-track-${item.id}`}>
+      <span className="playground-track-num">{index + 1}</span>
+      {item.thumbnail
+        ? <img src={item.thumbnail} alt={item.title} className="playground-track-thumb" data-testid={`playground-track-thumb-${item.id}`} />
+        : <span className="playground-track-icon"><Music2 size={18} /></span>
+      }
+      <div className="playground-track-info">
+        <strong data-testid={`playground-track-title-${item.id}`}>{item.title}</strong>
+        {item.description && <span data-testid={`playground-track-desc-${item.id}`}>{item.description}</span>}
+      </div>
+      <button className="playground-track-btn" onClick={() => onDownload(item)} data-testid={`playground-track-btn-${item.id}`}>
+        <Download size={14} /> Download Free
       </button>
+    </div>
+  );
+}
+
+function ThumbnailCard({ item, onDownload, btnLabel = "Download Free" }) {
+  return (
+    <article className="playground-thumb-card" data-testid={`playground-item-${item.id}`}>
+      {item.thumbnail
+        ? <img src={item.thumbnail} alt={item.title} className="playground-thumb-img" data-testid={`playground-item-thumb-${item.id}`} />
+        : <div className="playground-thumb-placeholder" data-testid={`playground-item-placeholder-${item.id}`}>
+            {item.category === "freebie" ? <BookOpen size={32} /> : <Gamepad2 size={32} />}
+          </div>
+      }
+      <div className="playground-thumb-body">
+        <h3 data-testid={`playground-item-title-${item.id}`}>{item.title}</h3>
+        <p data-testid={`playground-item-desc-${item.id}`}>{item.description}</p>
+        <button className="primary-btn" onClick={() => onDownload(item)} data-testid={`playground-item-btn-${item.id}`}>
+          <Download size={14} /> {btnLabel}
+        </button>
+      </div>
     </article>
   );
 }
@@ -61,9 +88,9 @@ export default function Playground() {
 
   useEffect(() => { load(); }, [load]);
 
-  const musicItems = items.filter((i) => i.category === "music");
-  const freebieItems = items.filter((i) => i.category === "freebie");
-  const gameItems = items.filter((i) => i.category === "game");
+  const musicItems = items.filter((i) => i.category === "music").slice(0, MUSIC_MAX);
+  const freebieItems = items.filter((i) => i.category === "freebie").slice(0, FREEBIE_MAX);
+  const gameItems = items.filter((i) => i.category === "game").slice(0, GAME_MAX);
 
   function handleDownload(item) {
     if (!user) {
@@ -88,24 +115,27 @@ export default function Playground() {
           <Music2 size={22} />
           <h2>AI Music</h2>
         </div>
-        <p className="playground-block-sub">Original AI-assisted music from Evolvix creators — follow the channels for new releases.</p>
+        <p className="playground-block-sub">Original AI-assisted music from Evolvix creators — follow the channels for new releases, or sign in to download individual tracks below.</p>
+
         {musicPreviews.length > 0 && (
           <div className="audio-preview-grid" data-testid="playground-artist-grid">
             {musicPreviews.map((track, i) => <ArtistCard key={track.id} track={track} index={i} />)}
           </div>
         )}
+
         {musicItems.length > 0 ? (
-          <>
-            <p className="playground-block-sub" style={{ marginTop: 8 }}>
-              {user ? "You're signed in — click Download Free to get a track." : "Sign in to download these tracks for free."}
-            </p>
-            <div className="playground-prompts-grid" data-testid="playground-music-downloads">
-              {musicItems.map((item) => <DownloadCard key={item.id} item={item} onDownload={handleDownload} />)}
+          <div className="playground-tracklist" data-testid="playground-tracklist">
+            <div className="playground-tracklist-header">
+              <span>Tracks available to download</span>
+              <span>{musicItems.length} / {MUSIC_MAX}</span>
             </div>
-          </>
+            {musicItems.map((item, i) => (
+              <MusicTrackRow key={item.id} item={item} index={i} onDownload={handleDownload} />
+            ))}
+          </div>
         ) : (
-          <div className="playground-coming-soon" data-testid="playground-music-empty">
-            <span className="playground-coming-badge">Coming Soon</span>
+          <div className="playground-coming-soon" style={{ marginTop: 24 }} data-testid="playground-music-empty">
+            <span className="playground-coming-badge">Tracks Coming Soon</span>
             <p>Downloadable music tracks are being added here — check back soon.</p>
           </div>
         )}
@@ -121,8 +151,8 @@ export default function Playground() {
           {user ? "You're signed in — click Download Free to get your pack." : "Sign in to claim your free pack — no payment needed, just an account."}
         </p>
         {freebieItems.length > 0 ? (
-          <div className="playground-prompts-grid" data-testid="playground-freebies-grid">
-            {freebieItems.map((item) => <DownloadCard key={item.id} item={item} onDownload={handleDownload} />)}
+          <div className="playground-thumb-grid" data-testid="playground-freebies-grid">
+            {freebieItems.map((item) => <ThumbnailCard key={item.id} item={item} onDownload={handleDownload} />)}
           </div>
         ) : (
           <div className="playground-coming-soon" data-testid="playground-freebies-empty">
@@ -143,8 +173,8 @@ export default function Playground() {
             <p className="playground-block-sub">
               {user ? "You're signed in — click to launch." : "Sign in to access these interactive experiences."}
             </p>
-            <div className="playground-prompts-grid" data-testid="playground-games-grid">
-              {gameItems.map((item) => <DownloadCard key={item.id} item={item} onDownload={handleDownload} />)}
+            <div className="playground-thumb-grid playground-thumb-grid--games" data-testid="playground-games-grid">
+              {gameItems.map((item) => <ThumbnailCard key={item.id} item={item} onDownload={handleDownload} btnLabel="Play Now" />)}
             </div>
           </>
         ) : (
