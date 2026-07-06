@@ -90,7 +90,7 @@ export default function Home() {
         {trust.map((item) => <span key={item} data-testid={`trust-item-${item.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><ShieldCheck size={16} /> {item}</span>)}
       </section>
       <section className="section split-section" data-testid="home-intro-section">
-        <SectionHeader eyebrow="Tier-2 Cities & Beyond" title="AI-powered solutions for students, professionals, creators, and local businesses." text="From small-city startups to metro enterprises — Evolvix delivers AI strategy, creative services, tech solutions, and digital products built for real-world growth." />
+        <SectionHeader eyebrow="Tier-2 Cities & Beyond" title="AI-powered solutions for students, professionals, creators, and local businesses." text="For individuals, local businesses, and small-to-medium-sized businesses — Evolvix makes AI strategy, creative services, tech solutions, and digital products practical and within reach." />
         <div className="reach-panel" data-testid="home-local-value-panel">
           {[
             { Icon: Sparkles, label: "Students", sub: "Learning & skill-building" },
