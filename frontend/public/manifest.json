@@ -1,0 +1,19 @@
+{
+  "name": "Evolvix Tech Media",
+  "short_name": "Evolvix",
+  "description": "AI-powered digital products, creative services, and business consulting for India.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#05050a",
+  "background_color": "#020204",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity", "education"],
+  "icons": [
+    {
+      "src": "/og-image.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
