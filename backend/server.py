@@ -1,4 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response
+import anthropic as _anthropic
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -181,7 +182,16 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
         "website_status": "Coming Soon",
     },
     "about": {
+        "title": "Humanizing the digital AI era.",
+        "intro": "Evolvix Tech Media exists because the future should not feel confusing, cold, or reserved for experts. It should feel approachable, useful, and creative for every age and skill level.",
         "description": "Evolvix Tech Media is a technology and creative solutions company helping individuals and businesses transform ideas into intelligent digital outcomes. We combine creativity, technology, and AI to deliver solutions that drive growth, efficiency, and real impact.",
+        "why_title": "Why Evolvix exists",
+        "why_text": "The brand helps people cope with change, learn practical AI skills, discover useful digital products, and experience creative media that speaks to emotion and mood.",
+        "mission_title": "The mission",
+        "mission_text": "Simplify technology without reducing its power. Give students, professionals, parents, elderly users, and creators tools that make growth feel possible.",
+        "creative_title": "The creative side",
+        "creative_text": "AI music and mood-based digital expression bring feeling into the technology conversation, connecting calm, focus, nostalgia, energy, romance, and reflection.",
+        "values": ["Clarity", "Creativity", "Innovation", "Accessibility", "Trust"],
         "what_we_do": [
             {"title": "We Create", "text": "Design, content, and digital experiences that bring ideas to life."},
             {"title": "We Build", "text": "Websites, apps, software, and AI-powered products built to last."},
@@ -224,7 +234,7 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
     "ecosystem": [
         {"name": "Evolvix LearnAI", "status": "Now on Gumroad", "description": "AI Learning & Productivity Packs — everything you need to learn, grow, and work smarter with AI. Ready to buy and use immediately.", "items": ["AI Prompt Packs", "Learning Resources", "Business Packs", "Career Packs", "Creator Packs", "Productivity Packs"]},
         {"name": "Evolvix BuildX", "status": "On-Demand", "description": "AI Powered Digital Products — custom-built web apps, mobile applications, business software, enterprise SaaS, and AI-powered digital products.", "items": ["Web Applications", "Mobile Applications", "Business Software", "Enterprise SaaS", "AI Powered Products"]},
-        {"name": "Evolvix Creative", "status": "On-Demand", "description": "Branding, Design & Creative Solutions — identity systems, graphic design, digital assets, multimedia design, and presentation decks built for impact.", "items": ["Branding & Identity", "Graphic Design", "Digital Assets", "Multimedia Design", "Pitch Decks"]},
+        {"name": "Evolvix Creative", "status": "On-Demand", "description": "Branding, Design & Creative Solutions — identity systems, graphic design, digital assets, multimedia design, and presentation decks built for impact.", "items": ["Branding & Identity", "Graphic Design", "Digital Assets", "Multimedia Design", "Pitch Decks", "ATS-Friendly Resume Building", "Resume Design"]},
         {"name": "Evolvix Business", "status": "On-Demand", "description": "AI Business Consulting & Automation — smart strategies, process automation, CRM solutions, SaaS planning, and growth strategy for forward-thinking businesses.", "items": ["AI Business Consulting", "Business Automation", "CRM Solutions", "SaaS Solutions", "Growth Strategy"]},
     ],
     "learning_categories": ["AI Prompt Packs", "Business Prompt Packs", "Career Prompt Packs", "Student Prompt Packs", "Creator Prompt Packs", "Productivity Prompt Packs", "Marketing Prompt Packs", "Coding Prompt Packs", "AI Learning Guides", "AI Cheat Sheets", "AI Templates", "AI Workbooks", "AI Support for Everyday Learning", "Grow Yourself Using AI", "AI Learning for Beginners", "Smart AI Routines", "Future AI Courses", "Future Certifications"],
@@ -264,6 +274,8 @@ def merged_site_content(custom_content: Optional[Dict[str, Any]]) -> Dict[str, A
     merged["about"] = {**DEFAULT_SITE_CONTENT["about"], **(custom_content or {}).get("about", {})}
     if not merged["about"].get("what_we_do"):
         merged["about"]["what_we_do"] = DEFAULT_SITE_CONTENT["about"]["what_we_do"]
+    if not merged["about"].get("values"):
+        merged["about"]["values"] = DEFAULT_SITE_CONTENT["about"]["values"]
     merged["analytics_report_settings"] = {**DEFAULT_SITE_CONTENT["analytics_report_settings"], **(custom_content or {}).get("analytics_report_settings", {})}
     for list_key in ["trust_strip", "how_we_work", "industries_served", "creative_services", "technology_services", "ecosystem", "learning_categories", "music_services", "music_previews", "custom_sections", "testimonials", "why_choose"]:
         if not merged.get(list_key):
@@ -1539,6 +1551,75 @@ app.add_middleware(
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+
+EVOLVIX_SYSTEM_PROMPT = """You are the Evolvix Tech Media virtual assistant — friendly, concise, and helpful.
+
+About Evolvix Tech Media:
+- A technology and creative solutions company based in Bardhaman, West Bengal, India
+- GST Registered, Udyam Registered MSME, IEC Registered, GST Invoice available
+- Contact: +91 98318 42869 (call & WhatsApp), Facebook page available
+- Website: evolvixtech.in
+
+What Evolvix offers (four pillars):
+
+1. Evolvix LearnAI (ready to buy on Gumroad):
+   - AI Prompt Packs, Learning Resources, Business Packs, Career Packs, Creator Packs, Productivity Packs
+   - Digital downloads — instant delivery after purchase
+
+2. Evolvix BuildX (on-demand, custom quote):
+   - Web Applications, Mobile Applications, Business Software, Enterprise SaaS, AI-Powered Products
+   - Custom websites, e-commerce, CRM, automation systems
+
+3. Evolvix Creative (on-demand, custom quote):
+   - Branding & Identity, Graphic Design, Digital Assets, Multimedia Design, Pitch Decks
+   - ATS-Friendly Resume Building, Resume Design (for freshers, professionals, career changers)
+   - Turnaround: typically 2–3 working days for resume/design work
+
+4. Evolvix Business (on-demand, custom quote):
+   - AI Business Consulting, Business Automation, CRM Solutions, SaaS Solutions, Growth Strategy
+   - Suitable for local businesses and startups in and around Bardhaman
+
+Pricing policy (IMPORTANT):
+- NEVER state specific prices or ranges — always say pricing depends on specific requirements and the team will share a custom quote.
+- For LearnAI products: pricing is available on the Gumroad store at evolvixtech.in/shop
+
+Response rules:
+- Keep replies to 2–3 sentences maximum. Be warm, direct, and professional.
+- If asked something you are not confident about, say "Let me connect you with the Evolvix team — they can give you a precise answer."
+- Always end a conversation branch by offering to connect via WhatsApp or Call when the user seems ready to take action.
+- Do not make up services, timelines, or guarantees not listed above.
+- If the user sends a greeting (hi, hello, hey), respond warmly and ask how you can help — do not list all services upfront.
+"""
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    messages: List[ChatMessage]
+
+@api_router.post("/chat")
+async def chat_stream(payload: ChatRequest):
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="Chat service not configured.")
+
+    anthropic_client = _anthropic.Anthropic(api_key=api_key)
+    messages = [{"role": m.role, "content": m.content} for m in payload.messages if m.role in ("user", "assistant")]
+
+    async def generate():
+        with anthropic_client.messages.stream(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=300,
+            system=EVOLVIX_SYSTEM_PROMPT,
+            messages=messages,
+        ) as stream:
+            for text in stream.text_stream:
+                yield f"data: {json.dumps({'text': text})}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.on_event("shutdown")

@@ -55,7 +55,7 @@ function AppRoutes() {
   );
 
   if (isAdmin) return routes;
-  return <Layout>{routes}</Layout>;
+  return <Layout><div key={location.pathname} className="page-transition-wrap">{routes}</div></Layout>;
 }
 
 function App() {

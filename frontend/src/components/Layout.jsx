@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Facebook, Menu, Phone, X, Mail, User } from "lucide-react";
+import { ChatWidget } from "./ChatWidget";
 import { toast } from "sonner";
 import { BrandLogo } from "./BrandLogo";
 import { useSiteContent } from "../hooks/useSiteContent";
@@ -36,6 +37,7 @@ export function Layout({ children }) {
       </header>
       {open && <nav className="mobile-nav" aria-label="Mobile navigation" data-testid="mobile-navigation-menu">{navItems.map(([label, path]) => <NavLink key={path} to={path} onClick={() => setOpen(false)} data-testid={`mobile-nav-link-${label.toLowerCase().replaceAll(" ", "-")}`}>{label}</NavLink>)}</nav>}
       <main data-testid="main-content">{children}</main>
+      <ChatWidget />
       <footer className="site-footer" data-testid="site-footer">
         <div className="footer-grid">
           <div className="footer-brand-col"><BrandLogo footer /><span className="eyebrow footer-tagline" data-testid="footer-tagline">{content.brand?.tagline}</span><p className="footer-brand-sub" data-testid="footer-brand-statement">AI • Digital • Business • Creative Solutions</p><div className="footer-reg-badges" data-testid="footer-trust-text"><span>GST Registered</span><span>Udyam Registered MSME</span><span>IEC Registered</span><span>GST Invoice Available</span></div></div>
