@@ -29,7 +29,7 @@ export default function Services() {
       <div className="how-we-work-grid" data-testid="how-we-work-grid">{howWeWork.map((item, index) => <article className="how-we-work-card" key={item.step} data-testid={`how-we-work-${index}`}><span className="how-we-work-index" data-testid={`how-we-work-index-${index}`}>{String(index + 1).padStart(2, "0")}</span><h3>{item.step}</h3><p>{item.text}</p></article>)}</div>
       <SectionHeader eyebrow="Industries" title="Industries we serve" />
       <div className="trust-strip" data-testid="industries-served-strip">{industries.map((industry) => <span key={industry} data-testid={`industry-${industry.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}>{industry}</span>)}<span data-testid="industry-and-more">And more</span></div>
-      <div className="related-panel" data-testid="services-contact-panel"><h2>Need something custom?</h2><p>Send a business, creative, or technology inquiry and Evolvix can shape the right solution.</p><Link to="/contact" className="primary-btn" data-testid="services-contact-cta">Request a Service <ArrowRight size={18} /></Link></div>
+      <div className="related-panel" data-testid="services-contact-panel"><h2>Need something custom?</h2><p>Send a business, creative, or technology inquiry and Evolvix can shape the right solution.</p><Link to="/contact?type=Business+inquiry" className="primary-btn" data-testid="services-contact-cta">Request a Service <ArrowRight size={18} /></Link></div>
     </section>
   );
 }

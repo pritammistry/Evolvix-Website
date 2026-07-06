@@ -1,8 +1,17 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles } from "lucide-react";
 
+const CATEGORY_TYPE = {
+  LearnAI: "Learning and Growth Product Support",
+  BuildX: "Website / App / Software",
+  Creative: "Creative Digital Services",
+  Business: "AI Business Consulting",
+};
+
 export function ProductCard({ product, onBuy }) {
   const gallery = (product.images?.length ? product.images : [product.image]).filter(Boolean).slice(0, 5);
+  const quoteType = CATEGORY_TYPE[product.category] || "Business inquiry";
+  const quoteUrl = `/contact?${new URLSearchParams({ type: quoteType, service: product.title }).toString()}`;
   return (
     <article className="product-card reveal-card" data-testid={`product-card-${product.slug}`}>
       <div className="product-media" data-testid={`product-image-wrap-${product.slug}`}>
@@ -12,7 +21,7 @@ export function ProductCard({ product, onBuy }) {
         {gallery.length > 1 && <div className="product-slider-dots" data-testid={`product-slider-dots-${product.slug}`}>{gallery.map((_, index) => <span key={`${product.slug}-dot-${index}`} data-testid={`product-slider-dot-${product.slug}-${index}`} />)}</div>}
         <span className="tag" data-testid={`product-tag-${product.slug}`}><Sparkles size={13} /> {product.tag}</span>
       </div>
-      <div className="product-body"><p className="mini" data-testid={`product-category-${product.slug}`}>{product.category}</p><h3 data-testid={`product-title-${product.slug}`}>{product.title}</h3><p data-testid={`product-description-${product.slug}`}>{product.description}</p><div className="product-actions">{product.type === "service" ? (<><span className="price price--quote" data-testid={`product-price-${product.slug}`}>On Request</span><Link to="/contact" className="ghost-buy" data-testid={`product-buy-button-${product.slug}`}>Get Quote</Link></>) : (<><span className="price price--tbd" data-testid={`product-price-${product.slug}`}>— — —</span><button onClick={() => onBuy(product.id)} className="ghost-buy" data-testid={`product-buy-button-${product.slug}`}>Buy Now</button></>)}<Link to={`/products/${product.slug}`} className="icon-link" data-testid={`product-detail-link-${product.slug}`}>Details <ArrowRight size={16} /></Link></div></div>
+      <div className="product-body"><p className="mini" data-testid={`product-category-${product.slug}`}>{product.category}</p><h3 data-testid={`product-title-${product.slug}`}>{product.title}</h3><p data-testid={`product-description-${product.slug}`}>{product.description}</p><div className="product-actions">{product.type === "service" ? (<><span className="price price--quote" data-testid={`product-price-${product.slug}`}>On Request</span><Link to={quoteUrl} className="ghost-buy" data-testid={`product-buy-button-${product.slug}`}>Get Quote</Link></>) : (<><span className="price price--tbd" data-testid={`product-price-${product.slug}`}>— — —</span><button onClick={() => onBuy(product.id)} className="ghost-buy" data-testid={`product-buy-button-${product.slug}`}>Buy Now</button></>)}<Link to={`/products/${product.slug}`} className="icon-link" data-testid={`product-detail-link-${product.slug}`}>Details <ArrowRight size={16} /></Link></div></div>
     </article>
   );
 }

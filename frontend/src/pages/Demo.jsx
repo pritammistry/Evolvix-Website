@@ -52,7 +52,7 @@ export default function Demo() {
               <a href={demo.url} target="_blank" rel="noopener noreferrer" className="primary-btn" data-testid={`demo-visit-${demo.id}`}>
                 View Live Demo <ExternalLink size={16} />
               </a>
-              <Link to="/contact" className="secondary-btn" data-testid={`demo-contact-${demo.id}`}>
+              <Link to={`/contact?${new URLSearchParams({ type: "Business inquiry", service: `Demo – ${demo.title}` }).toString()}`} className="secondary-btn" data-testid={`demo-contact-${demo.id}`}>
                 Request This for My Business
               </Link>
             </div>
@@ -76,7 +76,7 @@ export default function Demo() {
       <div className="related-panel" data-testid="demo-cta-panel">
         <h2>Want a demo built for your business?</h2>
         <p>Tell us your industry, your products, and your idea — we'll show you a working prototype before you spend a rupee.</p>
-        <Link to="/contact" className="primary-btn" data-testid="demo-contact-cta">
+        <Link to="/contact?type=Business+inquiry&service=Custom+Demo+Build" className="primary-btn" data-testid="demo-contact-cta">
           Get Your Free Demo <ArrowRight size={18} />
         </Link>
       </div>
