@@ -11,6 +11,8 @@ import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
 import { openRazorpayCheckout } from "../lib/razorpay";
 import { redirectToLoginForBuy, consumePendingBuyProductId } from "../lib/authRedirect";
+import { HeroParticle } from "../components/HeroParticle";
+import { TestimonialsCarousel } from "../components/TestimonialsCarousel";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -56,7 +58,7 @@ export default function Home() {
     try {
       await submitNewsletter({ email });
       trackNewsletterSubmit(window.location.pathname);
-      toast.success("You’re on the Evolvix update list.");
+      toast.success("You're on the Evolvix update list.");
       setEmail("");
     } catch (error) {
       toast.error("Please enter a valid email address.");
@@ -79,7 +81,10 @@ export default function Home() {
             <Link className="text-btn" to="/contact" data-testid="home-contact-cta">Talk to Us</Link>
           </div>
         </div>
-        <div className="hero-logo-stage" data-testid="home-hero-logo-stage"><img src={logos.circular} alt="Evolvix Tech Media circular logo" data-testid="home-hero-logo-image" /></div>
+        <div className="hero-logo-stage" data-testid="home-hero-logo-stage">
+          <HeroParticle />
+          <img src={logos.circular} alt="Evolvix Tech Media circular logo" className="hero-logo-overlay" data-testid="home-hero-logo-image" />
+        </div>
       </section>
       <section className="section trust-rail" data-testid="home-trust-strip">
         {trust.map((item) => <span key={item} data-testid={`trust-item-${item.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><ShieldCheck size={16} /> {item}</span>)}
@@ -109,9 +114,9 @@ export default function Home() {
       <section className="section mood-band" data-testid="home-why-choose-section">
         <SectionHeader eyebrow="Why choose Evolvix" title="AI-first, personalized, future-ready, and business-focused." text="The brand is designed to support people and businesses end-to-end — with practical innovation and creative excellence." />
         <div className="mood-row" data-testid="home-why-row">{whyChoose.map((item) => <span key={item} data-testid={`home-why-${item.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><BriefcaseBusiness size={15} /> {item}</span>)}</div>
-        <Link to="/contact" className="primary-btn" data-testid="home-start-project-cta">Start a Project <ArrowRight size={18} /></Link>
+        <Link to="/contact?type=Business+inquiry" className="primary-btn" data-testid="home-start-project-cta">Start a Project <ArrowRight size={18} /></Link>
       </section>
-      {testimonials.length > 0 && <section className="section" data-testid="home-testimonials-section"><SectionHeader eyebrow="Customer proof" title="Trust signals from people building, learning, and launching with Evolvix." /><div className="testimonial-grid" data-testid="home-testimonials-grid">{testimonials.slice(0, 6).map((item, index) => <article className="testimonial-card" key={item.id || `${item.name}-${item.role}`} data-testid={`testimonial-card-${index}`}><div data-testid={`testimonial-rating-${index}`}>{Array.from({ length: Math.max(1, Math.min(5, Number(item.rating) || 5)) }).map((_, starIndex) => <Star key={`${item.id || item.name}-star-${starIndex}`} size={16} fill="currentColor" />)}</div><p data-testid={`testimonial-quote-${index}`}>“{item.quote}”</p><h3 data-testid={`testimonial-name-${index}`}>{item.name}</h3><span data-testid={`testimonial-role-${index}`}>{item.role}</span></article>)}</div></section>}
+      {testimonials.length > 0 && <section className="section" data-testid="home-testimonials-section"><SectionHeader eyebrow="Customer proof" title="Trust signals from people building, learning, and launching with Evolvix." /><TestimonialsCarousel testimonials={testimonials} /></section>}
       <section className="section contact-cta-band" data-testid="home-contact-cta-section"><h2>Ready to create, innovate, and elevate?</h2><p>Tell Evolvix what you want to build, learn, automate, design, or launch.</p><Link to="/contact" className="primary-btn" data-testid="home-final-contact-cta">Contact Us <ArrowRight size={18} /></Link></section>
       {customSections.map((section, index) => <section className="section custom-public-section" key={`${section.title}-${index}`} data-testid={`custom-section-${index}`}><SectionHeader eyebrow={section.eyebrow || "Custom"} title={section.title} text={section.description} /><div className="custom-card-grid" data-testid={`custom-section-cards-${index}`}>{(section.cards || []).map((card, cardIndex) => <article className="pillar-card" key={`${card.title}-${cardIndex}`} data-testid={`custom-section-${index}-card-${cardIndex}`}><Sparkles size={24} /><h3>{card.title}</h3><p>{card.text}</p></article>)}</div>{section.cta_label && <Link to={section.cta_url || "/contact"} className="primary-btn" data-testid={`custom-section-${index}-cta`}>{section.cta_label} <ArrowRight size={18} /></Link>}</section>)}
       <section className="section trust-newsletter" data-testid="home-newsletter-section">
