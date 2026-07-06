@@ -587,7 +587,7 @@ async def update_site_content(payload: SiteContentUpdate):
 
 @api_router.post("/admin/login")
 async def admin_login(payload: AdminLogin, response: Response):
-    if payload.password != os.environ["ADMIN_PASSWORD"]:
+    if payload.password.strip() != os.environ["ADMIN_PASSWORD"].strip():
         raise HTTPException(status_code=401, detail="Invalid admin password")
     token = admin_token()
     response.set_cookie(key="evolvix_admin_token", value=token, httponly=True, secure=True, samesite="lax", max_age=60 * 60 * 8, path="/")
