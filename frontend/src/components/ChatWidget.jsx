@@ -162,7 +162,9 @@ export function ChatWidget() {
         aria-label={open ? "Close chat" : "Open chat"}
         data-testid="chat-launcher-button"
       >
-        {open ? <X size={24} /> : <MessageCircle size={26} />}
+        <span className="chat-launcher-icon">
+          {open ? <X size={18} /> : <MessageCircle size={20} />}
+        </span>
         {!open && <span className="chat-launcher-label">Chat with us</span>}
       </button>
 
