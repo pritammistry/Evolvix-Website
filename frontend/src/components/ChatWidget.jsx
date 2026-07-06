@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Phone } from "lucide-react";
 import { useSiteContent } from "../hooks/useSiteContent";
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8001";
+const API_BASE = process.env.REACT_APP_BACKEND_URL || "http://localhost:8001";
 
 const QUICK_REPLIES = [
   "Tell me about your services",
