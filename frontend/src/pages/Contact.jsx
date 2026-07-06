@@ -47,13 +47,14 @@ export default function Contact() {
   const [touched, setTouched] = useState({});
 
   const setField = (key, value) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    if (touched[key]) setErrors((prev) => ({ ...prev, ...validate({ ...form, [key]: value }) }));
+    const next = { ...form, [key]: value };
+    setForm(next);
+    if (touched[key]) setErrors(validate(next));
   };
 
   const blur = (key) => {
     setTouched((prev) => ({ ...prev, [key]: true }));
-    setErrors((prev) => ({ ...prev, ...validate(form) }));
+    setErrors(validate(form));
   };
 
   const submit = async (event) => {
