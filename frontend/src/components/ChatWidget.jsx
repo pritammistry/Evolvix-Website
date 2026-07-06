@@ -12,6 +12,26 @@ const QUICK_REPLIES = [
   "Browse LearnAI products",
 ];
 
+function getContextualCTAs(text) {
+  const t = text.toLowerCase();
+  const ctas = [];
+  if (/service|creative|design|resume|branding|logo|presentation|catalog|social media/.test(t))
+    ctas.push({ label: "View Services", href: "/services" });
+  if (/website|web app|\bapp\b|software|build|develop|automat/.test(t))
+    ctas.push({ label: "Request a Build", href: "/contact?" + new URLSearchParams({ type: "Website / App / Software" }).toString() });
+  if (/learn|course|guide|prompt|download|ebook|resource|product|learnai/.test(t))
+    ctas.push({ label: "Browse Products", href: "/playground" });
+  if (/demo|example|prototype|showcase/.test(t))
+    ctas.push({ label: "See Demos", href: "/demo" });
+  if (/price|cost|quote|budget|how much|package|plan/.test(t))
+    ctas.push({ label: "Get a Quote", href: "/contact?" + new URLSearchParams({ type: "Business inquiry" }).toString() });
+  if (ctas.length === 0)
+    ctas.push({ label: "Contact Us", href: "/contact" });
+  else if (!ctas.some((c) => c.href.startsWith("/contact")))
+    ctas.push({ label: "Get a Quote", href: "/contact?" + new URLSearchParams({ type: "Business inquiry" }).toString() });
+  return ctas.slice(0, 3);
+}
+
 function TypingDots() {
   return (
     <div className="chat-typing-dots" aria-label="Assistant is typing">
@@ -88,6 +108,12 @@ export function ChatWidget() {
           } catch {}
         }
       }
+      const ctas = getContextualCTAs(accumulated);
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { ...updated[updated.length - 1], ctas };
+        return updated;
+      });
     } catch {
       setMessages((prev) => {
         const updated = [...prev];
@@ -139,8 +165,19 @@ export function ChatWidget() {
             {messages.map((msg, i) => (
               <div key={i} className={`chat-msg chat-msg--${msg.role}`}>
                 {msg.role === "assistant" && <div className="chat-msg-avatar">EX</div>}
-                <div className="chat-msg-bubble">
-                  {msg.content || (streaming && i === messages.length - 1 ? <TypingDots /> : "")}
+                <div>
+                  <div className="chat-msg-bubble">
+                    {msg.content || (streaming && i === messages.length - 1 ? <TypingDots /> : "")}
+                  </div>
+                  {msg.ctas?.length > 0 && i > 0 && (
+                    <div className="chat-cta-row">
+                      {msg.ctas.map((cta) => (
+                        <a key={cta.href} href={cta.href} className="chat-cta-chip" onClick={() => setOpen(false)}>
+                          {cta.label}
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
