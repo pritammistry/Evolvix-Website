@@ -35,6 +35,9 @@ export function AnalyticsTracker() {
   useEffect(() => {
     if (location.pathname.startsWith("/admin")) return undefined;
     sendEvent({ event_type: "page_view", path: location.pathname, product_id: inferProductId(location.pathname), metadata: { search: location.search } });
+    if (typeof window.gtag === "function") {
+      window.gtag("event", "page_view", { page_path: location.pathname + location.search, page_title: document.title });
+    }
     seenSectionsRef.current = new Set();
     if (observerRef.current) observerRef.current.disconnect();
     observerRef.current = new IntersectionObserver((entries) => {

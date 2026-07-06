@@ -1,7 +1,11 @@
+import { useState, useEffect } from "react";
 import { BarChart3, ArrowRight, ExternalLink, Monitor, Smartphone, ShoppingBag, BookOpen, Utensils, Stethoscope, Zap } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { SectionHeader } from "../components/SectionHeader";
 import { useSiteContent } from "../hooks/useSiteContent";
+import { useAuth } from "../hooks/useAuth";
+import { redirectToLoginForDemo, consumePendingDemo } from "../lib/authRedirect";
 
 const ICON_MAP = {
   shopping: <ShoppingBag size={28} />,
@@ -69,7 +73,30 @@ function statusBadgeClass(status) {
 
 export default function Demo() {
   const { content } = useSiteContent();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const demos = (content?.demos?.length ? content.demos.filter((d) => d.visible !== false) : null) || DEMO_SITES;
+  const [highlighted, setHighlighted] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const pending = consumePendingDemo();
+    if (!pending) return;
+    window.open(pending.url, "_blank", "noopener,noreferrer");
+    toast.success("Demo opened in a new tab.");
+    setHighlighted(pending.id);
+    const t = setTimeout(() => setHighlighted(null), 4000);
+    return () => clearTimeout(t);
+  }, [user]);
+
+  function handleDemoClick(demo) {
+    if (!user) {
+      redirectToLoginForDemo(navigate, demo.id, demo.url);
+      return;
+    }
+    window.open(demo.url, "_blank", "noopener,noreferrer");
+  }
+
   return (
     <section className="section page-section" data-testid="demo-page">
       <SectionHeader
@@ -80,7 +107,7 @@ export default function Demo() {
 
       <div className="demo-cards" data-testid="demo-cards">
         {demos.map((demo) => (
-          <article className="demo-card" key={demo.id} data-testid={`demo-card-${demo.id}`}>
+          <article className={`demo-card${highlighted === demo.id ? " demo-card--highlighted" : ""}`} key={demo.id} data-testid={`demo-card-${demo.id}`}>
             <div className="demo-card-meta">
               <span className="demo-card-icon">{getDemoIcon(demo)}</span>
               <div>
@@ -95,9 +122,9 @@ export default function Demo() {
             </ul>
             <div className="demo-card-actions">
               {demo.status === "Live Demo" ? (
-                <a href={demo.url} target="_blank" rel="noopener noreferrer" className="primary-btn" data-testid={`demo-visit-${demo.id}`}>
+                <button onClick={() => handleDemoClick(demo)} className="primary-btn" data-testid={`demo-visit-${demo.id}`}>
                   View Live Demo <ExternalLink size={16} />
-                </a>
+                </button>
               ) : (
                 <span className="primary-btn demo-btn--disabled" data-testid={`demo-visit-${demo.id}`}>
                   {demo.status === "Now Building" ? "In Progress" : "Coming Soon"}

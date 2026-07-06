@@ -84,7 +84,7 @@ export const blogPosts = [
 export const legalContent = {
   terms: {
     title: "Terms of Service",
-    lastUpdated: "Last updated: [insert launch date]",
+    lastUpdated: "Last updated: 15 June 2026",
     intro: [
       "These Terms of Service (\"Terms\") govern your use of the website evolvixtech.in (\"Site\") and all products and services offered by Evolvix Tech Media (\"we,\" \"us,\" \"our\"), a sole proprietorship business operated by Pritam Mistry, registered address Chhotonilpur, Bardhaman, West Bengal 713103, India (GSTIN: 19BVTPM1874M1ZK).",
       "By accessing or using the Site, creating an account, or purchasing any product or service from us, you agree to be bound by these Terms. If you do not agree, please do not use the Site.",
@@ -189,7 +189,7 @@ export const legalContent = {
   },
   privacy: {
     title: "Privacy Policy",
-    lastUpdated: "Last updated: [insert launch date]",
+    lastUpdated: "Last updated: 15 June 2026",
     intro: [
       "Evolvix Tech Media (\"we,\" \"us,\" \"our\") respects your privacy. This Privacy Policy explains what personal data we collect through evolvixtech.in, why we collect it, and what rights you have over it.",
     ],
@@ -297,7 +297,7 @@ export const legalContent = {
   },
   refund: {
     title: "Refund & Cancellation Policy",
-    lastUpdated: "Last updated: [insert launch date]",
+    lastUpdated: "Last updated: 15 June 2026",
     intro: [],
     sections: [
       {
