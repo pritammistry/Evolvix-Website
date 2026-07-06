@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Lock, Save, RotateCcw, Plus, Trash2, Sparkles, Database, Layers3, Package, Newspaper, Image as ImageIcon, LogOut, UploadCloud, BarChart3, Star, DownloadCloud, FileDown, Gamepad2, Monitor, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import { adminLogin, adminLogout, createPlaygroundItem, deletePlaygroundItem, deleteProductFile, exportAdminAnalytics, fetchAdminAnalytics, fetchAdminAnalyticsOptions, fetchAdminDashboard, fetchAdminPlayground, resetAdminContent, saveAdminContent, saveAdminList, updatePlaygroundItem, uploadProductFile } from "../api";
+import { adminLogin, adminLogout, createPlaygroundItem, deletePlaygroundItem, deleteProductFile, exportAdminAnalytics, fetchAdminAnalytics, fetchAdminAnalyticsOptions, fetchAdminDashboard, fetchAdminPlayground, resetAdminContent, saveAdminContent, saveAdminList, updatePlaygroundItem, uploadProductFile, setVisitorAuthToken } from "../api";
 
 const blankProduct = { title: "New Product", slug: "new-product", price: 0, category: "Learning and Growth", tag: "New", description: "Short product outcome.", image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80", images: [], benefits: [], included: [], file_slots: [] };
 const blankPortfolio = { title: "New Showcase", category: "Digital Products", summary: "Short showcase description.", image: "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?auto=format&fit=crop&w=1200&q=80" };
@@ -297,7 +297,7 @@ export default function AdminDashboard() {
 
   const login = async (event) => {
     event.preventDefault();
-    try { await adminLogin({ password }); await loadDashboard(); setAuthenticated(true); toast.success("Admin unlocked"); } catch (err) { toast.error(err?.response?.data?.detail || err?.message || "Login failed"); }
+    try { const { data } = await adminLogin({ password }); setVisitorAuthToken(data.token); await loadDashboard(); setAuthenticated(true); toast.success("Admin unlocked"); } catch (err) { toast.error(err?.response?.data?.detail || err?.message || "Login failed"); }
   };
 
   const updateContent = (path, value) => {
@@ -320,6 +320,7 @@ export default function AdminDashboard() {
 
   const logout = () => {
     adminLogout().catch(() => {});
+    setVisitorAuthToken(null);
     setAuthenticated(false);
     setContent(null);
     setPassword("");
