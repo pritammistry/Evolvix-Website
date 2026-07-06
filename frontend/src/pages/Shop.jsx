@@ -20,7 +20,7 @@ export default function Shop() {
   const shopProducts = content.products || products;
   const learningCategories = content.learning_categories || [];
   const categories = useMemo(() => ["All", ...new Set(shopProducts.map((product) => product.category))], [shopProducts]);
-  const [active, setActive] = useState("All");
+  const [active, setActive] = useState(() => new URLSearchParams(location.search).get("category") || "All");
   const [query, setQuery] = useState("");
   const filtered = useMemo(() => shopProducts.filter((product) => (active === "All" || product.category === active) && product.title.toLowerCase().includes(query.toLowerCase())), [active, query, shopProducts]);
   const buyProduct = async (productId) => {

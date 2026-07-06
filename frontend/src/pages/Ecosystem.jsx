@@ -4,7 +4,7 @@ import { SectionHeader } from "../components/SectionHeader";
 import { useSiteContent } from "../hooks/useSiteContent";
 
 function ecosystemPath(name) {
-  if (name === "Evolvix LearnAI") return "/shop";
+  if (name === "Evolvix LearnAI") return "/shop?category=LearnAI";
   return "/contact";
 }
 
