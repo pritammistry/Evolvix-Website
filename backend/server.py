@@ -1539,8 +1539,6 @@ async def razorpay_webhook(request: Request):
     return {"received": True}
 
 
-app.include_router(api_router)
-
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -1620,6 +1618,9 @@ async def chat_stream(payload: ChatRequest):
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+app.include_router(api_router)
 
 
 @app.on_event("shutdown")
