@@ -32,6 +32,20 @@ export function AnalyticsTracker() {
   const observerRef = useRef(null);
   const seenSectionsRef = useRef(new Set());
 
+  // GA4 init — process.env substitution is guaranteed by webpack (unlike %VAR% in HTML)
+  useEffect(() => {
+    const id = process.env.REACT_APP_GA_MEASUREMENT_ID;
+    if (!id) return;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag("js", new Date());
+    window.gtag("config", id, { send_page_view: false });
+    const s = document.createElement("script");
+    s.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+    s.async = true;
+    document.head.appendChild(s);
+  }, []);
+
   useEffect(() => {
     if (location.pathname.startsWith("/admin")) return undefined;
     sendEvent({ event_type: "page_view", path: location.pathname, product_id: inferProductId(location.pathname), metadata: { search: location.search } });
