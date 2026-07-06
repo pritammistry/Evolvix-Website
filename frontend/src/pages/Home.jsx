@@ -90,8 +90,22 @@ export default function Home() {
         {trust.map((item) => <span key={item} data-testid={`trust-item-${item.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><ShieldCheck size={16} /> {item}</span>)}
       </section>
       <section className="section split-section" data-testid="home-intro-section">
-        <SectionHeader eyebrow="Bardhaman + beyond" title="AI-powered solutions for students, professionals, creators, and local businesses." text="Evolvix helps Bardhaman and nearby users grow with creative services, business consulting, learning products, software solutions, and creator-focused audio." />
-        <div className="mission-panel" data-testid="home-local-value-panel"><p data-testid="home-local-value-text"><MapPin size={24} /> Students • professionals • social media creators • small businesses • local entrepreneurs</p></div>
+        <SectionHeader eyebrow="Tier-2 Cities & Beyond" title="AI-powered solutions for students, professionals, creators, and local businesses." text="From small-city startups to metro enterprises — Evolvix delivers AI strategy, creative services, tech solutions, and digital products built for real-world growth." />
+        <div className="reach-panel" data-testid="home-local-value-panel">
+          {[
+            { Icon: Sparkles, label: "Students", sub: "Learning & skill-building" },
+            { Icon: BriefcaseBusiness, label: "Professionals", sub: "Career growth" },
+            { Icon: Palette, label: "Creators", sub: "Content & media" },
+            { Icon: Rocket, label: "Small Businesses", sub: "Local to regional" },
+            { Icon: BrainCircuit, label: "Enterprises", sub: "Scale & transform" },
+          ].map(({ Icon, label, sub }, i) => (
+            <div key={label} className="reach-node" style={{ animationDelay: `${i * 0.18}s` }} data-testid={`reach-node-${label.toLowerCase().replace(/\s+/g, "-")}`}>
+              <Icon size={22} />
+              <span>{label}</span>
+              <small>{sub}</small>
+            </div>
+          ))}
+        </div>
       </section>
       <section className="section" data-testid="home-pillars-section">
         <SectionHeader eyebrow="Core service pillars" title="Creative services, technology solutions, digital products, and business consulting." />
