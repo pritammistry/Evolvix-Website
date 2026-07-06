@@ -1,6 +1,18 @@
-import { ArrowRight, ExternalLink, Monitor, Smartphone, ShoppingBag, BookOpen, Utensils, Stethoscope } from "lucide-react";
+import { BarChart3, ArrowRight, ExternalLink, Monitor, Smartphone, ShoppingBag, BookOpen, Utensils, Stethoscope, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SectionHeader } from "../components/SectionHeader";
+import { useSiteContent } from "../hooks/useSiteContent";
+
+const ICON_MAP = {
+  shopping: <ShoppingBag size={28} />,
+  monitor: <Monitor size={28} />,
+  book: <BookOpen size={28} />,
+  food: <Utensils size={28} />,
+  health: <Stethoscope size={28} />,
+  phone: <Smartphone size={28} />,
+  chart: <BarChart3 size={28} />,
+  zap: <Zap size={28} />,
+};
 
 const DEMO_SITES = [
   {
@@ -13,6 +25,26 @@ const DEMO_SITES = [
     icon: <ShoppingBag size={28} />,
     status: "Live Demo",
   },
+  {
+    id: "invoice-management",
+    title: "Invoice & Billing Management App",
+    industry: "Finance / Accounting",
+    description: "A smart billing dashboard for small businesses — generate GST invoices, track payments, manage clients, and export reports.",
+    features: ["GST invoice generation", "Payment tracking", "Client management", "Report export"],
+    url: "",
+    icon: <BarChart3 size={28} />,
+    status: "Coming Soon",
+  },
+  {
+    id: "saas-crm-automation",
+    title: "SaaS CRM & Automation Demo",
+    industry: "SaaS / Tech Products",
+    description: "A full CRM with lead pipeline, automated follow-ups, task management, and team dashboard — built for SaaS and service businesses.",
+    features: ["Lead pipeline board", "Automated follow-ups", "Task & team management", "Analytics dashboard"],
+    url: "",
+    icon: <Zap size={28} />,
+    status: "Coming Soon",
+  },
 ];
 
 const VERTICALS = [
@@ -24,7 +56,20 @@ const VERTICALS = [
   { icon: <Smartphone size={22} />, label: "Service Businesses" },
 ];
 
+function getDemoIcon(demo) {
+  if (demo.icon) return demo.icon;
+  return ICON_MAP[demo.icon_key] || <Monitor size={28} />;
+}
+
+function statusBadgeClass(status) {
+  if (status === "Coming Soon") return "demo-live-badge demo-badge--coming-soon";
+  if (status === "Now Building") return "demo-live-badge demo-badge--now-building";
+  return "demo-live-badge";
+}
+
 export default function Demo() {
+  const { content } = useSiteContent();
+  const demos = (content?.demos?.length ? content.demos.filter((d) => d.visible !== false) : null) || DEMO_SITES;
   return (
     <section className="section page-section" data-testid="demo-page">
       <SectionHeader
@@ -34,24 +79,30 @@ export default function Demo() {
       />
 
       <div className="demo-cards" data-testid="demo-cards">
-        {DEMO_SITES.map((demo) => (
+        {demos.map((demo) => (
           <article className="demo-card" key={demo.id} data-testid={`demo-card-${demo.id}`}>
             <div className="demo-card-meta">
-              <span className="demo-card-icon">{demo.icon}</span>
+              <span className="demo-card-icon">{getDemoIcon(demo)}</span>
               <div>
                 <span className="eyebrow" style={{ marginBottom: 4 }}>{demo.industry}</span>
                 <h2>{demo.title}</h2>
               </div>
-              <span className="demo-live-badge">{demo.status}</span>
+              <span className={statusBadgeClass(demo.status)}>{demo.status}</span>
             </div>
             <p>{demo.description}</p>
             <ul className="demo-feature-list">
-              {demo.features.map((f) => <li key={f}>{f}</li>)}
+              {(demo.features || []).map((f) => <li key={f}>{f}</li>)}
             </ul>
             <div className="demo-card-actions">
-              <a href={demo.url} target="_blank" rel="noopener noreferrer" className="primary-btn" data-testid={`demo-visit-${demo.id}`}>
-                View Live Demo <ExternalLink size={16} />
-              </a>
+              {demo.status === "Live Demo" ? (
+                <a href={demo.url} target="_blank" rel="noopener noreferrer" className="primary-btn" data-testid={`demo-visit-${demo.id}`}>
+                  View Live Demo <ExternalLink size={16} />
+                </a>
+              ) : (
+                <span className="primary-btn demo-btn--disabled" data-testid={`demo-visit-${demo.id}`}>
+                  {demo.status === "Now Building" ? "In Progress" : "Coming Soon"}
+                </span>
+              )}
               <Link to={`/contact?${new URLSearchParams({ type: "Business inquiry", service: `Demo – ${demo.title}` }).toString()}`} className="secondary-btn" data-testid={`demo-contact-${demo.id}`}>
                 Request This for My Business
               </Link>
