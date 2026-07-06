@@ -18,6 +18,7 @@ const comingSoonSocials = [
 ];
 
 export default function Contact() {
+  useSEO({ title: "Contact Evolvix Tech Media", description: "Reach out for AI consulting, website development, digital products, branding, or creative services. Based in Bardhaman, serving clients across India.", path: "/contact" });
   const { content } = useSiteContent();
   const contact = content.contact || contactDetails;
   const [searchParams] = useSearchParams();

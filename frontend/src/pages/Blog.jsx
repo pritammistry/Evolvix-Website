@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { blogPosts } from "../data/siteContent";
+import { useSEO } from "../hooks/useSEO";
 import { SectionHeader } from "../components/SectionHeader";
 import { FilterPills } from "../components/FilterPills";
 import { useSiteContent } from "../hooks/useSiteContent";
 
 export default function Blog() {
+  useSEO({ title: "Blog & Insights — AI, Business, Creativity & Learning", description: "Practical articles on AI tools, learning strategies, business growth, and digital creativity from Evolvix Tech Media.", path: "/blog" });
   const { content } = useSiteContent();
   const posts = content.blog || blogPosts;
   const categories = ["All", ...new Set(posts.map((post) => post.category))];

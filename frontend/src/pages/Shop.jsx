@@ -13,6 +13,7 @@ import { openRazorpayCheckout } from "../lib/razorpay";
 import { redirectToLoginForBuy, consumePendingBuyProductId } from "../lib/authRedirect";
 
 export default function Shop() {
+  useSEO({ title: "Evolvix Store — Digital Products & Services", description: "Browse prompt packs, AI guides, digital learning kits, and service quotes. Instant delivery with GST invoice included.", path: "/shop" });
   const { content } = useSiteContent();
   const { user } = useAuth();
   const navigate = useNavigate();

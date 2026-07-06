@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useSEO } from "../hooks/useSEO";
 import { ArrowRight, BookOpen, Download, ExternalLink, Gamepad2, Music2, Play } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 import { useSiteContent } from "../hooks/useSiteContent";
@@ -70,6 +71,7 @@ function ThumbnailCard({ item, onDownload, btnLabel = "Download Free" }) {
 }
 
 export default function Playground() {
+  useSEO({ title: "Evolvix Playground — Creative Experiments & AI Tools", description: "Explore interactive AI experiments, tools, and creative prototypes from the Evolvix product lab.", path: "/playground" });
   const { content } = useSiteContent();
   const { user } = useAuth();
   const navigate = useNavigate();

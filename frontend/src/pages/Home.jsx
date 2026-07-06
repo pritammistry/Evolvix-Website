@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useSEO } from "../hooks/useSEO";
 import { ArrowRight, BrainCircuit, BriefcaseBusiness, Download, MapPin, Palette, Rocket, ShieldCheck, Sparkles, Star } from "lucide-react";
 import { toast } from "sonner";
 import { logos } from "../data/siteContent";
@@ -15,6 +16,7 @@ import { HeroParticle } from "../components/HeroParticle";
 import { TestimonialsCarousel } from "../components/TestimonialsCarousel";
 
 export default function Home() {
+  useSEO({ title: "AI Consulting, Digital Products & Creative Services in India", description: "Evolvix Tech Media helps students, professionals, and businesses learn AI, build digital products, and grow with creative and technology services.", path: "/" });
   const [email, setEmail] = useState("");
   const { content } = useSiteContent();
   const { user } = useAuth();

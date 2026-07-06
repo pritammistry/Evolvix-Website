@@ -72,6 +72,7 @@ function statusBadgeClass(status) {
 }
 
 export default function Demo() {
+  useSEO({ title: "Live Product Demos — See Before You Commit", description: "Explore live demos of Evolvix-built web products across retail, SaaS, and more. Request a custom demo for your business before spending a rupee.", path: "/demo" });
   const { content } = useSiteContent();
   const { user } = useAuth();
   const navigate = useNavigate();

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ExternalLink, Mic2, Music2, Play, Radio, WandSparkles } from "lucide-react";
 import { musicMoods } from "../data/siteContent";
+import { useSEO } from "../hooks/useSEO";
 import { SectionHeader } from "../components/SectionHeader";
 import { useSiteContent } from "../hooks/useSiteContent";
 
@@ -24,6 +25,7 @@ function AudioPreviewControl({ preview, index }) {
 }
 
 export default function CreativeLab() {
+  useSEO({ title: "Evolvix Creative Lab — AI Music & Mood Experiences", description: "AI-generated mood music and creative audio experiences for focus, calm, nostalgia, and energy — built by Evolvix Creative.", path: "/music" });
   const [selected, setSelected] = useState(musicMoods[0]);
   const { content } = useSiteContent();
   const musicServices = content.music_services || [];

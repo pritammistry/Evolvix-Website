@@ -1,8 +1,10 @@
 import { SectionHeader } from "../components/SectionHeader";
 import { logos } from "../data/siteContent";
 import { useSiteContent } from "../hooks/useSiteContent";
+import { useSEO } from "../hooks/useSEO";
 
 export default function About() {
+  useSEO({ title: "About Evolvix Tech Media", description: "Evolvix Tech Media is a Bardhaman-based AI and digital company helping people adapt, learn, create, and thrive through technology, creativity, and business tools.", path: "/about" });
   const { content } = useSiteContent();
   const about = content.about || {};
   const whatWeDo = about.what_we_do || [];

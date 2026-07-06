@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Boxes } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 import { useSiteContent } from "../hooks/useSiteContent";
+import { useSEO } from "../hooks/useSEO";
 
 function ecosystemPath(name) {
   if (name === "Evolvix LearnAI") return "/shop?category=LearnAI";
@@ -9,6 +10,7 @@ function ecosystemPath(name) {
 }
 
 export default function Ecosystem() {
+  useSEO({ title: "Evolvix Product Ecosystem — LearnAI, BuildX, Creative & Business", description: "Explore four focused verticals: Evolvix LearnAI for learning, BuildX for development, Creative for design, and Business for consulting and growth.", path: "/ecosystem" });
   const { content } = useSiteContent();
   const ecosystem = content.ecosystem || [];
   return (
