@@ -161,6 +161,19 @@ async def issue_otp(user: Dict[str, Any]) -> None:
         raise HTTPException(status_code=502, detail="Could not send verification email. Please try again in a moment.") from exc
 
 
+OWNER_EMAIL = os.environ.get("OWNER_EMAIL", "evolvixtech0pm@gmail.com")
+FROM_EMAIL = lambda: os.environ.get("RESEND_FROM_EMAIL", "Evolvix Tech Media <onboarding@resend.dev>")
+
+
+def send_notification_email(to: str, subject: str, html: str) -> None:
+    if not EMAIL_VERIFICATION_ENABLED:
+        return
+    try:
+        resend.Emails.send({"from": FROM_EMAIL(), "to": [to], "subject": subject, "html": html})
+    except Exception as exc:
+        logger.warning("Notification email to %s failed: %s", to, exc)
+
+
 DEFAULT_SITE_CONTENT: Dict[str, Any] = {
     "brand": {
         "name": "Evolvix Tech Media",
@@ -1052,13 +1065,47 @@ async def create_contact_message(payload: ContactMessageCreate):
     doc = payload.model_dump()
     doc.update({"id": str(uuid.uuid4()), "created_at": now_iso(), "status": "new"})
     await db.contact_messages.insert_one(doc)
+    send_notification_email(
+        to=OWNER_EMAIL,
+        subject=f"New enquiry [{doc.get('inquiry_type', 'Contact')}] from {doc.get('name', 'Unknown')}",
+        html=f"""
+<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+  <h2 style="color:#13dff4;margin-bottom:4px">New Contact Form Submission</h2>
+  <p style="color:#666;margin-top:0">Received on evolvixtech.in</p>
+  <table style="width:100%;border-collapse:collapse;margin-top:16px">
+    <tr><td style="padding:10px 14px;background:#f5f5f5;font-weight:700;width:130px">Name</td><td style="padding:10px 14px;border-bottom:1px solid #eee">{doc.get('name', '—')}</td></tr>
+    <tr><td style="padding:10px 14px;background:#f5f5f5;font-weight:700">Phone</td><td style="padding:10px 14px;border-bottom:1px solid #eee">{doc.get('phone', '—')}</td></tr>
+    <tr><td style="padding:10px 14px;background:#f5f5f5;font-weight:700">Email</td><td style="padding:10px 14px;border-bottom:1px solid #eee"><a href="mailto:{doc.get('email')}">{doc.get('email', '—')}</a></td></tr>
+    <tr><td style="padding:10px 14px;background:#f5f5f5;font-weight:700">Type</td><td style="padding:10px 14px;border-bottom:1px solid #eee">{doc.get('inquiry_type', '—')}</td></tr>
+    <tr><td style="padding:10px 14px;background:#f5f5f5;font-weight:700;vertical-align:top">Message</td><td style="padding:10px 14px">{doc.get('message', '—')}</td></tr>
+  </table>
+  <p style="margin-top:20px"><a href="https://evolvixtech.in/admin" style="background:#13dff4;color:#020204;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:700">View in Admin Dashboard</a></p>
+</div>""",
+    )
     return {"id": doc["id"], "message": "Thanks — your message has been received."}
 
 
 @api_router.post("/newsletter")
 async def create_newsletter_signup(payload: NewsletterCreate):
     doc = {"id": str(uuid.uuid4()), "email": payload.email, "created_at": now_iso(), "source": "website"}
-    await db.newsletter_signups.update_one({"email": payload.email}, {"$setOnInsert": doc}, upsert=True)
+    result = await db.newsletter_signups.update_one({"email": payload.email}, {"$setOnInsert": doc}, upsert=True)
+    if result.upserted_id:
+        send_notification_email(
+            to=payload.email,
+            subject="You’re on the Evolvix update list",
+            html=f"""
+<div style="font-family:sans-serif;max-width:520px;margin:0 auto;text-align:center;padding:32px 20px">
+  <h2 style="color:#13dff4">You’re in.</h2>
+  <p style="color:#444;line-height:1.7">Thanks for joining the Evolvix Tech Media update list.<br>You’ll be the first to know about new products, launches, and creative drops.</p>
+  <a href="https://evolvixtech.in" style="display:inline-block;margin-top:20px;background:#13dff4;color:#020204;padding:12px 28px;border-radius:999px;text-decoration:none;font-weight:700">Visit Evolvix</a>
+  <p style="margin-top:28px;color:#999;font-size:12px">To unsubscribe, reply with "unsubscribe" to this email.</p>
+</div>""",
+        )
+        send_notification_email(
+            to=OWNER_EMAIL,
+            subject=f"New newsletter signup: {payload.email}",
+            html=f"<p style=\"font-family:sans-serif\"><strong>{payload.email}</strong> just joined the Evolvix update list.</p>",
+        )
     return {"message": "You’re on the Evolvix update list."}
 
 
