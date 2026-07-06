@@ -42,7 +42,7 @@ export default function Contact() {
   const [searchParams] = useSearchParams();
   const prefillType = VALID_TYPES.includes(searchParams.get("type")) ? searchParams.get("type") : "Business inquiry";
   const prefillService = searchParams.get("service") || "";
-  const [form, setForm] = useState({ name: "", phone: "", email: "", inquiry_type: prefillType, message: prefillService ? `Hi, I’m interested in ${prefillService}.` : "" });
+  const [form, setForm] = useState({ name: "", phone: "+91 ", email: "", inquiry_type: prefillType, message: prefillService ? `Hi, I’m interested in ${prefillService}.` : "" });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
@@ -67,7 +67,7 @@ export default function Contact() {
       await submitContact(form);
       trackFormSubmit("contact-form", window.location.pathname, { inquiry_type: form.inquiry_type });
       toast.success("Your message has been received.");
-      setForm({ name: "", phone: "", email: "", inquiry_type: "Business inquiry", message: "" });
+      setForm({ name: "", phone: "+91 ", email: "", inquiry_type: "Business inquiry", message: "" });
       setTouched({});
       setErrors({});
     } catch { toast.error("Something went wrong. Please try again."); }
