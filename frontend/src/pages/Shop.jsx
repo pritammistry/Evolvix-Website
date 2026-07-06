@@ -10,6 +10,7 @@ import { createCheckout } from "../api";
 import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
 import { openRazorpayCheckout } from "../lib/razorpay";
+import { useSEO } from "../hooks/useSEO";
 import { redirectToLoginForBuy, consumePendingBuyProductId } from "../lib/authRedirect";
 
 export default function Shop() {

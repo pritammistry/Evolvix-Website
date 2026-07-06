@@ -7,6 +7,7 @@ import { submitContact } from "../api";
 import { SectionHeader } from "../components/SectionHeader";
 import { trackFormSubmit } from "../components/AnalyticsTracker";
 import { useSiteContent } from "../hooks/useSiteContent";
+import { useSEO } from "../hooks/useSEO";
 
 const VALID_TYPES = ["Business inquiry","AI Business Consulting","Creative Digital Services","Website / App / Software","Learning and Growth Product Support","Music for Creators","Branding / Portfolio / Resume","Collaboration inquiry"];
 

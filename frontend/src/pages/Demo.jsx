@@ -6,6 +6,7 @@ import { SectionHeader } from "../components/SectionHeader";
 import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
 import { redirectToLoginForDemo, consumePendingDemo } from "../lib/authRedirect";
+import { useSEO } from "../hooks/useSEO";
 
 const ICON_MAP = {
   shopping: <ShoppingBag size={28} />,
