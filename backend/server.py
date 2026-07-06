@@ -1194,6 +1194,55 @@ async def admin_analytics_export(request: Request, format: str = "csv", start_da
 
 
 
+# --- Leads (contacts + newsletter) ---
+
+@api_router.get("/admin/leads/contacts")
+async def admin_leads_contacts(request: Request):
+    verify_admin_request(request)
+    docs = []
+    async for doc in db.contact_messages.find({}, {"_id": 0}).sort("created_at", -1).limit(200):
+        docs.append(doc)
+    return {"contacts": docs, "total": len(docs)}
+
+@api_router.get("/admin/leads/contacts/export")
+async def admin_leads_contacts_export(request: Request):
+    verify_admin_request(request)
+    docs = []
+    async for doc in db.contact_messages.find({}, {"_id": 0}).sort("created_at", -1):
+        docs.append(doc)
+    fields = ["id", "name", "email", "phone", "inquiry_type", "message", "status", "created_at"]
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=fields, extrasaction="ignore")
+    writer.writeheader()
+    for doc in docs:
+        writer.writerow({k: doc.get(k, "") for k in fields})
+    payload = output.getvalue().encode("utf-8")
+    return StreamingResponse(io.BytesIO(payload), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=\"evolvix-contacts.csv\""})
+
+@api_router.get("/admin/leads/newsletter")
+async def admin_leads_newsletter(request: Request):
+    verify_admin_request(request)
+    docs = []
+    async for doc in db.newsletter_signups.find({}, {"_id": 0}).sort("created_at", -1).limit(1000):
+        docs.append(doc)
+    return {"subscribers": docs, "total": len(docs)}
+
+@api_router.get("/admin/leads/newsletter/export")
+async def admin_leads_newsletter_export(request: Request):
+    verify_admin_request(request)
+    docs = []
+    async for doc in db.newsletter_signups.find({}, {"_id": 0}).sort("created_at", -1):
+        docs.append(doc)
+    fields = ["id", "email", "source", "created_at"]
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=fields, extrasaction="ignore")
+    writer.writeheader()
+    for doc in docs:
+        writer.writerow({k: doc.get(k, "") for k in fields})
+    payload = output.getvalue().encode("utf-8")
+    return StreamingResponse(io.BytesIO(payload), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=\"evolvix-newsletter.csv\""})
+
+
 # --- Playground ---
 
 class PlaygroundItemCreate(BaseModel):
