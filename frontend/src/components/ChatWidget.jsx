@@ -40,6 +40,27 @@ function TypingDots() {
   );
 }
 
+function ChatBubbleText({ content }) {
+  const lines = content.split("\n").filter((l) => l.trim() !== "");
+  return (
+    <>
+      {lines.map((line, i) => {
+        // render **bold** spans inline
+        const parts = line.split(/(\*\*[^*]+\*\*)/g);
+        return (
+          <p key={i} className="chat-bubble-line">
+            {parts.map((part, j) =>
+              part.startsWith("**") && part.endsWith("**")
+                ? <strong key={j}>{part.slice(2, -2)}</strong>
+                : part
+            )}
+          </p>
+        );
+      })}
+    </>
+  );
+}
+
 export function ChatWidget() {
   const { content } = useSiteContent();
   const contact = content.contact || {};
@@ -167,7 +188,9 @@ export function ChatWidget() {
                 {msg.role === "assistant" && <div className="chat-msg-avatar">EX</div>}
                 <div>
                   <div className="chat-msg-bubble">
-                    {msg.content || (streaming && i === messages.length - 1 ? <TypingDots /> : "")}
+                    {msg.content
+                      ? (msg.role === "assistant" ? <ChatBubbleText content={msg.content} /> : msg.content)
+                      : (streaming && i === messages.length - 1 ? <TypingDots /> : "")}
                   </div>
                   {msg.ctas?.length > 0 && i > 0 && (
                     <div className="chat-cta-row">
