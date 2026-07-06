@@ -297,7 +297,7 @@ export default function AdminDashboard() {
 
   const login = async (event) => {
     event.preventDefault();
-    try { await adminLogin({ password }); await loadDashboard(); setAuthenticated(true); toast.success("Admin unlocked"); } catch { toast.error("Invalid admin password"); }
+    try { await adminLogin({ password }); await loadDashboard(); setAuthenticated(true); toast.success("Admin unlocked"); } catch (err) { toast.error(err?.response?.data?.detail || err?.message || "Login failed"); }
   };
 
   const updateContent = (path, value) => {
