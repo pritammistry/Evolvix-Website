@@ -431,6 +431,7 @@ BLOG_POSTS = [
 
 class ContactMessageCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=120)
+    phone: Optional[str] = Field(None, max_length=20)
     email: EmailStr
     inquiry_type: str = Field(..., max_length=80)
     message: str = Field(..., min_length=10, max_length=2500)
