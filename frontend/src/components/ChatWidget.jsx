@@ -20,7 +20,7 @@ function getContextualCTAs(text) {
   if (/website|web app|\bapp\b|software|build|develop|automat/.test(t))
     ctas.push({ label: "Request a Build", href: "/contact?" + new URLSearchParams({ type: "Website / App / Software" }).toString() });
   if (/learn|course|guide|prompt|download|ebook|resource|product|learnai/.test(t))
-    ctas.push({ label: "Browse Products", href: "/playground" });
+    ctas.push({ label: "Browse Products", href: "/shop" });
   if (/demo|example|prototype|showcase/.test(t))
     ctas.push({ label: "See Demos", href: "/demo" });
   if (/price|cost|quote|budget|how much|package|plan/.test(t))
@@ -82,7 +82,10 @@ export function ChatWidget() {
   }, [messages, streaming]);
 
   useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 120);
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 120);
+      fetch(`${API_BASE}/api/`).catch(() => {});
+    }
   }, [open]);
 
   const sendMessage = async (text) => {
