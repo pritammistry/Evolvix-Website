@@ -28,7 +28,10 @@ export function Layout({ children }) {
           {navItems.map(([label, path]) => <NavLink key={path} to={path} data-testid={`nav-link-${label.toLowerCase().replaceAll(" ", "-")}`}>{label}</NavLink>)}
         </nav>
         {user ? (
-          <button className="text-btn account-link" onClick={handleLogout} data-testid="header-account-logout-button"><User size={16} /> {user.name || user.email} · Logout</button>
+          <span className="account-link-group" data-testid="header-account-group">
+            <Link to="/account" className="text-btn" data-testid="header-account-link"><User size={16} /> {user.name || "My Account"}</Link>
+            <button className="text-btn header-logout-btn" onClick={handleLogout} data-testid="header-account-logout-button">Logout</button>
+          </span>
         ) : (
           <Link to="/login" className="text-btn account-link" data-testid="header-login-link"><User size={16} /> Log In</Link>
         )}

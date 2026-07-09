@@ -102,3 +102,18 @@
 .sphere-loader .hero-particle-canvas{width:200px!important;height:200px!important}
 .sphere-loader-text{color:rgba(255,255,255,.38);font-size:.8125rem;letter-spacing:.09em;text-transform:uppercase}
 @media(max-width:680px){.hero-logo-stage .hero-logo-overlay{width:clamp(64px,22%,96px)}}
+.password-field{position:relative}
+.password-field input{padding-right:46px;width:100%}
+.password-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);padding:4px;cursor:pointer;display:grid;place-items:center;min-height:auto;transition:color .15s ease}
+.password-toggle:hover{color:var(--cyan)}
+.account-link-group{display:inline-flex;align-items:center;gap:6px}
+.header-logout-btn{color:var(--muted)!important;font-size:12px}
+.header-logout-btn:hover{color:var(--text)!important}
+.account-order-list{display:grid;gap:12px;max-width:860px;margin-bottom:32px}
+.account-order-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.035));flex-wrap:wrap}
+.account-order-info{display:flex;flex-direction:column;gap:5px}
+.account-order-info strong{font-size:1rem;color:white}
+.account-order-meta{font-size:.82rem;color:var(--muted)}
+.account-order-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.account-help-panel{margin-top:16px;padding:28px;border-radius:24px;max-width:620px}
+@media(max-width:620px){.account-order-row{flex-direction:column;align-items:flex-start}.account-order-actions{padding-top:4px}}

@@ -22,6 +22,7 @@ import Legal from "./pages/Legal";
 import CheckoutResult from "./pages/CheckoutResult";
 import AdminDashboard from "./pages/AdminDashboard";
 import Login from "./pages/Login";
+import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./hooks/useAuth";
 
@@ -51,6 +52,7 @@ function AppRoutes() {
       <Route path="/refund" element={<Legal type="refund" />} />
       <Route path="/checkout/success" element={<CheckoutResult />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/account" element={<Account />} />
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

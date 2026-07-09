@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { fetchCurrentVisitor, loginVisitor, logoutVisitor, resendVisitorOtp, setVisitorAuthToken, signupVisitor, verifyVisitorOtp } from "../api";
+import { fetchCurrentVisitor, forgotPassword as forgotPasswordApi, loginVisitor, logoutVisitor, resendVisitorOtp, resetPassword as resetPasswordApi, setVisitorAuthToken, signupVisitor, verifyVisitorOtp } from "../api";
 
 const AuthContext = createContext(null);
 
@@ -52,7 +52,19 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  return <AuthContext.Provider value={{ user, loading, login, signup, verifyOtp, resendOtp, logout }}>{children}</AuthContext.Provider>;
+  const forgotPassword = useCallback(async (email) => {
+    const { data } = await forgotPasswordApi({ email });
+    return data;
+  }, []);
+
+  const resetPassword = useCallback(async (email, otp, newPassword) => {
+    const { data } = await resetPasswordApi({ email, otp, new_password: newPassword });
+    setVisitorAuthToken(data.token);
+    setUser(data.user);
+    return data;
+  }, []);
+
+  return <AuthContext.Provider value={{ user, loading, login, signup, verifyOtp, resendOtp, logout, forgotPassword, resetPassword }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

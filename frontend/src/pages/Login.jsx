@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { SectionHeader } from "../components/SectionHeader";
 import { useAuth } from "../hooks/useAuth";
@@ -12,7 +13,11 @@ export default function Login() {
   const [otp, setOtp] = useState("");
   const [pendingEmail, setPendingEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { login, signup, verifyOtp, resendOtp } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [resetOtp, setResetOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const { login, signup, verifyOtp, resendOtp, forgotPassword, resetPassword } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = params.get("next") || "/";
@@ -66,6 +71,44 @@ export default function Login() {
     }
   };
 
+  const submitForgot = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
+    try {
+      await forgotPassword(forgotEmail);
+      setPendingEmail(forgotEmail);
+      setMode("reset");
+      toast.success("Reset code sent. Check your email.");
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || "Could not send reset code. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitReset = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
+    try {
+      await resetPassword(pendingEmail, resetOtp, newPassword);
+      toast.success("Password updated. You are now logged in.");
+      navigate(next, { replace: true });
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || "Could not reset password. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleResendReset = async () => {
+    try {
+      await forgotPassword(pendingEmail);
+      toast.success("A new reset code has been sent.");
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || "Could not resend code. Please try again shortly.");
+    }
+  };
+
   if (mode === "verify") {
     return (
       <section className="section page-section" data-testid="login-page">
@@ -97,6 +140,73 @@ export default function Login() {
     );
   }
 
+  if (mode === "forgot") {
+    return (
+      <section className="section page-section" data-testid="login-page">
+        <SectionHeader eyebrow="Account" title="Reset your password." text="Enter your account email and we'll send a reset code." />
+        <div className="contact-grid">
+          <form onSubmit={submitForgot} className="contact-form" data-testid="login-forgot-form">
+            <input
+              type="email"
+              required
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              placeholder="Email address"
+              data-testid="login-forgot-email-input"
+            />
+            <button type="submit" className="primary-btn" disabled={submitting} data-testid="login-forgot-submit">
+              {submitting ? "Sending…" : "Send Reset Code"}
+            </button>
+          </form>
+          <aside className="contact-panel" data-testid="login-forgot-panel">
+            <p><button type="button" className="text-btn" onClick={() => setMode("login")} data-testid="login-forgot-back">Back to log in</button></p>
+          </aside>
+        </div>
+      </section>
+    );
+  }
+
+  if (mode === "reset") {
+    return (
+      <section className="section page-section" data-testid="login-page">
+        <SectionHeader eyebrow="Account" title="Set a new password." text={`Enter the 6-digit code we sent to ${pendingEmail} and choose a new password.`} />
+        <div className="contact-grid">
+          <form onSubmit={submitReset} className="contact-form" data-testid="login-reset-form">
+            <input
+              value={resetOtp}
+              onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="6-digit reset code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              data-testid="login-reset-otp-input"
+            />
+            <div className="password-field">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={8}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password (min. 8 characters)"
+                data-testid="login-reset-password-input"
+              />
+              <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} tabIndex={-1} aria-label={showPassword ? "Hide password" : "Show password"}>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            <button type="submit" className="primary-btn" disabled={submitting || resetOtp.length !== 6} data-testid="login-reset-submit">
+              {submitting ? "Setting password…" : "Set New Password"}
+            </button>
+          </form>
+          <aside className="contact-panel" data-testid="login-reset-panel">
+            <p>Didn't get it? <button type="button" className="text-btn" onClick={handleResendReset} data-testid="login-reset-resend">Resend code</button></p>
+            <p><button type="button" className="text-btn" onClick={() => setMode("login")} data-testid="login-reset-back">Back to log in</button></p>
+          </aside>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="section page-section" data-testid="login-page">
       <SectionHeader eyebrow="Account" title={mode === "signup" ? "Create your Evolvix account." : "Log in to continue."} text="One account for the Store, product demos, and Evolvix Lab downloads." />
@@ -110,12 +220,28 @@ export default function Login() {
             </select>
           )}
           <input type="email" required value={form.email} onChange={(e) => setField("email", e.target.value)} placeholder="Email address" data-testid="login-email-input" />
-          <input type="password" required minLength={mode === "signup" ? 8 : undefined} value={form.password} onChange={(e) => setField("password", e.target.value)} placeholder={mode === "signup" ? "Password (min. 8 characters)" : "Password"} data-testid="login-password-input" />
+          <div className="password-field">
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              minLength={mode === "signup" ? 8 : undefined}
+              value={form.password}
+              onChange={(e) => setField("password", e.target.value)}
+              placeholder={mode === "signup" ? "Password (min. 8 characters)" : "Password"}
+              data-testid="login-password-input"
+            />
+            <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} tabIndex={-1} aria-label={showPassword ? "Hide password" : "Show password"}>
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           <button type="submit" className="primary-btn" disabled={submitting} data-testid="login-submit-button">{submitting ? "Please wait..." : mode === "signup" ? "Create Account" : "Log In"}</button>
         </form>
         <aside className="contact-panel" data-testid="login-switch-panel">
           {mode === "login" ? (
-            <p data-testid="login-switch-to-signup-text">New to Evolvix? <button type="button" className="text-btn" onClick={() => setMode("signup")} data-testid="login-switch-to-signup-button">Create an account</button></p>
+            <>
+              <p data-testid="login-switch-to-signup-text">New to Evolvix? <button type="button" className="text-btn" onClick={() => setMode("signup")} data-testid="login-switch-to-signup-button">Create an account</button></p>
+              <p data-testid="login-forgot-link-text"><button type="button" className="text-btn" onClick={() => { setForgotEmail(form.email); setMode("forgot"); }} data-testid="login-forgot-link">Forgot your password?</button></p>
+            </>
           ) : (
             <p data-testid="login-switch-to-login-text">Already have an account? <button type="button" className="text-btn" onClick={() => setMode("login")} data-testid="login-switch-to-login-button">Log in</button></p>
           )}

@@ -161,6 +161,31 @@ async def issue_otp(user: Dict[str, Any]) -> None:
         raise HTTPException(status_code=502, detail="Could not send verification email. Please try again in a moment.") from exc
 
 
+async def issue_reset_otp(user: Dict[str, Any]) -> None:
+    if not EMAIL_VERIFICATION_ENABLED:
+        raise HTTPException(status_code=503, detail="Email service is not configured. Please contact support.")
+    otp = generate_otp()
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {
+            "otp_hash": hash_otp(otp),
+            "otp_expires_at": (datetime.now(timezone.utc) + timedelta(minutes=OTP_TTL_MINUTES)).isoformat(),
+            "otp_attempts": 0,
+            "otp_sent_at": now_iso(),
+        }},
+    )
+    try:
+        resend.Emails.send({
+            "from": os.environ.get("RESEND_FROM_EMAIL", "Evolvix Tech Media <onboarding@resend.dev>"),
+            "to": [user["email"]],
+            "subject": "Reset your Evolvix password",
+            "html": f"<p>Your Evolvix Tech Media password reset code is:</p><h2 style=\"letter-spacing:4px\">{otp}</h2><p>This code expires in {OTP_TTL_MINUTES} minutes. If you didn't request this, you can safely ignore this email.</p>",
+        })
+    except Exception as exc:
+        logger.warning("Failed to send reset email to %s: %s", user["email"], exc)
+        raise HTTPException(status_code=502, detail="Could not send reset email. Please try again in a moment.") from exc
+
+
 OWNER_EMAIL = os.environ.get("OWNER_EMAIL", "evolvixtech0pm@gmail.com")
 FROM_EMAIL = lambda: os.environ.get("RESEND_FROM_EMAIL", "Evolvix Tech Media <onboarding@resend.dev>")
 
@@ -483,6 +508,16 @@ class ResendOtpRequest(BaseModel):
     email: EmailStr
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6)
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
 class AdminContentUpdate(BaseModel):
     content: Dict[str, Any]
 
@@ -732,6 +767,57 @@ async def logout(request: Request, response: Response):
 async def get_me(request: Request):
     user = await require_user(request)
     return {"user": public_user(user)}
+
+
+@api_router.post("/auth/forgot-password")
+async def forgot_password(payload: ForgotPasswordRequest):
+    email = payload.email.lower()
+    user = await db.users.find_one({"email": email})
+    if not user or not user.get("email_verified"):
+        return {"status": "ok", "message": "If an account with this email exists, a reset code has been sent."}
+    last_sent = user.get("otp_sent_at")
+    if last_sent:
+        elapsed = (datetime.now(timezone.utc) - datetime.fromisoformat(last_sent)).total_seconds()
+        if elapsed < OTP_RESEND_COOLDOWN_SECONDS:
+            raise HTTPException(status_code=429, detail="Please wait before requesting another code.")
+    await issue_reset_otp(user)
+    return {"status": "ok", "message": "If an account with this email exists, a reset code has been sent."}
+
+
+@api_router.post("/auth/reset-password")
+async def reset_password(payload: ResetPasswordRequest, response: Response):
+    email = payload.email.lower()
+    user = await db.users.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="Account not found")
+    if not user.get("otp_hash") or not user.get("otp_expires_at"):
+        raise HTTPException(status_code=400, detail="No reset code pending. Please request a new one.")
+    if user["otp_expires_at"] < now_iso():
+        raise HTTPException(status_code=400, detail="This code has expired. Please request a new one.")
+    if user.get("otp_attempts", 0) >= OTP_MAX_ATTEMPTS:
+        raise HTTPException(status_code=429, detail="Too many incorrect attempts. Please request a new code.")
+    if hash_otp(payload.otp) != user["otp_hash"]:
+        await db.users.update_one({"id": user["id"]}, {"$inc": {"otp_attempts": 1}})
+        raise HTTPException(status_code=400, detail="Incorrect code. Please try again.")
+    new_hash = hash_password(payload.new_password)
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"password_hash": new_hash},
+         "$unset": {"otp_hash": "", "otp_expires_at": "", "otp_attempts": "", "otp_sent_at": ""}},
+    )
+    user["password_hash"] = new_hash
+    return await start_session(response, user)
+
+
+@api_router.get("/visitor/orders")
+async def get_visitor_orders(request: Request):
+    user = await require_user(request)
+    cursor = db.payment_transactions.find(
+        {"user_id": user["id"], "payment_status": "paid"},
+        {"_id": 0, "id": 1, "session_id": 1, "product_id": 1, "amount": 1, "currency": 1, "metadata": 1, "created_at": 1},
+    ).sort("created_at", -1)
+    orders = await cursor.to_list(length=50)
+    return {"orders": orders}
 
 
 @api_router.get("/admin/dashboard")
