@@ -2,27 +2,37 @@ import { useEffect, useState } from "react";
 import { fetchSiteContent } from "../api";
 import { fallbackSiteContent } from "../data/siteContent";
 
-const siteContentFallback = fallbackSiteContent;
+// Module-level cache — survives page navigation within the same session.
+// Once the API responds, every subsequent useSiteContent() call gets the
+// cached value immediately with loading=false (no sphere, no skeleton).
+let cachedContent = null;
+let fetchPromise = null;
 
 export function useSiteContent() {
-  const [content, setContent] = useState(fallbackSiteContent);
-  const [loading, setLoading] = useState(true);
+  const [content, setContent] = useState(() => cachedContent || fallbackSiteContent);
+  const [loading, setLoading] = useState(() => !cachedContent);
 
   useEffect(() => {
+    // Cache already populated — nothing to fetch.
+    if (cachedContent) return;
+
+    // Kick off one shared fetch regardless of how many components mount.
+    if (!fetchPromise) {
+      fetchPromise = fetchSiteContent();
+    }
+
     let active = true;
-    fetchSiteContent()
+    fetchPromise
       .then(({ data }) => {
-        if (active) setContent(data);
+        cachedContent = data;
+        if (active) { setContent(data); setLoading(false); }
       })
       .catch(() => {
-        if (active) setContent(siteContentFallback);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+        cachedContent = fallbackSiteContent;
+        if (active) { setContent(fallbackSiteContent); setLoading(false); }
       });
-    return () => {
-      active = false;
-    };
+
+    return () => { active = false; };
   }, []);
 
   return { content, loading };

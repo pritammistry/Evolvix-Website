@@ -91,7 +91,8 @@
 .hero-logo-stage .hero-logo-overlay{position:absolute;width:clamp(78px,24%,124px);z-index:2;box-shadow:0 0 48px rgba(19,223,244,.38),0 0 0 2px rgba(19,223,244,.18),0 30px 60px rgba(0,0,0,.38)}
 @media(max-width:1060px){.hero-logo-stage .hero-logo-overlay{width:clamp(72px,22%,110px)}}
 @keyframes skeletonShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-.product-card--skeleton{min-height:340px;border-radius:16px;background:linear-gradient(90deg,rgba(255,255,255,.05) 25%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.05) 75%);background-size:200% 100%;animation:skeletonShimmer 1.4s ease infinite}
+.product-card--skeleton{min-height:340px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);position:relative;overflow:hidden}
+.product-card--skeleton::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 25%,rgba(255,255,255,.1) 50%,transparent 75%);background-size:200% 100%;animation:skeletonShimmer 1.4s ease infinite}
 .sphere-loader-page{display:flex;align-items:center;justify-content:center;min-height:60vh}
 .sphere-loader{display:flex;flex-direction:column;align-items:center;gap:1.25rem;max-width:220px}
 .sphere-loader .hero-particle-canvas{width:200px!important;height:200px!important}
