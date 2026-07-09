@@ -102,9 +102,9 @@
 .sphere-loader .hero-particle-canvas{width:200px!important;height:200px!important}
 .sphere-loader-text{color:rgba(255,255,255,.38);font-size:.8125rem;letter-spacing:.09em;text-transform:uppercase}
 @media(max-width:680px){.hero-logo-stage .hero-logo-overlay{width:clamp(64px,22%,96px)}}
-.password-field{position:relative}
-.password-field input{padding-right:46px;width:100%}
-.password-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);padding:4px;cursor:pointer;display:grid;place-items:center;min-height:auto;transition:color .15s ease}
+.password-field{display:flex;align-items:center;min-height:46px;border:1px solid var(--line);border-radius:16px;background:rgba(0,0,0,.22);overflow:hidden}
+.password-field input,.contact-form .password-field input{flex:1;border:none;border-radius:0;background:transparent;padding:0 14px;min-height:44px;width:auto}
+.password-toggle{flex-shrink:0;background:none;border:none;color:var(--muted);padding:0 14px;cursor:pointer;display:grid;place-items:center;min-height:44px;transition:color .15s ease}
 .password-toggle:hover{color:var(--cyan)}
 .account-link-group{display:inline-flex;align-items:center;gap:6px}
 .header-logout-btn{color:var(--muted)!important;font-size:12px}
