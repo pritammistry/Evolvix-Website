@@ -18,12 +18,12 @@ import { TestimonialsCarousel } from "../components/TestimonialsCarousel";
 export default function Home() {
   useSEO({ title: "AI Consulting, Digital Products & Creative Services in India", description: "Evolvix Tech Media helps students, professionals, and businesses learn AI, build digital products, and grow with creative and technology services.", path: "/" });
   const [email, setEmail] = useState("");
-  const { content } = useSiteContent();
+  const { content, loading } = useSiteContent();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const brand = content.brand || {};
-  const products = content.products || [];
+  const products = loading ? [] : (content.products || []);
   const portfolioItems = content.portfolio || [];
   const ecosystem = content.ecosystem || [];
   const whyChoose = content.why_choose || [];
@@ -125,7 +125,7 @@ export default function Home() {
       </section>
       <section className="section" data-testid="home-shop-preview-section">
         <SectionHeader eyebrow="Featured products / services" title="Actionable AI resources and creator-ready digital products." />
-        <div className="product-grid">{products.slice(0, 3).map((product) => <ProductCard key={product.id} product={product} onBuy={buyProduct} />)}</div>
+        <div className="product-grid">{loading ? [1,2,3].map((i) => <div key={i} className="product-card product-card--skeleton" aria-hidden="true" />) : products.slice(0, 3).map((product) => <ProductCard key={product.id} product={product} onBuy={buyProduct} />)}</div>
       </section>
       <section className="section mood-band" data-testid="home-why-choose-section">
         <SectionHeader eyebrow="Why choose Evolvix" title="AI-first, personalized, future-ready, and business-focused." text="The brand is designed to support people and businesses end-to-end — with practical innovation and creative excellence." />

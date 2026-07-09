@@ -3,10 +3,18 @@ import { Link } from "react-router-dom";
 import { SectionHeader } from "../components/SectionHeader";
 import { useSEO } from "../hooks/useSEO";
 import { useSiteContent } from "../hooks/useSiteContent";
+import { HeroParticle } from "../components/HeroParticle";
 
 export default function Services() {
   useSEO({ title: "AI Consulting, Web Development & Creative Services", description: "Creative digital services, AI business consulting, websites, apps, branding, automation, and digital marketing for businesses across India.", path: "/services" });
-  const { content } = useSiteContent();
+  const { content, loading } = useSiteContent();
+  if (loading) {
+    return (
+      <section className="section page-section sphere-loader-page" data-testid="services-loading">
+        <div className="sphere-loader"><HeroParticle /><p className="sphere-loader-text">Loading services…</p></div>
+      </section>
+    );
+  }
   const creative = content.creative_services || [];
   const tech = content.technology_services || [];
   const howWeWork = content.how_we_work || [];

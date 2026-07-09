@@ -7,6 +7,7 @@ import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
 import { redirectToLoginForDemo, consumePendingDemo } from "../lib/authRedirect";
 import { useSEO } from "../hooks/useSEO";
+import { HeroParticle } from "../components/HeroParticle";
 
 const ICON_MAP = {
   shopping: <ShoppingBag size={28} />,
@@ -74,10 +75,9 @@ function statusBadgeClass(status) {
 
 export default function Demo() {
   useSEO({ title: "Live Product Demos — See Before You Commit", description: "Explore live demos of Evolvix-built web products across retail, SaaS, and more. Request a custom demo for your business before spending a rupee.", path: "/demo" });
-  const { content } = useSiteContent();
+  const { content, loading } = useSiteContent();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const demos = (content?.demos?.length ? content.demos.filter((d) => d.visible !== false) : null) || DEMO_SITES;
   const [highlighted, setHighlighted] = useState(null);
 
   useEffect(() => {
@@ -90,6 +90,19 @@ export default function Demo() {
     const t = setTimeout(() => setHighlighted(null), 4000);
     return () => clearTimeout(t);
   }, [user]);
+
+  if (loading) {
+    return (
+      <section className="section page-section sphere-loader-page" data-testid="demo-loading">
+        <div className="sphere-loader">
+          <HeroParticle />
+          <p className="sphere-loader-text">Loading demos…</p>
+        </div>
+      </section>
+    );
+  }
+
+  const demos = (content?.demos?.length ? content.demos.filter((d) => d.visible !== false) : null) || DEMO_SITES;
 
   function handleDemoClick(demo) {
     if (!user) {

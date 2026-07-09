@@ -3,6 +3,7 @@ import { ArrowRight, Boxes } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 import { useSiteContent } from "../hooks/useSiteContent";
 import { useSEO } from "../hooks/useSEO";
+import { HeroParticle } from "../components/HeroParticle";
 
 function ecosystemPath(name) {
   if (name === "Evolvix LearnAI") return "/shop?category=LearnAI";
@@ -11,7 +12,14 @@ function ecosystemPath(name) {
 
 export default function Ecosystem() {
   useSEO({ title: "Evolvix Product Ecosystem — LearnAI, BuildX, Creative & Business", description: "Explore four focused verticals: Evolvix LearnAI for learning, BuildX for development, Creative for design, and Business for consulting and growth.", path: "/ecosystem" });
-  const { content } = useSiteContent();
+  const { content, loading } = useSiteContent();
+  if (loading) {
+    return (
+      <section className="section page-section sphere-loader-page" data-testid="ecosystem-loading">
+        <div className="sphere-loader"><HeroParticle /><p className="sphere-loader-text">Loading ecosystem…</p></div>
+      </section>
+    );
+  }
   const ecosystem = content.ecosystem || [];
   return (
     <section className="section page-section" data-testid="ecosystem-page">
