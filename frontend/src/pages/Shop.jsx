@@ -15,11 +15,11 @@ import { redirectToLoginForBuy, consumePendingBuyProductId } from "../lib/authRe
 
 export default function Shop() {
   useSEO({ title: "Evolvix Store — Digital Products & Services", description: "Browse prompt packs, AI guides, digital learning kits, and service quotes. Instant delivery with GST invoice included.", path: "/shop" });
-  const { content } = useSiteContent();
+  const { content, loading } = useSiteContent();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const shopProducts = content.products || products;
+  const shopProducts = useMemo(() => loading ? [] : (content.products || products), [loading, content.products]);
   const learningCategories = content.learning_categories || [];
   const categories = useMemo(() => ["All", ...new Set(shopProducts.map((product) => product.category))], [shopProducts]);
   const [active, setActive] = useState(() => new URLSearchParams(location.search).get("category") || "All");
@@ -50,5 +50,5 @@ export default function Shop() {
     if (pendingProductId) buyProduct(pendingProductId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
-  return <section className="section page-section" data-testid="shop-page"><SectionHeader eyebrow="Evolvix Store" title="Products, services, and digital tools — all in one place." text="Browse ready-made digital packs you can download today, or request a custom service quote from any of Evolvix's four verticals: LearnAI, BuildX, Creative, and Business." /><div className="shop-toolbar" data-testid="shop-toolbar"><label className="search-box" data-testid="shop-search-label"><Search size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search products and services" data-testid="shop-search-input" /></label><FilterPills items={categories} active={active} setActive={setActive} testPrefix="shop" /></div><div className="product-grid" data-testid="shop-product-grid">{filtered.map((product) => <ProductCard key={product.id} product={product} onBuy={buyProduct} />)}</div><aside className="upsell-panel" data-testid="shop-upsell-panel"><h2 data-testid="shop-upsell-title">More coming soon</h2><p data-testid="shop-upsell-text">New digital packs and service bundles are added regularly. Service prices are shared on request — contact us for a custom quote tailored to your needs.</p></aside></section>;
+  return <section className="section page-section" data-testid="shop-page"><SectionHeader eyebrow="Evolvix Store" title="Products, services, and digital tools — all in one place." text="Browse ready-made digital packs you can download today, or request a custom service quote from any of Evolvix's four verticals: LearnAI, BuildX, Creative, and Business." /><div className="shop-toolbar" data-testid="shop-toolbar"><label className="search-box" data-testid="shop-search-label"><Search size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search products and services" data-testid="shop-search-input" /></label><FilterPills items={categories} active={active} setActive={setActive} testPrefix="shop" /></div><div className="product-grid" data-testid="shop-product-grid">{loading ? [1,2,3].map((i) => <div key={i} className="product-card product-card--skeleton" aria-hidden="true" />) : filtered.map((product) => <ProductCard key={product.id} product={product} onBuy={buyProduct} />)}</div><aside className="upsell-panel" data-testid="shop-upsell-panel"><h2 data-testid="shop-upsell-title">More coming soon</h2><p data-testid="shop-upsell-text">New digital packs and service bundles are added regularly. Service prices are shared on request — contact us for a custom quote tailored to your needs.</p></aside></section>;
 }

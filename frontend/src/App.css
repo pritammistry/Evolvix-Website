@@ -90,4 +90,6 @@
 .hero-particle-canvas{display:block;width:min(520px,100%);height:auto;position:relative;z-index:1}
 .hero-logo-stage .hero-logo-overlay{position:absolute;width:clamp(78px,24%,124px);z-index:2;box-shadow:0 0 48px rgba(19,223,244,.38),0 0 0 2px rgba(19,223,244,.18),0 30px 60px rgba(0,0,0,.38)}
 @media(max-width:1060px){.hero-logo-stage .hero-logo-overlay{width:clamp(72px,22%,110px)}}
+@keyframes skeletonShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.product-card--skeleton{min-height:340px;border-radius:16px;background:linear-gradient(90deg,rgba(255,255,255,.05) 25%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.05) 75%);background-size:200% 100%;animation:skeletonShimmer 1.4s ease infinite}
 @media(max-width:680px){.hero-logo-stage .hero-logo-overlay{width:clamp(64px,22%,96px)}}
