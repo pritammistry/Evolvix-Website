@@ -5,24 +5,11 @@ import { useSEO } from "../hooks/useSEO";
 import { SectionHeader } from "../components/SectionHeader";
 import { FilterPills } from "../components/FilterPills";
 import { useSiteContent } from "../hooks/useSiteContent";
-import { HeroParticle } from "../components/HeroParticle";
 
 export default function Blog() {
   useSEO({ title: "Blog & Insights — AI, Business, Creativity & Learning", description: "Practical articles on AI tools, learning strategies, business growth, and digital creativity from Evolvix Tech Media.", path: "/blog" });
-  const { content, loading } = useSiteContent();
+  const { content } = useSiteContent();
   const [active, setActive] = useState("All");
-
-  if (loading) {
-    return (
-      <section className="section page-section sphere-loader-page" data-testid="blog-loading">
-        <div className="sphere-loader">
-          <HeroParticle />
-          <p className="sphere-loader-text">Loading insights…</p>
-        </div>
-      </section>
-    );
-  }
-
   const posts = content.blog || blogPosts;
   const categories = ["All", ...new Set(posts.map((post) => post.category))];
   const filtered = active === "All" ? posts : posts.filter((post) => post.category === active);

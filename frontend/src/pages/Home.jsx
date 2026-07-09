@@ -125,7 +125,7 @@ export default function Home() {
       </section>
       <section className="section" data-testid="home-shop-preview-section">
         <SectionHeader eyebrow="Featured products / services" title="Actionable AI resources and creator-ready digital products." />
-        <div className="product-grid">{loading ? [1,2,3].map((i) => <div key={i} className="product-card product-card--skeleton" aria-hidden="true" />) : products.slice(0, 3).map((product) => <ProductCard key={product.id} product={product} onBuy={buyProduct} />)}</div>
+        <div className="product-grid">{loading ? [1,2,3].map((i) => <div key={i} className="product-card product-card--skeleton" aria-hidden="true"><div className="skeleton-thumb" /><div className="skeleton-body"><div className="skeleton-line" style={{height:10,width:"40%"}} /><div className="skeleton-line" style={{height:20,width:"75%"}} /><div className="skeleton-line" style={{height:14,width:"90%"}} /></div></div>) : products.slice(0, 3).map((product) => <ProductCard key={product.id} product={product} onBuy={buyProduct} />)}</div>
       </section>
       <section className="section mood-band" data-testid="home-why-choose-section">
         <SectionHeader eyebrow="Why choose Evolvix" title="AI-first, personalized, future-ready, and business-focused." text="The brand is designed to support people and businesses end-to-end — with practical innovation and creative excellence." />

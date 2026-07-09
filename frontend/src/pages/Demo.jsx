@@ -7,7 +7,6 @@ import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
 import { redirectToLoginForDemo, consumePendingDemo } from "../lib/authRedirect";
 import { useSEO } from "../hooks/useSEO";
-import { HeroParticle } from "../components/HeroParticle";
 
 const ICON_MAP = {
   shopping: <ShoppingBag size={28} />,
@@ -75,9 +74,10 @@ function statusBadgeClass(status) {
 
 export default function Demo() {
   useSEO({ title: "Live Product Demos — See Before You Commit", description: "Explore live demos of Evolvix-built web products across retail, SaaS, and more. Request a custom demo for your business before spending a rupee.", path: "/demo" });
-  const { content, loading } = useSiteContent();
+  const { content } = useSiteContent();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const demos = (content?.demos?.length ? content.demos.filter((d) => d.visible !== false) : null) || DEMO_SITES;
   const [highlighted, setHighlighted] = useState(null);
 
   useEffect(() => {
@@ -90,19 +90,6 @@ export default function Demo() {
     const t = setTimeout(() => setHighlighted(null), 4000);
     return () => clearTimeout(t);
   }, [user]);
-
-  if (loading) {
-    return (
-      <section className="section page-section sphere-loader-page" data-testid="demo-loading">
-        <div className="sphere-loader">
-          <HeroParticle />
-          <p className="sphere-loader-text">Loading demos…</p>
-        </div>
-      </section>
-    );
-  }
-
-  const demos = (content?.demos?.length ? content.demos.filter((d) => d.visible !== false) : null) || DEMO_SITES;
 
   function handleDemoClick(demo) {
     if (!user) {
@@ -119,7 +106,6 @@ export default function Demo() {
         title="See it before you commit."
         text="Every Evolvix project starts with a working demo — real design, real functionality, built for your industry. Browse live examples below, then tell us what you want built."
       />
-
       <div className="demo-cards" data-testid="demo-cards">
         {demos.map((demo) => (
           <article className={`demo-card${highlighted === demo.id ? " demo-card--highlighted" : ""}`} key={demo.id} data-testid={`demo-card-${demo.id}`}>
@@ -152,20 +138,15 @@ export default function Demo() {
           </article>
         ))}
       </div>
-
       <div className="demo-verticals-block" data-testid="demo-verticals">
         <h2>We build demos for every industry</h2>
         <p className="demo-verticals-sub">Don't see your industry? We'll build a custom demo for you — no commitment needed.</p>
         <div className="demo-verticals-grid">
           {VERTICALS.map(({ icon, label }) => (
-            <div className="demo-vertical-chip" key={label}>
-              {icon}
-              <span>{label}</span>
-            </div>
+            <div className="demo-vertical-chip" key={label}>{icon}<span>{label}</span></div>
           ))}
         </div>
       </div>
-
       <div className="related-panel" data-testid="demo-cta-panel">
         <h2>Want a demo built for your business?</h2>
         <p>Tell us your industry, your products, and your idea — we'll show you a working prototype before you spend a rupee.</p>

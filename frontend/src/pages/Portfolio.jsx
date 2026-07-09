@@ -3,23 +3,10 @@ import { portfolioItems } from "../data/siteContent";
 import { FilterPills } from "../components/FilterPills";
 import { SectionHeader } from "../components/SectionHeader";
 import { useSiteContent } from "../hooks/useSiteContent";
-import { HeroParticle } from "../components/HeroParticle";
 
 export default function Portfolio() {
-  const { content, loading } = useSiteContent();
+  const { content } = useSiteContent();
   const [active, setActive] = useState("All");
-
-  if (loading) {
-    return (
-      <section className="section page-section sphere-loader-page" data-testid="portfolio-loading">
-        <div className="sphere-loader">
-          <HeroParticle />
-          <p className="sphere-loader-text">Loading showcase…</p>
-        </div>
-      </section>
-    );
-  }
-
   const items = content.portfolio || portfolioItems;
   const categories = ["All", ...new Set(items.map((item) => item.category))];
   const filtered = active === "All" ? items : items.filter((item) => item.category === active);

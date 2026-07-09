@@ -2,23 +2,25 @@ import { useEffect, useState } from "react";
 import { fetchSiteContent } from "../api";
 import { fallbackSiteContent } from "../data/siteContent";
 
-// Module-level cache — survives page navigation within the same session.
-// Once the API responds, every subsequent useSiteContent() call gets the
-// cached value immediately with loading=false (no sphere, no skeleton).
+// Module-level cache — one fetch per browser session.
+// All useSiteContent() calls after the first get cached data instantly (loading=false).
 let cachedContent = null;
 let fetchPromise = null;
+
+const TIMEOUT_MS = 8000;
 
 export function useSiteContent() {
   const [content, setContent] = useState(() => cachedContent || fallbackSiteContent);
   const [loading, setLoading] = useState(() => !cachedContent);
 
   useEffect(() => {
-    // Cache already populated — nothing to fetch.
     if (cachedContent) return;
 
-    // Kick off one shared fetch regardless of how many components mount.
     if (!fetchPromise) {
-      fetchPromise = fetchSiteContent();
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("timeout")), TIMEOUT_MS)
+      );
+      fetchPromise = Promise.race([fetchSiteContent(), timeout]);
     }
 
     let active = true;
@@ -28,6 +30,8 @@ export function useSiteContent() {
         if (active) { setContent(data); setLoading(false); }
       })
       .catch(() => {
+        // Timeout or network error — fall back to static content so the
+        // page never stays blank (critical for mobile on slow connections).
         cachedContent = fallbackSiteContent;
         if (active) { setContent(fallbackSiteContent); setLoading(false); }
       });
