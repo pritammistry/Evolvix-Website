@@ -1,4 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response
+import asyncio
 import anthropic as _anthropic
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -197,6 +198,113 @@ def send_notification_email(to: str, subject: str, html: str) -> None:
         resend.Emails.send({"from": FROM_EMAIL(), "to": [to], "subject": subject, "html": html})
     except Exception as exc:
         logger.warning("Notification email to %s failed: %s", to, exc)
+
+
+ORDERS_FROM_EMAIL = lambda: os.environ.get("RESEND_ORDERS_FROM_EMAIL", os.environ.get("RESEND_FROM_EMAIL", "Evolvix Store <onboarding@resend.dev>"))
+
+_PURCHASE_CONFIRMATION_HTML = """\
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#f0f2f7">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+    <tr><td align="center" style="padding:40px 16px">
+      <table width="600" cellpadding="0" cellspacing="0" role="presentation"
+             style="max-width:600px;width:100%;background:#0a0f1c;border-radius:14px;overflow:hidden">
+        <tr><td style="background:#13dff4;padding:28px 32px;text-align:center">
+          <p style="color:#0a0f1c;font-size:20px;font-weight:800;margin:0;letter-spacing:0.05em">EVOLVIX TECH MEDIA</p>
+          <p style="color:#0a0f1c;font-size:13px;margin:6px 0 0;opacity:0.75">Order Confirmed ✓</p>
+        </td></tr>
+        <tr><td style="padding:32px">
+          <p style="color:#ffffff;font-size:18px;font-weight:700;margin:0 0 6px">Hi {customer_name},</p>
+          <p style="color:#9ca3af;font-size:14px;margin:0 0 28px;line-height:1.6">Thank you for your purchase! Your digital download is ready and waiting for you.</p>
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+                 style="background:#111827;border-radius:10px;margin-bottom:28px">
+            <tr><td style="padding:22px 24px">
+              <p style="color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;margin:0 0 6px">PRODUCT</p>
+              <p style="color:#ffffff;font-size:16px;font-weight:700;margin:0 0 18px">{product_title}</p>
+              <p style="color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;margin:0 0 6px">AMOUNT PAID</p>
+              <p style="color:#13dff4;font-size:26px;font-weight:800;margin:0">&#8377;{amount}</p>
+            </td></tr>
+          </table>
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:20px">
+            <tr><td align="center" style="padding-bottom:16px">
+              <a href="{download_url}"
+                 style="display:inline-block;background:#13dff4;color:#0a0f1c;text-decoration:none;font-weight:800;font-size:15px;padding:15px 36px;border-radius:9px;letter-spacing:0.02em">
+                Access Your Download &rarr;
+              </a>
+            </td></tr>
+            <tr><td align="center">
+              <a href="{invoice_url}"
+                 style="display:inline-block;color:#13dff4;text-decoration:none;font-size:13px;padding:10px 22px;border:1.5px solid rgba(19,223,244,0.4);border-radius:8px">
+                Download GST Invoice (PDF)
+              </a>
+            </td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:22px 32px;border-top:1px solid #1a2035">
+          <p style="color:#6b7280;font-size:13px;margin:0 0 8px">Questions? We&rsquo;re here:</p>
+          <p style="color:#9ca3af;font-size:13px;margin:0">
+            &#128222; +91 98318 42869 &nbsp;&middot;&nbsp;
+            <a href="https://wa.me/919831842869?text=Hi!%20I%20have%20a%20question%20about%20my%20Evolvix%20purchase."
+               style="color:#13dff4;text-decoration:none">&#128172; WhatsApp us</a>
+          </p>
+          <p style="color:#4b5563;font-size:11px;margin:14px 0 0">
+            Evolvix Tech Media &middot; evolvixtech.in &middot; Bardhaman, West Bengal, India
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+
+async def send_purchase_confirmation(session_id: str) -> None:
+    if not EMAIL_VERIFICATION_ENABLED:
+        return
+    try:
+        transaction = await db.payment_transactions.find_one({"session_id": session_id})
+        if not transaction or transaction.get("confirmation_email_sent"):
+            return
+        user = await db.users.find_one({"id": transaction.get("user_id")})
+        if not user or not user.get("email"):
+            logger.warning("No user/email for purchase confirmation: %s", session_id)
+            return
+        catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
+        products = normalize_catalog_items(
+            catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products"
+        )
+        product_id = transaction.get("product_id")
+        product = next(
+            (p for p in products if p.get("id") == product_id or p.get("slug") == product_id), {}
+        )
+        product_title = product.get("title", "Your Evolvix Product")
+        amount = transaction.get("amount", 0)
+        amount_str = f"{float(amount):.0f}" if amount else "—"
+        origin = os.environ.get("FRONTEND_URL", "https://evolvixtech.in")
+        download_url = f"{origin}/checkout/success?session_id={session_id}&product={product.get('slug', product_id or '')}"
+        invoice_url = f"https://evolvix-website.onrender.com/api/payments/{session_id}/invoice"
+        customer_name = user.get("name") or user["email"].split("@")[0].capitalize()
+        html = _PURCHASE_CONFIRMATION_HTML.format(
+            customer_name=customer_name,
+            product_title=product_title,
+            amount=amount_str,
+            download_url=download_url,
+            invoice_url=invoice_url,
+        )
+        resend.Emails.send({
+            "from": ORDERS_FROM_EMAIL(),
+            "to": [user["email"]],
+            "subject": f"Your Evolvix purchase is confirmed — {product_title}",
+            "html": html,
+        })
+        await db.payment_transactions.update_one(
+            {"session_id": session_id},
+            {"$set": {"confirmation_email_sent": True, "confirmation_email_sent_at": now_iso()}},
+        )
+        logger.info("Purchase confirmation sent to %s for session %s", user["email"], session_id)
+    except Exception as exc:
+        logger.warning("Failed to send purchase confirmation for %s: %s", session_id, exc)
 
 
 DEFAULT_SITE_CONTENT: Dict[str, Any] = {
@@ -1719,6 +1827,8 @@ async def razorpay_webhook(request: Request):
             {"session_id": order_id},
             {"$set": {"payment_status": payment_status, "event_type": event_type, "updated_at": now_iso()}},
         )
+        if payment_status == "paid":
+            asyncio.create_task(send_purchase_confirmation(order_id))
     return {"received": True}
 
 
