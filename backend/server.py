@@ -1154,6 +1154,20 @@ async def admin_reset(request: Request):
     return {"message": "Admin content reset to Evolvix defaults"}
 
 
+@api_router.post("/admin/reset/{kind}")
+async def admin_reset_section(kind: str, request: Request):
+    verify_admin_request(request)
+    if kind not in {"products", "portfolio", "blog"}:
+        raise HTTPException(status_code=400, detail="Invalid section. Valid values: products, portfolio, blog")
+    section_defaults = {"products": list(PRODUCTS.values()), "portfolio": PORTFOLIO, "blog": BLOG_POSTS}
+    await db.editable_catalog.update_one(
+        {"id": "primary"},
+        {"$set": {kind: section_defaults[kind], "updated_at": now_iso()}},
+        upsert=True,
+    )
+    return {"message": f"{kind} reset to Evolvix defaults"}
+
+
 @api_router.post("/site-content/reset")
 async def reset_site_content():
     await db.site_content.update_one(

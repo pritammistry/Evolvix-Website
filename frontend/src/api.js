@@ -36,6 +36,7 @@ export const fetchAdminDashboard = () => axios.get(`${API}/admin/dashboard`);
 export const saveAdminContent = (content) => axios.put(`${API}/admin/content`, { content });
 export const saveAdminList = (kind, items) => axios.put(`${API}/admin/${kind}`, { items });
 export const resetAdminContent = () => axios.post(`${API}/admin/reset`, {});
+export const resetAdminSection = (kind) => axios.post(`${API}/admin/reset/${kind}`, {});
 export const uploadProductFile = (productId, payload) => axios.post(`${API}/admin/products/${productId}/files`, payload);
 export const deleteProductFile = (productId, fileId) => axios.delete(`${API}/admin/products/${productId}/files/${fileId}`);
 export const trackAnalyticsEvent = (payload) => axios.post(`${API}/analytics/events`, payload);
