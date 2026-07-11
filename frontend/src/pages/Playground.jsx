@@ -6,6 +6,7 @@ import { SectionHeader } from "../components/SectionHeader";
 import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
 import { fetchPlayground, trackAnalyticsEvent } from "../api";
+import { toast } from "sonner";
 
 const MUSIC_MAX = 10;
 const FREEBIE_MAX = 6;
@@ -29,6 +30,17 @@ function ArtistCard({ track, index }) {
       </div>
     </article>
   );
+}
+
+function normalizeAudioUrl(url) {
+  if (!url) return url;
+  // Google Drive /file/d/ID/view  →  /uc?export=download&id=ID
+  const m = url.match(/drive\.google\.com\/file\/d\/([^/?#]+)/);
+  if (m) return `https://drive.google.com/uc?export=download&id=${m[1]}`;
+  // Google Drive open?id=ID
+  const m2 = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
+  if (m2) return `https://drive.google.com/uc?export=download&id=${m2[1]}`;
+  return url;
 }
 
 function makeThumbSrc(title) {
@@ -88,18 +100,24 @@ function MusicTrackRow({ item, index, onDownload }) {
   }
 
   function togglePreview() {
-    const src = item.preview_url || item.url;
+    const src = normalizeAudioUrl(item.preview_url || item.url);
     if (!src) return;
     if (playing) { stopPreview(); return; }
 
     const audio = new Audio(src);
     audioRef.current = audio;
+
+    function onError() {
+      stopPreview();
+      toast.error("Preview unavailable — use a direct audio link (Dropbox, Cloudinary, etc.)");
+    }
+
     audio.addEventListener('ended', stopPreview);
-    audio.addEventListener('error', stopPreview);
+    audio.addEventListener('error', onError);
 
     if (item.preview_url) {
       // Explicit short clip — play from start
-      audio.play().catch(stopPreview);
+      audio.play().catch(onError);
       setPlaying(true);
       scheduleFade(10000);
     } else {
@@ -107,7 +125,7 @@ function MusicTrackRow({ item, index, onDownload }) {
       audio.addEventListener('loadedmetadata', () => {
         if (!audioRef.current) return;
         audio.currentTime = audio.duration * (0.25 + Math.random() * 0.40);
-        audio.play().catch(stopPreview);
+        audio.play().catch(onError);
         setPlaying(true);
         scheduleFade(10000);
       });
