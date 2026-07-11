@@ -415,6 +415,18 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
         {"id": "invoice-management", "title": "Invoice & Billing Management App", "industry": "Finance / Accounting", "description": "A smart billing dashboard for small businesses — generate GST invoices, track payments, manage clients, and export reports.", "features": ["GST invoice generation", "Payment tracking", "Client management", "Report export"], "url": "", "icon_key": "chart", "status": "Coming Soon", "visible": True},
         {"id": "saas-crm-automation", "title": "SaaS CRM & Automation Demo", "industry": "SaaS / Tech Products", "description": "A full CRM with lead pipeline, automated follow-ups, task management, and team dashboard — built for SaaS and service businesses.", "features": ["Lead pipeline board", "Automated follow-ups", "Task & team management", "Analytics dashboard"], "url": "", "icon_key": "zap", "status": "Coming Soon", "visible": True},
     ],
+    "product_categories": [
+        "Learning and Growth",
+        "Brand Assets",
+        "Music",
+        "Business",
+        "Bundle",
+        "Digital Products",
+        "Kids & Learning",
+        "Career & Jobs",
+        "Productivity",
+        "AI Tools",
+    ],
 }
 
 
@@ -428,7 +440,7 @@ def merged_site_content(custom_content: Optional[Dict[str, Any]]) -> Dict[str, A
     if not merged["about"].get("values"):
         merged["about"]["values"] = DEFAULT_SITE_CONTENT["about"]["values"]
     merged["analytics_report_settings"] = {**DEFAULT_SITE_CONTENT["analytics_report_settings"], **(custom_content or {}).get("analytics_report_settings", {})}
-    for list_key in ["trust_strip", "how_we_work", "industries_served", "creative_services", "technology_services", "ecosystem", "learning_categories", "music_services", "music_previews", "custom_sections", "testimonials", "why_choose", "demos"]:
+    for list_key in ["trust_strip", "how_we_work", "industries_served", "creative_services", "technology_services", "ecosystem", "learning_categories", "music_services", "music_previews", "custom_sections", "testimonials", "why_choose", "demos", "product_categories"]:
         if not merged.get(list_key):
             merged[list_key] = DEFAULT_SITE_CONTENT[list_key]
     return merged
@@ -1181,6 +1193,7 @@ CONTENT_SECTION_MAP: Dict[str, List[str]] = {
     "music": ["music_services", "music_previews"],
     "custom": ["custom_sections"],
     "demos": ["demos"],
+    "settings": ["product_categories"],
     "testimonials": ["testimonials"],
 }
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Lock, Save, RotateCcw, Plus, Trash2, Sparkles, Database, Layers3, Package, Newspaper, Image as ImageIcon, LogOut, UploadCloud, BarChart3, Star, DownloadCloud, FileDown, Gamepad2, Monitor, Eye, EyeOff, ChevronUp, ChevronDown, AlertTriangle, RefreshCw, Loader2 } from "lucide-react";
+import { Lock, Save, RotateCcw, Plus, Trash2, Sparkles, Database, Layers3, Package, Newspaper, Image as ImageIcon, LogOut, UploadCloud, BarChart3, Star, DownloadCloud, FileDown, Gamepad2, Monitor, Eye, EyeOff, ChevronUp, ChevronDown, AlertTriangle, RefreshCw, Loader2, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { adminLogin, adminLogout, createPlaygroundItem, deletePlaygroundItem, deleteProductFile, exportAdminAnalytics, fetchAdminAnalytics, fetchAdminAnalyticsOptions, fetchAdminDashboard, fetchAdminPlayground, resetAdminContent, resetAdminSection, reorderPlayground, saveAdminContent, saveAdminList, updatePlaygroundItem, uploadProductFile, setVisitorAuthToken, fetchAdminLeadsContacts, exportAdminLeadsContacts, fetchAdminLeadsNewsletter, exportAdminLeadsNewsletter } from "../api";
 
@@ -35,6 +35,7 @@ const SIDEBAR_GROUPS = [
     items: [
       { id: "leads", label: "Leads & Contacts", type: "ops" },
       { id: "analytics", label: "Analytics", type: "ops" },
+      { id: "settings", label: "Store Settings", type: "ops" },
     ],
   },
   {
@@ -53,9 +54,67 @@ function TextField({ label, value, onChange, testId, multiline = false }) {
   return <label className="admin-field" data-testid={`${testId}-field`}><span>{label}</span>{multiline ? <textarea value={value || ""} onChange={(e) => onChange(e.target.value)} data-testid={testId} /> : <input value={value || ""} onChange={(e) => onChange(e.target.value)} data-testid={testId} />}</label>;
 }
 
+function SelectField({ label, value, onChange, options, testId }) {
+  return (
+    <label className="admin-field" data-testid={`${testId}-field`}>
+      <span>{label}</span>
+      <select value={value || ""} onChange={(e) => onChange(e.target.value)} data-testid={testId}>
+        {(options || []).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+        {value && !(options || []).includes(value) && <option value={value}>{value} (custom)</option>}
+      </select>
+    </label>
+  );
+}
+
+function ProductSettingsEditor({ categories, onChange }) {
+  const cats = categories || [];
+  const [newCat, setNewCat] = useState("");
+  const addCat = () => {
+    const trimmed = newCat.trim();
+    if (!trimmed || cats.includes(trimmed)) return;
+    onChange([...cats, trimmed]);
+    setNewCat("");
+  };
+  return (
+    <section className="admin-editor-card" data-testid="product-settings-editor">
+      <h3><Settings size={20} /> Store Settings</h3>
+      <p style={{ color: "var(--muted)", marginBottom: 18 }}>
+        Manage product categories. These appear as a dropdown when adding or editing any Store product — keeping names consistent across the catalog.
+      </p>
+      <div className="admin-array">
+        <h4>Product Categories</h4>
+        {cats.map((cat, index) => (
+          <div className="admin-row" key={index}>
+            <input
+              value={cat}
+              onChange={(e) => onChange(cats.map((c, i) => i === index ? e.target.value : c))}
+              data-testid={`category-item-${index}`}
+            />
+            <button type="button" onClick={() => onChange(cats.filter((_, i) => i !== index))} data-testid={`category-remove-${index}`}>
+              <Trash2 size={15} />
+            </button>
+          </div>
+        ))}
+        <div className="admin-row" style={{ marginTop: 8 }}>
+          <input
+            value={newCat}
+            placeholder="New category name"
+            onChange={(e) => setNewCat(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") addCat(); }}
+            data-testid="category-new-input"
+          />
+          <button type="button" className="admin-mini-btn" onClick={addCat} data-testid="category-add-button">
+            <Plus size={15} /> Add
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ArrayEditor({ title, items, onChange, placeholder, testPrefix }) {
   const list = items || [];
-  return <div className="admin-array" data-testid={`${testPrefix}-array`}><h4>{title}</h4>{list.map((item, index) => <div className="admin-row" key={`${item}-${index}`}><input value={item} placeholder={placeholder} onChange={(e) => onChange(list.map((entry, i) => i === index ? e.target.value : entry))} data-testid={`${testPrefix}-item-${index}`} /><button type="button" onClick={() => onChange(list.filter((_, i) => i !== index))} data-testid={`${testPrefix}-remove-${index}`}><Trash2 size={15} /></button></div>)}<button type="button" className="admin-mini-btn" onClick={() => onChange([...list, placeholder])} data-testid={`${testPrefix}-add-button`}><Plus size={15} /> Add</button></div>;
+  return <div className="admin-array" data-testid={`${testPrefix}-array`}><h4>{title}</h4>{list.map((item, index) => <div className="admin-row" key={index}><input value={item} placeholder={placeholder} onChange={(e) => onChange(list.map((entry, i) => i === index ? e.target.value : entry))} data-testid={`${testPrefix}-item-${index}`} /><button type="button" onClick={() => onChange(list.filter((_, i) => i !== index))} data-testid={`${testPrefix}-remove-${index}`}><Trash2 size={15} /></button></div>)}<button type="button" className="admin-mini-btn" onClick={() => onChange([...list, placeholder])} data-testid={`${testPrefix}-add-button`}><Plus size={15} /> Add</button></div>;
 }
 
 function fileToDataUrl(file) {
@@ -349,7 +408,7 @@ function getCatalogFields(kind) {
   return ["title", "slug", "category", "excerpt", "body", "seo_title", "seo_description", "seo_keywords", "date", "read_time"];
 }
 
-function CatalogEditor({ title, icon: Icon, items, onChange, kind, onRefresh }) {
+function CatalogEditor({ title, icon: Icon, items, onChange, kind, onRefresh, categoryOptions }) {
   const template = getCatalogTemplate(kind);
   const fields = getCatalogFields(kind);
   const update = (index, key, value) => onChange(items.map((item, i) => {
@@ -362,7 +421,13 @@ function CatalogEditor({ title, icon: Icon, items, onChange, kind, onRefresh }) 
     try { await resetAdminSection(kind); if (onRefresh) await onRefresh(); toast.success(`${title} reset to defaults`); }
     catch { toast.error(`Could not reset ${title}`); }
   };
-  return <section className="admin-editor-card catalog-card" data-testid={`${kind}-editor`}><h3><Icon size={20} /> {title}<button type="button" className="admin-reset" style={{marginLeft:"auto",fontSize:12,padding:"4px 10px"}} onClick={resetSection} data-testid={`${kind}-reset-button`}><RotateCcw size={13} /> Reset {kind}</button></h3>{items.map((item, index) => <details className="admin-catalog-item" key={`${item.id || item.title}-${index}`} open={index === 0}><summary data-testid={`${kind}-summary-${index}`}>{item.title || `Item ${index + 1}`}</summary>{kind === "products" && <ProductImageUploader product={item} index={index} onUpdate={update} />}{kind === "products" && <ProductFileManager product={item} index={index} onRefresh={onRefresh} />}<div className="admin-form-grid">{fields.map((field) => <TextField key={field} label={field.replaceAll("_", " ")} value={item[field]} onChange={(value) => update(index, field, value)} testId={`${kind}-${field}-${index}`} multiline={field === "description" || field === "summary" || field === "excerpt" || field === "body" || field === "seo_description"} />)}</div>{kind === "blog" && <BlogSeoTools post={item} index={index} />}{kind === "products" && <><ArrayEditor title="Benefits" items={item.benefits || []} onChange={(value) => update(index, "benefits", value)} placeholder="Benefit" testPrefix={`${kind}-benefits-${index}`} /><ArrayEditor title="Included" items={item.included || []} onChange={(value) => update(index, "included", value)} placeholder="Included item" testPrefix={`${kind}-included-${index}`} /><ArrayEditor title="File slots" items={item.file_slots || item.fileSlots || []} onChange={(value) => update(index, "file_slots", value)} placeholder="Download file slot" testPrefix={`${kind}-files-${index}`} /></>}<button type="button" className="danger-btn" onClick={() => onChange(items.filter((_, i) => i !== index))} data-testid={`${kind}-delete-${index}`}><Trash2 size={16} /> Remove</button></details>)}<button type="button" className="admin-mini-btn" onClick={() => onChange([...items, { ...template, id: `${kind}-${Date.now()}` }])} data-testid={`${kind}-add-button`}><Plus size={16} /> Add {kind}</button></section>;
+  const renderField = (field, item, index) => {
+    if (field === "category" && kind === "products" && categoryOptions?.length) {
+      return <SelectField key={field} label="Category" value={item[field]} onChange={(value) => update(index, field, value)} options={categoryOptions} testId={`${kind}-${field}-${index}`} />;
+    }
+    return <TextField key={field} label={field.replaceAll("_", " ")} value={item[field]} onChange={(value) => update(index, field, value)} testId={`${kind}-${field}-${index}`} multiline={field === "description" || field === "summary" || field === "excerpt" || field === "body" || field === "seo_description"} />;
+  };
+  return <section className="admin-editor-card catalog-card" data-testid={`${kind}-editor`}><h3><Icon size={20} /> {title}<button type="button" className="admin-reset" style={{marginLeft:"auto",fontSize:12,padding:"4px 10px"}} onClick={resetSection} data-testid={`${kind}-reset-button`}><RotateCcw size={13} /> Reset {kind}</button></h3>{items.map((item, index) => <details className="admin-catalog-item" key={`${item.id || item.title}-${index}`} open={index === 0}><summary data-testid={`${kind}-summary-${index}`}>{item.title || `Item ${index + 1}`}</summary>{kind === "products" && <ProductImageUploader product={item} index={index} onUpdate={update} />}{kind === "products" && <ProductFileManager product={item} index={index} onRefresh={onRefresh} />}<div className="admin-form-grid">{fields.map((field) => renderField(field, item, index))}</div>{kind === "blog" && <BlogSeoTools post={item} index={index} />}{kind === "products" && <><ArrayEditor title="Benefits" items={item.benefits || []} onChange={(value) => update(index, "benefits", value)} placeholder="Benefit" testPrefix={`${kind}-benefits-${index}`} /><ArrayEditor title="Included" items={item.included || []} onChange={(value) => update(index, "included", value)} placeholder="Included item" testPrefix={`${kind}-included-${index}`} /><ArrayEditor title="File slots" items={item.file_slots || item.fileSlots || []} onChange={(value) => update(index, "file_slots", value)} placeholder="Download file slot" testPrefix={`${kind}-files-${index}`} /></>}<button type="button" className="danger-btn" onClick={() => onChange(items.filter((_, i) => i !== index))} data-testid={`${kind}-delete-${index}`}><Trash2 size={16} /> Remove</button></details>)}<button type="button" className="admin-mini-btn" onClick={() => onChange([...items, { ...template, id: `${kind}-${Date.now()}` }])} data-testid={`${kind}-add-button`}><Plus size={16} /> Add {kind}</button></section>;
 }
 
 function DemosEditor({ items, onChange }) {
@@ -596,7 +661,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* ── ACTIVE: Frequently Editable ── */}
-        {active === "products" && <CatalogEditor title="Products" icon={Package} items={products} onChange={setProducts} kind="products" onRefresh={loadDashboard} />}
+        {active === "products" && <CatalogEditor title="Products" icon={Package} items={products} onChange={setProducts} kind="products" onRefresh={loadDashboard} categoryOptions={content.product_categories || []} />}
         {active === "blog" && <CatalogEditor title="Blog / Insights" icon={Newspaper} items={blog} onChange={setBlog} kind="blog" onRefresh={loadDashboard} />}
         {active === "portfolio" && <CatalogEditor title="Portfolio / Showcase" icon={ImageIcon} items={portfolio} onChange={setPortfolio} kind="portfolio" onRefresh={loadDashboard} />}
         {active === "playground" && <PlaygroundEditor />}
@@ -700,6 +765,10 @@ export default function AdminDashboard() {
         {/* ── OPERATIONS ── */}
         {active === "leads" && <LeadsPanel />}
         {active === "analytics" && <AnalyticsPanel reportSettings={content.analytics_report_settings || {}} onReportChange={(value) => updateContent(["analytics_report_settings"], value)} />}
+        {active === "settings" && <>
+          <SectionToolbar resetKey="settings" label="Store Settings" onReset={resetSection} />
+          <ProductSettingsEditor categories={content.product_categories || []} onChange={(value) => updateContent(["product_categories"], value)} />
+        </>}
 
         {/* ── INACTIVE / SPECIALIZED ── */}
         {active === "music" && <>
