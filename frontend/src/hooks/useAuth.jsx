@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { fetchCurrentVisitor, forgotPassword as forgotPasswordApi, loginVisitor, logoutVisitor, resendVisitorOtp, resetPassword as resetPasswordApi, setVisitorAuthToken, signupVisitor, verifyVisitorOtp } from "../api";
+import { fetchCurrentVisitor, forgotPassword as forgotPasswordApi, loginVisitor, logoutVisitor, resendVisitorOtp, resetPassword as resetPasswordApi, restoreVisitorAuthToken, setVisitorAuthToken, signupVisitor, verifyVisitorOtp } from "../api";
 
 const AuthContext = createContext(null);
 
@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    restoreVisitorAuthToken();
     fetchCurrentVisitor()
       .then(({ data }) => setUser(data.user))
       .catch(() => setUser(null))

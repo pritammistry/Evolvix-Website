@@ -6,14 +6,24 @@ axios.defaults.withCredentials = true;
 
 // Belt-and-suspenders alongside the httpOnly session cookie: some browsers (notably Safari,
 // due to cross-site cookie/tracking-prevention policies) won't reliably resend a Secure cookie
-// on the very next cross-port request right after signup/login. An explicit Bearer header,
-// held in memory only (not persisted), works regardless of cookie policy.
+// on the very next cross-port request right after signup/login. An explicit Bearer header
+// persisted to sessionStorage survives full-page navigations (e.g. Razorpay redirect back
+// to /checkout/success) without exposing the token across browser sessions.
+const VISITOR_TOKEN_KEY = "evolvix_visitor_token";
+
 export function setVisitorAuthToken(token) {
   if (token) {
     axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    sessionStorage.setItem(VISITOR_TOKEN_KEY, token);
   } else {
     delete axios.defaults.headers.common["Authorization"];
+    sessionStorage.removeItem(VISITOR_TOKEN_KEY);
   }
+}
+
+export function restoreVisitorAuthToken() {
+  const saved = sessionStorage.getItem(VISITOR_TOKEN_KEY);
+  if (saved) axios.defaults.headers.common["Authorization"] = `Bearer ${saved}`;
 }
 
 export const fetchIndianStates = () => axios.get(`${API}/meta/states`);
