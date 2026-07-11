@@ -1484,6 +1484,10 @@ class PlaygroundItemCreate(BaseModel):
     visible: bool = True
 
 
+class PlaygroundReorder(BaseModel):
+    ids: List[str]
+
+
 @api_router.get("/playground")
 async def get_playground_items():
     items = []
@@ -1506,11 +1510,9 @@ async def admin_get_playground(request: Request):
 
 
 @api_router.post("/admin/playground/reorder")
-async def admin_reorder_playground(request: Request):
+async def admin_reorder_playground(payload: PlaygroundReorder, request: Request):
     verify_admin_request(request)
-    body = await request.json()
-    ids = body.get("ids", [])
-    for i, item_id in enumerate(ids):
+    for i, item_id in enumerate(payload.ids):
         await db.playground_items.update_one({"id": item_id}, {"$set": {"position": i}})
     return {"message": "Reordered"}
 
