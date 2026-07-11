@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Lock, Save, RotateCcw, Plus, Trash2, Sparkles, Database, Layers3, Package, Newspaper, Image as ImageIcon, LogOut, UploadCloud, BarChart3, Star, DownloadCloud, FileDown, Gamepad2, Monitor, Eye, EyeOff, ChevronUp, ChevronDown, AlertTriangle } from "lucide-react";
+import { Lock, Save, RotateCcw, Plus, Trash2, Sparkles, Database, Layers3, Package, Newspaper, Image as ImageIcon, LogOut, UploadCloud, BarChart3, Star, DownloadCloud, FileDown, Gamepad2, Monitor, Eye, EyeOff, ChevronUp, ChevronDown, AlertTriangle, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { adminLogin, adminLogout, createPlaygroundItem, deletePlaygroundItem, deleteProductFile, exportAdminAnalytics, fetchAdminAnalytics, fetchAdminAnalyticsOptions, fetchAdminDashboard, fetchAdminPlayground, resetAdminContent, resetAdminSection, reorderPlayground, saveAdminContent, saveAdminList, updatePlaygroundItem, uploadProductFile, setVisitorAuthToken, fetchAdminLeadsContacts, exportAdminLeadsContacts, fetchAdminLeadsNewsletter, exportAdminLeadsNewsletter } from "../api";
 
@@ -430,6 +430,8 @@ function SectionToolbar({ resetKey, label, onReset }) {
   );
 }
 
+const ADMIN_TOKEN_KEY = "evolvix_admin_token";
+
 export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -440,6 +442,8 @@ export default function AdminDashboard() {
   const [blog, setBlog] = useState([]);
   const [active, setActive] = useState("products");
   const [saving, setSaving] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadDashboard = useCallback(async () => {
     const { data } = await fetchAdminDashboard();
@@ -449,11 +453,27 @@ export default function AdminDashboard() {
     setBlog(data.blog || []);
   }, []);
 
-  useEffect(() => { loadDashboard().then(() => setAuthenticated(true)).catch(() => setAuthenticated(false)); }, [loadDashboard]);
+  useEffect(() => {
+    const saved = sessionStorage.getItem(ADMIN_TOKEN_KEY);
+    if (saved) setVisitorAuthToken(saved);
+    loadDashboard().then(() => setAuthenticated(true)).catch(() => setAuthenticated(false));
+  }, [loadDashboard]);
 
   const login = async (event) => {
     event.preventDefault();
-    try { const { data } = await adminLogin({ password }); setVisitorAuthToken(data.token); await loadDashboard(); setAuthenticated(true); toast.success("Admin unlocked"); } catch (err) { toast.error(err?.response?.data?.detail || err?.message || "Login failed"); }
+    setLoginLoading(true);
+    try {
+      const { data } = await adminLogin({ password });
+      sessionStorage.setItem(ADMIN_TOKEN_KEY, data.token);
+      setVisitorAuthToken(data.token);
+      await loadDashboard();
+      setAuthenticated(true);
+      toast.success("Admin unlocked");
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || err?.message || "Login failed");
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
   const updateContent = (path, value) => {
@@ -484,11 +504,19 @@ export default function AdminDashboard() {
 
   const logout = () => {
     adminLogout().catch(() => {});
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
     setVisitorAuthToken(null);
     setAuthenticated(false);
     setContent(null);
     setPassword("");
     toast.success("Logged out");
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try { await loadDashboard(); toast.success("Dashboard refreshed"); }
+    catch { toast.error("Could not refresh — try logging in again"); }
+    finally { setRefreshing(false); }
   };
 
   if (!authenticated || !content) {
@@ -518,7 +546,9 @@ export default function AdminDashboard() {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            <button type="submit" data-testid="admin-login-button"><Lock size={18} /> Unlock Dashboard</button>
+            <button type="submit" disabled={loginLoading} data-testid="admin-login-button">
+              {loginLoading ? <><Loader2 size={18} className="spin-icon" /> Logging in…</> : <><Lock size={18} /> Unlock Dashboard</>}
+            </button>
           </form>
         </div>
       </section>
@@ -559,6 +589,7 @@ export default function AdminDashboard() {
           </div>
           <div className="admin-action-buttons">
             <button className="admin-save" onClick={saveAll} disabled={saving} data-testid="admin-save-all-button"><Save size={16} /> {saving ? "Saving…" : "Save Changes"}</button>
+            <button className="admin-reset" onClick={handleRefresh} disabled={refreshing} data-testid="admin-refresh-button"><RefreshCw size={16} className={refreshing ? "spin-icon" : ""} /> {refreshing ? "Refreshing…" : "Refresh"}</button>
             <button className="admin-reset" onClick={resetAll} data-testid="admin-reset-button"><RotateCcw size={16} /> Reset All</button>
             <button className="admin-logout" onClick={logout} data-testid="admin-logout-button"><LogOut size={16} /> Logout</button>
           </div>
