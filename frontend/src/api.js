@@ -53,6 +53,7 @@ export const fetchAdminPlayground = () => axios.get(`${API}/admin/playground`);
 export const createPlaygroundItem = (payload) => axios.post(`${API}/admin/playground`, payload);
 export const updatePlaygroundItem = (id, payload) => axios.put(`${API}/admin/playground/${id}`, payload);
 export const deletePlaygroundItem = (id) => axios.delete(`${API}/admin/playground/${id}`);
+export const reorderPlayground = (ids) => axios.post(`${API}/admin/playground/reorder`, { ids });
 export const forgotPassword = (payload) => axios.post(`${API}/auth/forgot-password`, payload);
 export const resetPassword = (payload) => axios.post(`${API}/auth/reset-password`, payload);
 export const fetchVisitorOrders = () => axios.get(`${API}/visitor/orders`);

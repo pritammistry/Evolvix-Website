@@ -1487,7 +1487,9 @@ class PlaygroundItemCreate(BaseModel):
 @api_router.get("/playground")
 async def get_playground_items():
     items = []
-    async for doc in db.playground_items.find({"visible": True}, {"_id": 0}).sort("created_at", 1):
+    async for doc in db.playground_items.find({"visible": True}, {"_id": 0}).sort(
+        [("position", 1), ("created_at", 1)]
+    ):
         items.append(doc)
     return {"items": items}
 
@@ -1496,14 +1498,27 @@ async def get_playground_items():
 async def admin_get_playground(request: Request):
     verify_admin_request(request)
     items = []
-    async for doc in db.playground_items.find({}, {"_id": 0}).sort("created_at", 1):
+    async for doc in db.playground_items.find({}, {"_id": 0}).sort(
+        [("position", 1), ("created_at", 1)]
+    ):
         items.append(doc)
     return {"items": items}
+
+
+@api_router.post("/admin/playground/reorder")
+async def admin_reorder_playground(request: Request):
+    verify_admin_request(request)
+    body = await request.json()
+    ids = body.get("ids", [])
+    for i, item_id in enumerate(ids):
+        await db.playground_items.update_one({"id": item_id}, {"$set": {"position": i}})
+    return {"message": "Reordered"}
 
 
 @api_router.post("/admin/playground")
 async def admin_create_playground_item(payload: PlaygroundItemCreate, request: Request):
     verify_admin_request(request)
+    count = await db.playground_items.count_documents({})
     item = {
         "id": f"pg-{uuid.uuid4().hex[:10]}",
         "category": payload.category,
@@ -1513,6 +1528,7 @@ async def admin_create_playground_item(payload: PlaygroundItemCreate, request: R
         "thumbnail": payload.thumbnail,
         "preview_url": payload.preview_url,
         "visible": payload.visible,
+        "position": count,
         "created_at": now_iso(),
     }
     await db.playground_items.insert_one(item)
