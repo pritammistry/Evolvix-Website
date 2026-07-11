@@ -50,8 +50,26 @@ const SIDEBAR_GROUPS = [
   },
 ];
 
+function titleToSlug(title) {
+  return (title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
 function TextField({ label, value, onChange, testId, multiline = false }) {
   return <label className="admin-field" data-testid={`${testId}-field`}><span>{label}</span>{multiline ? <textarea value={value || ""} onChange={(e) => onChange(e.target.value)} data-testid={testId} /> : <input value={value || ""} onChange={(e) => onChange(e.target.value)} data-testid={testId} />}</label>;
+}
+
+function SlugField({ value, onChange, title, testId }) {
+  return (
+    <label className="admin-field" data-testid={`${testId}-field`}>
+      <span>Slug <small style={{ fontWeight: 400, color: "var(--muted)" }}>(URL identifier)</small></span>
+      <div style={{ display: "flex", gap: 6 }}>
+        <input value={value || ""} onChange={(e) => onChange(e.target.value)} data-testid={testId} style={{ flex: 1 }} placeholder="e.g. animals-coloring-book" />
+        <button type="button" className="admin-mini-btn" style={{ whiteSpace: "nowrap", flexShrink: 0 }} onClick={() => { const s = titleToSlug(title); if (s) onChange(s); }} data-testid={`${testId}-generate`} title="Generate from title">
+          Auto
+        </button>
+      </div>
+    </label>
+  );
 }
 
 function SelectField({ label, value, onChange, options, testId }) {
@@ -422,6 +440,9 @@ function CatalogEditor({ title, icon: Icon, items, onChange, kind, onRefresh, ca
     catch { toast.error(`Could not reset ${title}`); }
   };
   const renderField = (field, item, index) => {
+    if (field === "slug") {
+      return <SlugField key={field} value={item[field]} onChange={(value) => update(index, field, value)} title={item.title} testId={`${kind}-${field}-${index}`} />;
+    }
     if (field === "category" && kind === "products" && categoryOptions?.length) {
       return <SelectField key={field} label="Category" value={item[field]} onChange={(value) => update(index, field, value)} options={categoryOptions} testId={`${kind}-${field}-${index}`} />;
     }
