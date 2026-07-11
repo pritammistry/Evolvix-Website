@@ -1167,17 +1167,41 @@ async def admin_reset(request: Request):
     return {"message": "Admin content reset to Evolvix defaults"}
 
 
+CONTENT_SECTION_MAP: Dict[str, List[str]] = {
+    "brand": ["brand", "contact", "trust_strip"],
+    "about": ["about"],
+    "services": ["creative_services", "technology_services"],
+    "ecosystem": ["ecosystem"],
+    "learning": ["learning_categories"],
+    "music": ["music_services", "music_previews"],
+    "custom": ["custom_sections"],
+    "demos": ["demos"],
+    "testimonials": ["testimonials"],
+}
+
+
 @api_router.post("/admin/reset/{kind}")
 async def admin_reset_section(kind: str, request: Request):
     verify_admin_request(request)
-    if kind not in {"products", "portfolio", "blog"}:
-        raise HTTPException(status_code=400, detail="Invalid section. Valid values: products, portfolio, blog")
-    section_defaults = {"products": list(PRODUCTS.values()), "portfolio": PORTFOLIO, "blog": BLOG_POSTS}
-    await db.editable_catalog.update_one(
-        {"id": "primary"},
-        {"$set": {kind: section_defaults[kind], "updated_at": now_iso()}},
-        upsert=True,
-    )
+    catalog_kinds = {"products", "portfolio", "blog"}
+    content_kinds = set(CONTENT_SECTION_MAP.keys())
+    if kind not in catalog_kinds and kind not in content_kinds:
+        raise HTTPException(status_code=400, detail=f"Invalid section. Valid: {', '.join(sorted(catalog_kinds | content_kinds))}")
+    if kind in catalog_kinds:
+        section_defaults = {"products": list(PRODUCTS.values()), "portfolio": PORTFOLIO, "blog": BLOG_POSTS}
+        await db.editable_catalog.update_one(
+            {"id": "primary"},
+            {"$set": {kind: section_defaults[kind], "updated_at": now_iso()}},
+            upsert=True,
+        )
+    else:
+        set_fields = {f"content.{key}": DEFAULT_SITE_CONTENT.get(key, []) for key in CONTENT_SECTION_MAP[kind]}
+        set_fields["updated_at"] = now_iso()
+        await db.site_content.update_one(
+            {"id": "primary"},
+            {"$set": set_fields},
+            upsert=True,
+        )
     return {"message": f"{kind} reset to Evolvix defaults"}
 
 

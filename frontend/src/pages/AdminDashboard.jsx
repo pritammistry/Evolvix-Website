@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Lock, Save, RotateCcw, Plus, Trash2, Sparkles, Database, Layers3, Package, Newspaper, Image as ImageIcon, LogOut, UploadCloud, BarChart3, Star, DownloadCloud, FileDown, Gamepad2, Monitor, Eye, EyeOff, ChevronUp, ChevronDown } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Lock, Save, RotateCcw, Plus, Trash2, Sparkles, Database, Layers3, Package, Newspaper, Image as ImageIcon, LogOut, UploadCloud, BarChart3, Star, DownloadCloud, FileDown, Gamepad2, Monitor, Eye, EyeOff, ChevronUp, ChevronDown, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { adminLogin, adminLogout, createPlaygroundItem, deletePlaygroundItem, deleteProductFile, exportAdminAnalytics, fetchAdminAnalytics, fetchAdminAnalyticsOptions, fetchAdminDashboard, fetchAdminPlayground, resetAdminContent, resetAdminSection, reorderPlayground, saveAdminContent, saveAdminList, updatePlaygroundItem, uploadProductFile, setVisitorAuthToken, fetchAdminLeadsContacts, exportAdminLeadsContacts, fetchAdminLeadsNewsletter, exportAdminLeadsNewsletter } from "../api";
 
@@ -9,6 +9,45 @@ const blankBlog = { title: "New Insight", slug: "new-insight", category: "AI Too
 const blankTestimonial = { name: "New Customer", role: "Customer", quote: "Share a clear customer result or review here.", rating: 5, visible: true };
 const blankMusicPreview = { mood: "Calm", title: "New audio preview", description: "Short preview description.", audio_url: "", visible: true };
 const blankDemo = { title: "New Demo", industry: "Retail / Optical", description: "Demo description.", features: ["Feature 1", "Feature 2"], url: "", icon_key: "monitor", status: "Coming Soon", visible: true };
+
+const SIDEBAR_GROUPS = [
+  {
+    id: "active",
+    label: "Active Pages",
+    sublabel: "Live on the website",
+    items: [
+      { id: "products", label: "Products / Store", type: "frequent" },
+      { id: "blog", label: "Blog & Insights", type: "frequent" },
+      { id: "playground", label: "Playground", type: "frequent" },
+      { id: "demos", label: "Demos Page", type: "frequent" },
+      { id: "testimonials", label: "Testimonials", type: "frequent" },
+      { id: "custom", label: "Custom Sections", type: "frequent" },
+      { id: "brand", label: "Brand & Contact", type: "caution" },
+      { id: "about", label: "About Page", type: "caution" },
+      { id: "services", label: "Services", type: "caution" },
+      { id: "ecosystem", label: "Ecosystem", type: "caution" },
+    ],
+  },
+  {
+    id: "operations",
+    label: "Operations",
+    sublabel: "Read-only data",
+    items: [
+      { id: "leads", label: "Leads & Contacts", type: "ops" },
+      { id: "analytics", label: "Analytics", type: "ops" },
+    ],
+  },
+  {
+    id: "inactive",
+    label: "Inactive / Specialized",
+    sublabel: "Not in primary navigation",
+    items: [
+      { id: "music", label: "Music Services", type: "inactive" },
+      { id: "learning", label: "Learning Categories", type: "inactive" },
+      { id: "portfolio", label: "Portfolio / Showcase", type: "inactive" },
+    ],
+  },
+];
 
 function TextField({ label, value, onChange, testId, multiline = false }) {
   return <label className="admin-field" data-testid={`${testId}-field`}><span>{label}</span>{multiline ? <textarea value={value || ""} onChange={(e) => onChange(e.target.value)} data-testid={testId} /> : <input value={value || ""} onChange={(e) => onChange(e.target.value)} data-testid={testId} />}</label>;
@@ -369,6 +408,28 @@ function PlaygroundEditor() {
   return <section className="admin-editor-card" data-testid="playground-editor"><h3><Gamepad2 size={20} /> Playground Items</h3><p style={{ color: "var(--muted)", marginBottom: 18 }}>Add songs, freebie books, or games. Visitors must sign in to access download links.</p><div className="admin-form-grid"><label className="admin-field" data-testid="playground-form-category-field"><span>Category</span><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} data-testid="playground-form-category"><option value="music">Music Download</option><option value="freebie">Freebie / Prompt Book</option><option value="game">Game / Interactive</option></select></label><TextField label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} testId="playground-form-title" /><TextField label="Download / Access URL" value={form.url} onChange={(v) => setForm({ ...form, url: v })} testId="playground-form-url" /><TextField label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} testId="playground-form-desc" multiline /><TextField label="Thumbnail URL (optional)" value={form.thumbnail} onChange={(v) => setForm({ ...form, thumbnail: v })} testId="playground-form-thumb" /><TextField label="Audio Preview URL (optional, 10-15 sec clip)" value={form.preview_url} onChange={(v) => setForm({ ...form, preview_url: v })} testId="playground-form-preview" /></div><label className="admin-check"><input type="checkbox" checked={form.visible} onChange={(e) => setForm({ ...form, visible: e.target.checked })} data-testid="playground-form-visible" /> Visible on Playground</label><div style={{ display: "flex", gap: 10, marginTop: 12 }}><button type="button" className="admin-save" onClick={handleSave} data-testid="playground-form-save">{editId ? <><Save size={16} /> Update Item</> : <><Plus size={16} /> Add Item</>}</button>{editId && <button type="button" className="danger-btn" onClick={() => { setEditId(null); setForm(BLANK); }} data-testid="playground-form-cancel">Cancel</button>}</div>{["music", "freebie", "game"].map((cat) => { const catItems = items.filter((item) => item.category === cat); return <div key={cat} style={{ marginTop: 28 }} data-testid={`playground-section-${cat}`}><h4 style={{ color: "var(--cyan)", textTransform: "uppercase", fontSize: 12, letterSpacing: "0.1em", marginBottom: 10 }}>{catLabel[cat]}</h4>{catItems.length === 0 ? <p style={{ color: "var(--muted)", fontSize: 13 }} data-testid={`playground-empty-${cat}`}>No items yet.</p> : catItems.map((item, ci) => <div className="admin-pair" key={item.id} data-testid={`playground-item-${item.id}`}><div><strong style={{ color: "white" }}>{item.title}</strong><span style={{ color: "var(--muted)", fontSize: 12, marginLeft: 10 }}>{item.visible ? "Visible" : "Hidden"}</span></div><div style={{ display: "flex", gap: 8, alignItems: "center" }}><div style={{ display: "flex", flexDirection: "column", gap: 3 }}><button type="button" className="admin-mini-btn" onClick={() => moveItem(item, "up")} disabled={ci === 0} title="Move up" style={{ minHeight: 28, padding: "0 8px" }} data-testid={`playground-up-${item.id}`}><ChevronUp size={13} /></button><button type="button" className="admin-mini-btn" onClick={() => moveItem(item, "down")} disabled={ci === catItems.length - 1} title="Move down" style={{ minHeight: 28, padding: "0 8px" }} data-testid={`playground-down-${item.id}`}><ChevronDown size={13} /></button></div><button type="button" className="admin-mini-btn" onClick={() => handleEdit(item)} data-testid={`playground-edit-${item.id}`}><Save size={14} /> Edit</button><button type="button" className="danger-btn" onClick={() => handleDelete(item.id)} data-testid={`playground-delete-${item.id}`}><Trash2 size={14} /> Remove</button></div></div>)}</div>; })}</section>;
 }
 
+function CautionBanner({ section }) {
+  return (
+    <div className="admin-caution-banner">
+      <AlertTriangle size={18} />
+      <div>
+        <strong>Core page — edit with care</strong>
+        <p>Changes to <em>{section}</em> appear live on the website immediately after Save. Only edit when intentionally updating core brand content.</p>
+      </div>
+    </div>
+  );
+}
+
+function SectionToolbar({ resetKey, label, onReset }) {
+  return (
+    <div className="admin-section-toolbar">
+      <button type="button" className="admin-reset section-reset-btn" onClick={() => onReset(resetKey, label)}>
+        <RotateCcw size={13} /> Reset {label}
+      </button>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -377,9 +438,8 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState([]);
   const [portfolio, setPortfolio] = useState([]);
   const [blog, setBlog] = useState([]);
-  const [active, setActive] = useState("brand");
+  const [active, setActive] = useState("products");
   const [saving, setSaving] = useState(false);
-  const tabs = useMemo(() => ["brand", "about", "services", "ecosystem", "learning", "music", "custom", "demos", "products", "portfolio", "blog", "testimonials", "playground", "leads", "analytics"], []);
 
   const loadDashboard = useCallback(async () => {
     const { data } = await fetchAdminDashboard();
@@ -414,6 +474,12 @@ export default function AdminDashboard() {
   const resetAll = async () => {
     if (!window.confirm("Reset ALL sections (brand, services, products, blog, portfolio…) to code defaults? This cannot be undone.")) return;
     try { await resetAdminContent(); await loadDashboard(); toast.success("All content reset to defaults"); } catch { toast.error("Could not reset content"); }
+  };
+
+  const resetSection = async (key, label) => {
+    if (!window.confirm(`Reset "${label}" to code defaults? All admin edits for this section will be lost.`)) return;
+    try { await resetAdminSection(key); await loadDashboard(); toast.success(`${label} reset to defaults`); }
+    catch { toast.error(`Could not reset ${label}`); }
   };
 
   const logout = () => {
@@ -459,5 +525,169 @@ export default function AdminDashboard() {
     );
   }
 
-  return <section className="admin-shell" data-testid="admin-dashboard-page"><aside className="admin-sidebar"><h2>EVOLVIX OS</h2><p>3D Content Control</p>{tabs.map((tab) => <button key={tab} className={active === tab ? "active" : ""} onClick={() => setActive(tab)} data-testid={`admin-tab-${tab}`}>{tab}</button>)}</aside><main className="admin-main"><div className="admin-topbar" data-testid="admin-action-bar"><div><span>Admin Dashboard</span><h1>Manage every Evolvix section from one command center.</h1></div><div className="admin-action-buttons"><button className="admin-save" onClick={saveAll} disabled={saving} data-testid="admin-save-all-button"><Save size={16} /> {saving ? "Saving…" : "Save Changes"}</button><button className="admin-reset" onClick={resetAll} data-testid="admin-reset-button"><RotateCcw size={16} /> Reset</button><button className="admin-logout" onClick={logout} data-testid="admin-logout-button"><LogOut size={16} /> Logout</button></div></div>{active === "brand" && <section className="admin-editor-card"><h3><Database size={20} /> Brand, Contact & Trust</h3><div className="admin-form-grid"><TextField label="Brand Name" value={content.brand.name} onChange={(value) => updateContent(["brand", "name"], value)} testId="admin-brand-name" /><TextField label="Headline" value={content.brand.headline} onChange={(value) => updateContent(["brand", "headline"], value)} testId="admin-brand-headline" /><TextField label="Subheadline" value={content.brand.subheadline} onChange={(value) => updateContent(["brand", "subheadline"], value)} testId="admin-brand-subheadline" /><TextField label="GSTIN" value={content.brand.gstin} onChange={(value) => updateContent(["brand", "gstin"], value)} testId="admin-brand-gstin" /><TextField label="Email" value={content.contact.email} onChange={(value) => updateContent(["contact", "email"], value)} testId="admin-contact-email" /><TextField label="Phone" value={content.contact.phone} onChange={(value) => updateContent(["contact", "phone"], value)} testId="admin-contact-phone" /><TextField label="WhatsApp" value={content.contact.whatsapp} onChange={(value) => updateContent(["contact", "whatsapp"], value)} testId="admin-contact-whatsapp" /><TextField label="Address" value={content.contact.address} onChange={(value) => updateContent(["contact", "address"], value)} testId="admin-contact-address" /><TextField label="Facebook" value={content.contact.facebook} onChange={(value) => updateContent(["contact", "facebook"], value)} testId="admin-contact-facebook" /><TextField label="Google Location" value={content.contact.google_location} onChange={(value) => updateContent(["contact", "google_location"], value)} testId="admin-contact-google" /><TextField label="Gumroad" value={content.contact.gumroad} onChange={(value) => updateContent(["contact", "gumroad"], value)} testId="admin-contact-gumroad" /></div><ArrayEditor title="Trust Strip" items={content.trust_strip || []} onChange={(value) => updateContent(["trust_strip"], value)} placeholder="Trust item" testPrefix="admin-trust" /></section>}{active === "about" && <section className="admin-editor-card" data-testid="admin-about-editor"><h3><Database size={20} /> About Page</h3><div className="admin-form-grid"><TextField label="Hero title" value={content.about?.title} onChange={(value) => updateContent(["about", "title"], value)} testId="admin-about-title" /><TextField label="Hero intro paragraph" value={content.about?.intro} onChange={(value) => updateContent(["about", "intro"], value)} testId="admin-about-intro" multiline /><TextField label="Description paragraph" value={content.about?.description} onChange={(value) => updateContent(["about", "description"], value)} testId="admin-about-description" multiline /></div><div className="admin-form-grid" style={{marginTop:"1.5rem"}}><TextField label="Story panel 1 — title" value={content.about?.why_title} onChange={(value) => updateContent(["about", "why_title"], value)} testId="admin-about-why-title" /><TextField label="Story panel 1 — text" value={content.about?.why_text} onChange={(value) => updateContent(["about", "why_text"], value)} testId="admin-about-why-text" multiline /><TextField label="Story panel 2 — title" value={content.about?.mission_title} onChange={(value) => updateContent(["about", "mission_title"], value)} testId="admin-about-mission-title" /><TextField label="Story panel 2 — text" value={content.about?.mission_text} onChange={(value) => updateContent(["about", "mission_text"], value)} testId="admin-about-mission-text" multiline /><TextField label="Story panel 3 — title" value={content.about?.creative_title} onChange={(value) => updateContent(["about", "creative_title"], value)} testId="admin-about-creative-title" /><TextField label="Story panel 3 — text" value={content.about?.creative_text} onChange={(value) => updateContent(["about", "creative_text"], value)} testId="admin-about-creative-text" multiline /></div><div style={{marginTop:"1.5rem"}}><ArrayEditor title="Values" items={content.about?.values || []} onChange={(value) => updateContent(["about", "values"], value)} placeholder="Value" testPrefix="admin-about-values" /></div></section>}{active === "about" && <ServiceListEditor title="What We Do" items={content.about?.what_we_do || []} onChange={(value) => updateContent(["about", "what_we_do"], value)} testPrefix="admin-about-what-we-do" />}{active === "services" && <><ServiceListEditor title="Creative Digital Services" items={content.creative_services || []} onChange={(value) => updateContent(["creative_services"], value)} testPrefix="admin-creative" /><ServiceListEditor title="AI Business & Technology Services" items={content.technology_services || []} onChange={(value) => updateContent(["technology_services"], value)} testPrefix="admin-technology" /></>}{active === "ecosystem" && <EcosystemEditor items={content.ecosystem || []} onChange={(value) => updateContent(["ecosystem"], value)} />}{active === "learning" && <section className="admin-editor-card"><h3><Layers3 size={20} /> Learning and Growth Categories</h3><ArrayEditor title="Categories" items={content.learning_categories || []} onChange={(value) => updateContent(["learning_categories"], value)} placeholder="Learning category" testPrefix="admin-learning" /></section>}{active === "music" && <><section className="admin-editor-card"><h3><Sparkles size={20} /> Music Services</h3><ArrayEditor title="Music Services" items={content.music_services || []} onChange={(value) => updateContent(["music_services"], value)} placeholder="Music service" testPrefix="admin-music" /></section><MusicPreviewsEditor items={content.music_previews || []} onChange={(value) => updateContent(["music_previews"], value)} /></>}{active === "custom" && <CustomSectionsEditor items={content.custom_sections || []} onChange={(value) => updateContent(["custom_sections"], value)} />}{active === "demos" && <DemosEditor items={content.demos || []} onChange={(value) => updateContent(["demos"], value)} />}{active === "products" && <CatalogEditor title="Products" icon={Package} items={products} onChange={setProducts} kind="products" onRefresh={loadDashboard} />}{active === "portfolio" && <CatalogEditor title="Portfolio / Showcase" icon={ImageIcon} items={portfolio} onChange={setPortfolio} kind="portfolio" onRefresh={loadDashboard} />}{active === "blog" && <CatalogEditor title="Blog / Insights" icon={Newspaper} items={blog} onChange={setBlog} kind="blog" onRefresh={loadDashboard} />}{active === "testimonials" && <TestimonialsEditor items={content.testimonials || []} onChange={(value) => updateContent(["testimonials"], value)} />}{active === "playground" && <PlaygroundEditor />}{active === "leads" && <LeadsPanel />}{active === "analytics" && <AnalyticsPanel reportSettings={content.analytics_report_settings || {}} onReportChange={(value) => updateContent(["analytics_report_settings"], value)} />}</main></section>;
+  return (
+    <section className="admin-shell" data-testid="admin-dashboard-page">
+      <aside className="admin-sidebar">
+        <h2>EVOLVIX OS</h2>
+        <p>Command Center</p>
+        {SIDEBAR_GROUPS.map((group) => (
+          <div key={group.id} className={`admin-sidebar-group group-${group.id}`}>
+            <div className="admin-sidebar-group-label">
+              <span>{group.label}</span>
+              <small>{group.sublabel}</small>
+            </div>
+            {group.items.map((item) => (
+              <button
+                key={item.id}
+                className={`admin-sidebar-item type-${item.type}${active === item.id ? " active" : ""}`}
+                onClick={() => setActive(item.id)}
+                data-testid={`admin-tab-${item.id}`}
+              >
+                <span className={`admin-sidebar-dot dot-${item.type}`} />
+                {item.label}
+              </button>
+            ))}
+          </div>
+        ))}
+      </aside>
+
+      <main className="admin-main">
+        <div className="admin-topbar" data-testid="admin-action-bar">
+          <div>
+            <span>Admin Dashboard</span>
+            <h1>Manage every Evolvix section from one command center.</h1>
+          </div>
+          <div className="admin-action-buttons">
+            <button className="admin-save" onClick={saveAll} disabled={saving} data-testid="admin-save-all-button"><Save size={16} /> {saving ? "Saving…" : "Save Changes"}</button>
+            <button className="admin-reset" onClick={resetAll} data-testid="admin-reset-button"><RotateCcw size={16} /> Reset All</button>
+            <button className="admin-logout" onClick={logout} data-testid="admin-logout-button"><LogOut size={16} /> Logout</button>
+          </div>
+        </div>
+
+        {/* ── ACTIVE: Frequently Editable ── */}
+        {active === "products" && <CatalogEditor title="Products" icon={Package} items={products} onChange={setProducts} kind="products" onRefresh={loadDashboard} />}
+        {active === "blog" && <CatalogEditor title="Blog / Insights" icon={Newspaper} items={blog} onChange={setBlog} kind="blog" onRefresh={loadDashboard} />}
+        {active === "portfolio" && <CatalogEditor title="Portfolio / Showcase" icon={ImageIcon} items={portfolio} onChange={setPortfolio} kind="portfolio" onRefresh={loadDashboard} />}
+        {active === "playground" && <PlaygroundEditor />}
+
+        {active === "demos" && <>
+          <SectionToolbar resetKey="demos" label="Demos Page" onReset={resetSection} />
+          <DemosEditor items={content.demos || []} onChange={(value) => updateContent(["demos"], value)} />
+        </>}
+
+        {active === "testimonials" && <>
+          <SectionToolbar resetKey="testimonials" label="Testimonials" onReset={resetSection} />
+          <TestimonialsEditor items={content.testimonials || []} onChange={(value) => updateContent(["testimonials"], value)} />
+        </>}
+
+        {active === "custom" && <>
+          <SectionToolbar resetKey="custom" label="Custom Sections" onReset={resetSection} />
+          <CustomSectionsEditor items={content.custom_sections || []} onChange={(value) => updateContent(["custom_sections"], value)} />
+        </>}
+
+        {/* ── ACTIVE: Core Structure (Caution) ── */}
+        {active === "brand" && (
+          <section className="admin-editor-card" data-testid="admin-brand-editor">
+            <CautionBanner section="Brand & Contact" />
+            <h3>
+              <Database size={20} /> Brand, Contact & Trust
+              <button type="button" className="admin-reset section-reset-btn" onClick={() => resetSection("brand", "Brand & Contact")} data-testid="brand-reset-button">
+                <RotateCcw size={13} /> Reset
+              </button>
+            </h3>
+            <div className="admin-form-grid">
+              <TextField label="Brand Name" value={content.brand.name} onChange={(value) => updateContent(["brand", "name"], value)} testId="admin-brand-name" />
+              <TextField label="Headline" value={content.brand.headline} onChange={(value) => updateContent(["brand", "headline"], value)} testId="admin-brand-headline" />
+              <TextField label="Subheadline" value={content.brand.subheadline} onChange={(value) => updateContent(["brand", "subheadline"], value)} testId="admin-brand-subheadline" />
+              <TextField label="GSTIN" value={content.brand.gstin} onChange={(value) => updateContent(["brand", "gstin"], value)} testId="admin-brand-gstin" />
+              <TextField label="Email" value={content.contact.email} onChange={(value) => updateContent(["contact", "email"], value)} testId="admin-contact-email" />
+              <TextField label="Phone" value={content.contact.phone} onChange={(value) => updateContent(["contact", "phone"], value)} testId="admin-contact-phone" />
+              <TextField label="WhatsApp" value={content.contact.whatsapp} onChange={(value) => updateContent(["contact", "whatsapp"], value)} testId="admin-contact-whatsapp" />
+              <TextField label="Address" value={content.contact.address} onChange={(value) => updateContent(["contact", "address"], value)} testId="admin-contact-address" />
+              <TextField label="Facebook" value={content.contact.facebook} onChange={(value) => updateContent(["contact", "facebook"], value)} testId="admin-contact-facebook" />
+              <TextField label="Google Location" value={content.contact.google_location} onChange={(value) => updateContent(["contact", "google_location"], value)} testId="admin-contact-google" />
+              <TextField label="Gumroad" value={content.contact.gumroad} onChange={(value) => updateContent(["contact", "gumroad"], value)} testId="admin-contact-gumroad" />
+            </div>
+            <ArrayEditor title="Trust Strip" items={content.trust_strip || []} onChange={(value) => updateContent(["trust_strip"], value)} placeholder="Trust item" testPrefix="admin-trust" />
+          </section>
+        )}
+
+        {active === "about" && (
+          <section className="admin-editor-card" data-testid="admin-about-editor">
+            <CautionBanner section="About Page" />
+            <h3>
+              <Database size={20} /> About Page
+              <button type="button" className="admin-reset section-reset-btn" onClick={() => resetSection("about", "About Page")} data-testid="about-reset-button">
+                <RotateCcw size={13} /> Reset
+              </button>
+            </h3>
+            <div className="admin-form-grid">
+              <TextField label="Hero title" value={content.about?.title} onChange={(value) => updateContent(["about", "title"], value)} testId="admin-about-title" />
+              <TextField label="Hero intro paragraph" value={content.about?.intro} onChange={(value) => updateContent(["about", "intro"], value)} testId="admin-about-intro" multiline />
+              <TextField label="Description paragraph" value={content.about?.description} onChange={(value) => updateContent(["about", "description"], value)} testId="admin-about-description" multiline />
+            </div>
+            <div className="admin-form-grid" style={{marginTop:"1.5rem"}}>
+              <TextField label="Story panel 1 — title" value={content.about?.why_title} onChange={(value) => updateContent(["about", "why_title"], value)} testId="admin-about-why-title" />
+              <TextField label="Story panel 1 — text" value={content.about?.why_text} onChange={(value) => updateContent(["about", "why_text"], value)} testId="admin-about-why-text" multiline />
+              <TextField label="Story panel 2 — title" value={content.about?.mission_title} onChange={(value) => updateContent(["about", "mission_title"], value)} testId="admin-about-mission-title" />
+              <TextField label="Story panel 2 — text" value={content.about?.mission_text} onChange={(value) => updateContent(["about", "mission_text"], value)} testId="admin-about-mission-text" multiline />
+              <TextField label="Story panel 3 — title" value={content.about?.creative_title} onChange={(value) => updateContent(["about", "creative_title"], value)} testId="admin-about-creative-title" />
+              <TextField label="Story panel 3 — text" value={content.about?.creative_text} onChange={(value) => updateContent(["about", "creative_text"], value)} testId="admin-about-creative-text" multiline />
+            </div>
+            <div style={{marginTop:"1.5rem"}}>
+              <ArrayEditor title="Values" items={content.about?.values || []} onChange={(value) => updateContent(["about", "values"], value)} placeholder="Value" testPrefix="admin-about-values" />
+            </div>
+          </section>
+        )}
+        {active === "about" && <ServiceListEditor title="What We Do" items={content.about?.what_we_do || []} onChange={(value) => updateContent(["about", "what_we_do"], value)} testPrefix="admin-about-what-we-do" />}
+
+        {active === "services" && <>
+          <section className="admin-editor-card admin-caution-wrapper">
+            <CautionBanner section="Services" />
+            <div className="admin-section-toolbar" style={{marginTop:12}}>
+              <button type="button" className="admin-reset section-reset-btn" onClick={() => resetSection("services", "Services")} data-testid="services-reset-button">
+                <RotateCcw size={13} /> Reset Services to Defaults
+              </button>
+            </div>
+          </section>
+          <ServiceListEditor title="Creative Digital Services" items={content.creative_services || []} onChange={(value) => updateContent(["creative_services"], value)} testPrefix="admin-creative" />
+          <ServiceListEditor title="AI Business & Technology Services" items={content.technology_services || []} onChange={(value) => updateContent(["technology_services"], value)} testPrefix="admin-technology" />
+        </>}
+
+        {active === "ecosystem" && <>
+          <section className="admin-editor-card admin-caution-wrapper">
+            <CautionBanner section="Ecosystem" />
+            <div className="admin-section-toolbar" style={{marginTop:12}}>
+              <button type="button" className="admin-reset section-reset-btn" onClick={() => resetSection("ecosystem", "Ecosystem")} data-testid="ecosystem-reset-button">
+                <RotateCcw size={13} /> Reset Ecosystem to Defaults
+              </button>
+            </div>
+          </section>
+          <EcosystemEditor items={content.ecosystem || []} onChange={(value) => updateContent(["ecosystem"], value)} />
+        </>}
+
+        {/* ── OPERATIONS ── */}
+        {active === "leads" && <LeadsPanel />}
+        {active === "analytics" && <AnalyticsPanel reportSettings={content.analytics_report_settings || {}} onReportChange={(value) => updateContent(["analytics_report_settings"], value)} />}
+
+        {/* ── INACTIVE / SPECIALIZED ── */}
+        {active === "music" && <>
+          <SectionToolbar resetKey="music" label="Music Services" onReset={resetSection} />
+          <section className="admin-editor-card">
+            <h3><Sparkles size={20} /> Music Services</h3>
+            <ArrayEditor title="Music Services" items={content.music_services || []} onChange={(value) => updateContent(["music_services"], value)} placeholder="Music service" testPrefix="admin-music" />
+          </section>
+          <MusicPreviewsEditor items={content.music_previews || []} onChange={(value) => updateContent(["music_previews"], value)} />
+        </>}
+
+        {active === "learning" && <>
+          <SectionToolbar resetKey="learning" label="Learning Categories" onReset={resetSection} />
+          <section className="admin-editor-card">
+            <h3><Layers3 size={20} /> Learning and Growth Categories</h3>
+            <ArrayEditor title="Categories" items={content.learning_categories || []} onChange={(value) => updateContent(["learning_categories"], value)} placeholder="Learning category" testPrefix="admin-learning" />
+          </section>
+        </>}
+      </main>
+    </section>
+  );
 }
