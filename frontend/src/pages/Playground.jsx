@@ -71,17 +71,7 @@ function MusicTrackRow({ item, index, onDownload }) {
     setPlaying(false);
   }
 
-  function togglePreview() {
-    if (!item.preview_url) return;
-    if (playing) { stopPreview(); return; }
-
-    const audio = new Audio(item.preview_url);
-    audioRef.current = audio;
-    audio.addEventListener('ended', stopPreview);
-    audio.play().catch(() => {});
-    setPlaying(true);
-
-    // Fade: 0.25s ticks × 20 steps = 5s. Start at 10s, done at 15s.
+  function scheduleFade(delayMs) {
     fadeTimeoutRef.current = setTimeout(() => {
       let step = 0;
       fadeIntervalRef.current = setInterval(() => {
@@ -93,22 +83,52 @@ function MusicTrackRow({ item, index, onDownload }) {
           audioRef.current = null;
           setPlaying(false);
         }
-      }, 250);
-    }, 10000);
+      }, 250); // 20 × 250ms = 5s fade
+    }, delayMs);
   }
+
+  function togglePreview() {
+    const src = item.preview_url || item.url;
+    if (!src) return;
+    if (playing) { stopPreview(); return; }
+
+    const audio = new Audio(src);
+    audioRef.current = audio;
+    audio.addEventListener('ended', stopPreview);
+    audio.addEventListener('error', stopPreview);
+
+    if (item.preview_url) {
+      // Explicit short clip — play from start
+      audio.play().catch(stopPreview);
+      setPlaying(true);
+      scheduleFade(10000);
+    } else {
+      // Full track — seek to random position between 25–65% once metadata loads
+      audio.addEventListener('loadedmetadata', () => {
+        if (!audioRef.current) return;
+        audio.currentTime = audio.duration * (0.25 + Math.random() * 0.40);
+        audio.play().catch(stopPreview);
+        setPlaying(true);
+        scheduleFade(10000);
+      });
+      audio.load();
+    }
+  }
+
+  const hasPreview = !!(item.preview_url || item.url);
 
   return (
     <div className={`playground-track-row${playing ? " playground-track-row--playing" : ""}`} data-testid={`playground-track-${item.id}`}>
       <span className="playground-track-num">{index + 1}</span>
       <button
-        className={`playground-track-thumb-wrap${item.preview_url ? " playground-track-thumb-wrap--clickable" : ""}`}
+        className={`playground-track-thumb-wrap${hasPreview ? " playground-track-thumb-wrap--clickable" : ""}`}
         onClick={togglePreview}
         aria-label={playing ? "Pause preview" : "Play preview"}
-        disabled={!item.preview_url}
+        disabled={!hasPreview}
         data-testid={`playground-track-thumb-${item.id}`}
       >
         <img src={thumbSrc} alt={item.title} className="playground-track-thumb" />
-        {item.preview_url && (
+        {hasPreview && (
           <span className="playground-track-play-overlay">
             {playing ? <Pause size={14} /> : <Play size={14} />}
           </span>
