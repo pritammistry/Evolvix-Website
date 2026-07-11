@@ -410,6 +410,11 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
         {"id": "t3", "name": "Learning User", "role": "AI Beginner", "quote": "The learning resources are structured in a simple way that builds confidence step by step.", "rating": 5, "visible": True},
     ],
     "why_choose": ["AI-first approach", "Personalized solutions", "Future-ready technology", "Business-focused innovation", "Creative excellence", "End-to-end support"],
+    "demos": [
+        {"id": "optical-catalog", "title": "Smart Store — Spectacle Shop", "industry": "Retail / Optical", "description": "A fully branded digital catalog for an optical retailer. Customers browse frames, lenses, and accessories with a 'Show Interest' flow that feeds directly into a live leads dashboard.", "features": ["Product catalog with categories", "Show Interest / enquiry flow", "Live leads dashboard", "Mobile-first design"], "url": "https://evolvix-catalog-demo.vercel.app", "icon_key": "shopping", "status": "Live Demo", "visible": True},
+        {"id": "invoice-management", "title": "Invoice & Billing Management App", "industry": "Finance / Accounting", "description": "A smart billing dashboard for small businesses — generate GST invoices, track payments, manage clients, and export reports.", "features": ["GST invoice generation", "Payment tracking", "Client management", "Report export"], "url": "", "icon_key": "chart", "status": "Coming Soon", "visible": True},
+        {"id": "saas-crm-automation", "title": "SaaS CRM & Automation Demo", "industry": "SaaS / Tech Products", "description": "A full CRM with lead pipeline, automated follow-ups, task management, and team dashboard — built for SaaS and service businesses.", "features": ["Lead pipeline board", "Automated follow-ups", "Task & team management", "Analytics dashboard"], "url": "", "icon_key": "zap", "status": "Coming Soon", "visible": True},
+    ],
 }
 
 
@@ -423,7 +428,7 @@ def merged_site_content(custom_content: Optional[Dict[str, Any]]) -> Dict[str, A
     if not merged["about"].get("values"):
         merged["about"]["values"] = DEFAULT_SITE_CONTENT["about"]["values"]
     merged["analytics_report_settings"] = {**DEFAULT_SITE_CONTENT["analytics_report_settings"], **(custom_content or {}).get("analytics_report_settings", {})}
-    for list_key in ["trust_strip", "how_we_work", "industries_served", "creative_services", "technology_services", "ecosystem", "learning_categories", "music_services", "music_previews", "custom_sections", "testimonials", "why_choose"]:
+    for list_key in ["trust_strip", "how_we_work", "industries_served", "creative_services", "technology_services", "ecosystem", "learning_categories", "music_services", "music_previews", "custom_sections", "testimonials", "why_choose", "demos"]:
         if not merged.get(list_key):
             merged[list_key] = DEFAULT_SITE_CONTENT[list_key]
     return merged
