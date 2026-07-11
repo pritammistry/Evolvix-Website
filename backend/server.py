@@ -292,19 +292,19 @@ async def send_purchase_confirmation(session_id: str) -> None:
             download_url=download_url,
             invoice_url=invoice_url,
         )
-        resend.Emails.send({
+        send_result = resend.Emails.send({
             "from": ORDERS_FROM_EMAIL(),
             "to": [user["email"]],
             "subject": f"Your Evolvix purchase is confirmed — {product_title}",
             "html": html,
         })
+        logger.info("Purchase confirmation sent to %s for session %s (resend id: %s)", user["email"], session_id, send_result)
         await db.payment_transactions.update_one(
             {"session_id": session_id},
             {"$set": {"confirmation_email_sent": True, "confirmation_email_sent_at": now_iso()}},
         )
-        logger.info("Purchase confirmation sent to %s for session %s", user["email"], session_id)
     except Exception as exc:
-        logger.warning("Failed to send purchase confirmation for %s: %s", session_id, exc)
+        logger.error("PURCHASE CONFIRMATION EMAIL FAILED for session %s → from=%s to=%s error=%s", session_id, ORDERS_FROM_EMAIL(), user.get("email"), exc)
 
 
 DEFAULT_SITE_CONTENT: Dict[str, Any] = {
