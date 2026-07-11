@@ -1480,6 +1480,7 @@ class PlaygroundItemCreate(BaseModel):
     description: str
     url: str
     thumbnail: str = ""
+    preview_url: str = ""
     visible: bool = True
 
 
@@ -1510,6 +1511,7 @@ async def admin_create_playground_item(payload: PlaygroundItemCreate, request: R
         "description": payload.description,
         "url": payload.url,
         "thumbnail": payload.thumbnail,
+        "preview_url": payload.preview_url,
         "visible": payload.visible,
         "created_at": now_iso(),
     }
@@ -1527,6 +1529,7 @@ async def admin_update_playground_item(item_id: str, payload: PlaygroundItemCrea
         "description": payload.description,
         "url": payload.url,
         "thumbnail": payload.thumbnail,
+        "preview_url": payload.preview_url,
         "visible": payload.visible,
         "updated_at": now_iso(),
     }

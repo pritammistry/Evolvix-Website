@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSEO } from "../hooks/useSEO";
-import { ArrowRight, BookOpen, Download, ExternalLink, Gamepad2, Music2, Play } from "lucide-react";
+import { ArrowRight, BookOpen, Download, ExternalLink, Gamepad2, Music2, Pause, Play } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
@@ -31,14 +31,89 @@ function ArtistCard({ track, index }) {
   );
 }
 
+function makeThumbSrc(title) {
+  const hue = [...title].reduce((h, c) => (h * 31 + c.charCodeAt(0)) & 0xffff, 0) % 360;
+  const c1 = `hsl(${hue},70%,62%)`;
+  const c2 = `hsl(${(hue + 40) % 360},65%,52%)`;
+  const bg = `hsl(${hue},30%,9%)`;
+  const bars = 7;
+  const codes = [...title].map(c => c.charCodeAt(0));
+  const barW = 3, gap = 2, totalW = bars * (barW + gap) - gap;
+  const x0 = (40 - totalW) / 2;
+  const rects = Array.from({ length: bars }, (_, i) => {
+    const h = 8 + ((codes[i % codes.length] * (i + 5)) % 22);
+    const x = x0 + i * (barW + gap);
+    const y = ((40 - h) / 2).toFixed(1);
+    return `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="1.5" fill="${i % 2 === 0 ? c1 : c2}" opacity="${(0.55 + (i % 3) * 0.15).toFixed(2)}"/>`;
+  }).join('');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="${bg}"/>${rects}</svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 function MusicTrackRow({ item, index, onDownload }) {
+  const [playing, setPlaying] = useState(false);
+  const audioRef = useRef(null);
+  const fadeTimeoutRef = useRef(null);
+  const fadeIntervalRef = useRef(null);
+  const thumbSrc = useMemo(() => item.thumbnail || makeThumbSrc(item.title), [item.thumbnail, item.title]);
+
+  useEffect(() => () => {
+    audioRef.current?.pause();
+    clearTimeout(fadeTimeoutRef.current);
+    clearInterval(fadeIntervalRef.current);
+  }, []);
+
+  function stopPreview() {
+    audioRef.current?.pause();
+    audioRef.current = null;
+    clearTimeout(fadeTimeoutRef.current);
+    clearInterval(fadeIntervalRef.current);
+    setPlaying(false);
+  }
+
+  function togglePreview() {
+    if (!item.preview_url) return;
+    if (playing) { stopPreview(); return; }
+
+    const audio = new Audio(item.preview_url);
+    audioRef.current = audio;
+    audio.addEventListener('ended', stopPreview);
+    audio.play().catch(() => {});
+    setPlaying(true);
+
+    // Fade: 0.25s ticks × 20 steps = 5s. Start at 10s, done at 15s.
+    fadeTimeoutRef.current = setTimeout(() => {
+      let step = 0;
+      fadeIntervalRef.current = setInterval(() => {
+        step++;
+        if (audioRef.current) audioRef.current.volume = Math.max(0, 1 - step / 20);
+        if (step >= 20) {
+          clearInterval(fadeIntervalRef.current);
+          audioRef.current?.pause();
+          audioRef.current = null;
+          setPlaying(false);
+        }
+      }, 250);
+    }, 10000);
+  }
+
   return (
-    <div className="playground-track-row" data-testid={`playground-track-${item.id}`}>
+    <div className={`playground-track-row${playing ? " playground-track-row--playing" : ""}`} data-testid={`playground-track-${item.id}`}>
       <span className="playground-track-num">{index + 1}</span>
-      {item.thumbnail
-        ? <img src={item.thumbnail} alt={item.title} className="playground-track-thumb" data-testid={`playground-track-thumb-${item.id}`} />
-        : <span className="playground-track-icon"><Music2 size={18} /></span>
-      }
+      <button
+        className={`playground-track-thumb-wrap${item.preview_url ? " playground-track-thumb-wrap--clickable" : ""}`}
+        onClick={togglePreview}
+        aria-label={playing ? "Pause preview" : "Play preview"}
+        disabled={!item.preview_url}
+        data-testid={`playground-track-thumb-${item.id}`}
+      >
+        <img src={thumbSrc} alt={item.title} className="playground-track-thumb" />
+        {item.preview_url && (
+          <span className="playground-track-play-overlay">
+            {playing ? <Pause size={14} /> : <Play size={14} />}
+          </span>
+        )}
+      </button>
       <div className="playground-track-info">
         <strong data-testid={`playground-track-title-${item.id}`}>{item.title}</strong>
         {item.description && <span data-testid={`playground-track-desc-${item.id}`}>{item.description}</span>}
