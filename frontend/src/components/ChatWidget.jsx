@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Phone } from "lucide-react";
 import { useSiteContent } from "../hooks/useSiteContent";
+import { submitContact } from "../api";
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || "http://localhost:8001";
 
@@ -15,11 +16,11 @@ const QUICK_REPLIES = [
 function getContextualCTAs(text) {
   const t = text.toLowerCase();
   const ctas = [];
-  if (/service|creative|design|resume|branding|logo|presentation|catalog|social media/.test(t))
+  if (/service|creative|design|resume|branding|logo|presentation|catalog|social media|music/.test(t))
     ctas.push({ label: "View Services", href: "/services" });
   if (/website|web app|\bapp\b|software|build|develop|automat/.test(t))
     ctas.push({ label: "Request a Build", href: "/contact?" + new URLSearchParams({ type: "Website / App / Software" }).toString() });
-  if (/learn|course|guide|prompt|download|ebook|resource|product|learnai/.test(t))
+  if (/learn|course|guide|prompt|download|ebook|resource|product|learnai|kids|children|coloring|book/.test(t))
     ctas.push({ label: "Browse Products", href: "/shop" });
   if (/demo|example|prototype|showcase/.test(t))
     ctas.push({ label: "See Demos", href: "/demo" });
@@ -30,6 +31,15 @@ function getContextualCTAs(text) {
   else if (!ctas.some((c) => c.href.startsWith("/contact")))
     ctas.push({ label: "Get a Quote", href: "/contact?" + new URLSearchParams({ type: "Business inquiry" }).toString() });
   return ctas.slice(0, 3);
+}
+
+function getInquiryType(text) {
+  const t = text.toLowerCase();
+  if (/website|web app|\bapp\b|software|build|develop/.test(t)) return "Website / App / Software";
+  if (/creative|design|resume|branding|logo|catalog|social media/.test(t)) return "Creative Services";
+  if (/learn|prompt|ebook|book|digital|product|kids/.test(t)) return "Digital Products";
+  if (/music/.test(t)) return "Music Production";
+  return "Chat Inquiry";
 }
 
 function TypingDots() {
@@ -45,7 +55,6 @@ function ChatBubbleText({ content }) {
   return (
     <>
       {lines.map((line, i) => {
-        // render **bold** spans inline
         const parts = line.split(/(\*\*[^*]+\*\*)/g);
         return (
           <p key={i} className="chat-bubble-line">
@@ -58,6 +67,94 @@ function ChatBubbleText({ content }) {
         );
       })}
     </>
+  );
+}
+
+function LeadCaptureCard({ messages, onDismiss }) {
+  const [form, setForm] = useState({ name: "", email: "", phone: "" });
+  const [submitState, setSubmitState] = useState("idle"); // idle | submitting | done
+  const [error, setError] = useState("");
+
+  const userMessages = messages.filter((m) => m.role === "user").map((m) => m.content);
+  const rawSummary = userMessages.slice(-3).join(" | ");
+  const conversationSummary = rawSummary.length >= 10 ? rawSummary : "Chat inquiry from website via chatbot.";
+  const inquiryType = getInquiryType(rawSummary);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.email.trim()) {
+      setError("Name and email are required.");
+      return;
+    }
+    setError("");
+    setSubmitState("submitting");
+    try {
+      await submitContact({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim() || undefined,
+        inquiry_type: inquiryType,
+        message: conversationSummary,
+      });
+      setSubmitState("done");
+    } catch {
+      setError("Couldn't send right now. Please try WhatsApp.");
+      setSubmitState("idle");
+    }
+  };
+
+  if (submitState === "done") {
+    return (
+      <div className="chat-lead-success" data-testid="chat-lead-success">
+        ✅ Got it! We'll reach out to you shortly.
+      </div>
+    );
+  }
+
+  return (
+    <div className="chat-lead-card" data-testid="chat-lead-card">
+      <p className="chat-lead-title">Want us to follow up with you?</p>
+      <form className="chat-lead-form" onSubmit={handleSubmit} data-testid="chat-lead-form">
+        <input
+          className="chat-lead-input"
+          placeholder="Your name *"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          maxLength={80}
+          data-testid="chat-lead-name"
+        />
+        <input
+          className="chat-lead-input"
+          type="email"
+          placeholder="Email address *"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          data-testid="chat-lead-email"
+        />
+        <input
+          className="chat-lead-input"
+          placeholder="Phone (optional)"
+          value={form.phone}
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          maxLength={20}
+          data-testid="chat-lead-phone"
+        />
+        {error && <p className="chat-lead-error">{error}</p>}
+        <div className="chat-lead-actions">
+          <button
+            type="submit"
+            className="chat-lead-submit"
+            disabled={submitState === "submitting"}
+            data-testid="chat-lead-submit"
+          >
+            {submitState === "submitting" ? "Sending…" : "Send Details"}
+          </button>
+          <button type="button" className="chat-lead-dismiss" onClick={onDismiss} data-testid="chat-lead-dismiss">
+            No thanks
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
@@ -74,6 +171,7 @@ export function ChatWidget() {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [showQuick, setShowQuick] = useState(true);
+  const [leadDismissed, setLeadDismissed] = useState(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -132,7 +230,10 @@ export function ChatWidget() {
           } catch {}
         }
       }
-      const ctas = getContextualCTAs(accumulated);
+
+      // Use last user message + bot response for richer CTA matching
+      const combinedText = userText + " " + accumulated;
+      const ctas = getContextualCTAs(combinedText);
       setMessages((prev) => {
         const updated = [...prev];
         updated[updated.length - 1] = { ...updated[updated.length - 1], ctas };
@@ -156,9 +257,11 @@ export function ChatWidget() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
 
+  // Show lead capture after 2 user turns (messages: greeting + user1 + bot1 + user2 + bot2 = 5)
+  const showLeadCapture = messages.length >= 5 && !streaming && !leadDismissed;
+
   return (
     <>
-      {/* Launcher button — replaces standalone WA float */}
       <button
         className={`chat-launcher${open ? " chat-launcher--open" : ""}`}
         onClick={() => setOpen((v) => !v)}
@@ -171,10 +274,8 @@ export function ChatWidget() {
         {!open && <span className="chat-launcher-label">Chat with us</span>}
       </button>
 
-      {/* Chat panel */}
       {open && (
         <div className="chat-panel" data-testid="chat-panel" role="dialog" aria-label="Evolvix chat assistant">
-          {/* Header */}
           <div className="chat-header">
             <div className="chat-header-info">
               <div className="chat-avatar">EX</div>
@@ -186,7 +287,6 @@ export function ChatWidget() {
             <button className="chat-close-btn" onClick={() => setOpen(false)} aria-label="Close chat"><X size={18} /></button>
           </div>
 
-          {/* Messages */}
           <div className="chat-messages" data-testid="chat-messages">
             {messages.map((msg, i) => (
               <div key={i} className={`chat-msg chat-msg--${msg.role}`}>
@@ -210,7 +310,6 @@ export function ChatWidget() {
               </div>
             ))}
 
-            {/* Quick reply chips — shown only at start */}
             {showQuick && !streaming && (
               <div className="chat-quick-replies">
                 {QUICK_REPLIES.map((q) => (
@@ -219,7 +318,15 @@ export function ChatWidget() {
               </div>
             )}
 
-            {/* Handoff buttons — shown after a few exchanges */}
+            {/* Lead capture — shown after 2 user turns */}
+            {showLeadCapture && (
+              <LeadCaptureCard
+                messages={messages}
+                onDismiss={() => setLeadDismissed(true)}
+              />
+            )}
+
+            {/* Handoff buttons */}
             {messages.length >= 4 && !streaming && (
               <div className="chat-handoff">
                 <span>Connect directly:</span>
@@ -240,7 +347,6 @@ export function ChatWidget() {
             <div ref={bottomRef} />
           </div>
 
-          {/* Input */}
           <div className="chat-input-row">
             <input
               ref={inputRef}
