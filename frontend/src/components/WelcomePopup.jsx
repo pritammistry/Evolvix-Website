@@ -4,6 +4,7 @@ import { submitContact } from "../api";
 import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
 import { trackFormSubmit } from "./AnalyticsTracker";
+import { markLeadCaptured, hasLeadBeenCaptured } from "../lib/leadCapture";
 
 const STORAGE_KEY = "evolvix_welcome_seen_v1";
 
@@ -60,6 +61,7 @@ export function WelcomePopup() {
   // Skipped entirely for logged-in visitors — they are already customers.
   useEffect(() => {
     if (authLoading || user || cfg.enabled === false) return;
+    if (hasLeadBeenCaptured()) return;
     let seen = false;
     try { seen = !!localStorage.getItem(STORAGE_KEY); } catch {}
     if (seen) return;
@@ -107,6 +109,7 @@ export function WelcomePopup() {
         message: `Welcome popup enquiry — interested in ${form.interest}. Requested a free consultation from the website.`,
       });
       trackFormSubmit("welcome-popup", window.location.pathname, { inquiry_type: form.interest });
+      markLeadCaptured();
       setState("done");
       closeTimer.current = setTimeout(close, 2600);
     } catch {

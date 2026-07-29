@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Phone } from "lucide-react";
 import { useSiteContent } from "../hooks/useSiteContent";
 import { submitContact } from "../api";
+import { markLeadCaptured, hasLeadBeenCaptured } from "../lib/leadCapture";
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || "http://localhost:8001";
 
@@ -96,6 +97,7 @@ function LeadCaptureCard({ messages, onDismiss }) {
         inquiry_type: inquiryType,
         message: conversationSummary,
       });
+      markLeadCaptured();
       setSubmitState("done");
     } catch {
       setError("Couldn't send right now. Please try WhatsApp.");
@@ -172,6 +174,9 @@ export function ChatWidget() {
   const [streaming, setStreaming] = useState(false);
   const [showQuick, setShowQuick] = useState(true);
   const [leadDismissed, setLeadDismissed] = useState(false);
+  // Already gave us their details via the welcome popup (or an earlier chat) —
+  // don't ask a second time.
+  const [leadAlreadyCaptured] = useState(hasLeadBeenCaptured);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -258,7 +263,7 @@ export function ChatWidget() {
   };
 
   // Show lead capture after 2 user turns (messages: greeting + user1 + bot1 + user2 + bot2 = 5)
-  const showLeadCapture = messages.length >= 5 && !streaming && !leadDismissed;
+  const showLeadCapture = messages.length >= 5 && !streaming && !leadDismissed && !leadAlreadyCaptured;
 
   return (
     <>
