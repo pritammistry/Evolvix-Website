@@ -44,6 +44,11 @@ export function WelcomePopup() {
   const cfg = { ...DEFAULTS, ...(content.welcome_popup || {}) };
   const bullets = cfg.bullets?.length ? cfg.bullets : DEFAULTS.bullets;
 
+  // Read once at mount — the query string does not change under the SPA router.
+  const [forced] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("welcome") === "1"; } catch { return false; }
+  });
+
   const [visible, setVisible] = useState(false);
   const [closing, setClosing] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", interest: INTERESTS[0] });
@@ -59,19 +64,26 @@ export function WelcomePopup() {
 
   // Show once per browser, after a short delay so the page paints first.
   // Skipped entirely for logged-in visitors — they are already customers.
+  // ?welcome=1 forces it open every time, for testing and live demos: it
+  // ignores all the gates and never writes the "already seen" flag.
   useEffect(() => {
-    if (authLoading || user || cfg.enabled === false) return;
-    if (hasLeadBeenCaptured()) return;
-    let seen = false;
-    try { seen = !!localStorage.getItem(STORAGE_KEY); } catch {}
-    if (seen) return;
-    const delay = Math.max(0, Number(cfg.delay_seconds) || 0) * 1000;
+    if (authLoading) return;
+    if (!forced) {
+      if (user || cfg.enabled === false) return;
+      if (hasLeadBeenCaptured()) return;
+      let seen = false;
+      try { seen = !!localStorage.getItem(STORAGE_KEY); } catch {}
+      if (seen) return;
+    }
+    const delay = forced ? 0 : Math.max(0, Number(cfg.delay_seconds) || 0) * 1000;
     const timer = setTimeout(() => {
       setVisible(true);
-      try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch {}
+      if (!forced) {
+        try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch {}
+      }
     }, delay);
     return () => clearTimeout(timer);
-  }, [authLoading, user, cfg.enabled, cfg.delay_seconds]);
+  }, [authLoading, user, cfg.enabled, cfg.delay_seconds, forced]);
 
   // Lock page scroll, focus the first field, close on Escape.
   useEffect(() => {
