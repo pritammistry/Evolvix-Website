@@ -6,6 +6,10 @@ import { useAuth } from "../hooks/useAuth";
 import { trackFormSubmit } from "./AnalyticsTracker";
 import { markLeadCaptured, hasLeadBeenCaptured } from "../lib/leadCapture";
 
+// sessionStorage, not localStorage: the popup returns once per browser session,
+// so a visitor who comes back in a new tab or a new browsing session sees it
+// again. It still will not re-fire on a plain reload of the same tab. Once they
+// actually submit, the permanent lead-captured flag stops it for good.
 const STORAGE_KEY = "evolvix_welcome_seen_v1";
 
 // Defaults live here so the popup still works if the backend content is missing.
@@ -72,14 +76,14 @@ export function WelcomePopup() {
       if (user || cfg.enabled === false) return;
       if (hasLeadBeenCaptured()) return;
       let seen = false;
-      try { seen = !!localStorage.getItem(STORAGE_KEY); } catch {}
+      try { seen = !!sessionStorage.getItem(STORAGE_KEY); } catch {}
       if (seen) return;
     }
     const delay = forced ? 0 : Math.max(0, Number(cfg.delay_seconds) || 0) * 1000;
     const timer = setTimeout(() => {
       setVisible(true);
       if (!forced) {
-        try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch {}
+        try { sessionStorage.setItem(STORAGE_KEY, String(Date.now())); } catch {}
       }
     }, delay);
     return () => clearTimeout(timer);
