@@ -437,4 +437,19 @@ export const fallbackSiteContent = {
   products,
   portfolio: portfolioItems,
   blog: blogPosts,
+  welcome_popup: {
+    enabled: true,
+    delay_seconds: 2,
+    eyebrow: "Welcome to Evolvix Tech Media",
+    title: "Your idea deserves a",
+    highlight: "proper build",
+    subtitle: "AI, web, creative and business solutions — planned, designed and delivered by one team.",
+    offer: "Free 20-minute consultation. No obligation, no sales script.",
+    cta_label: "Get My Free Consultation",
+    bullets: [
+      "Websites, apps and automation built end to end",
+      "Branding, resumes, catalogs and creative design",
+      "AI consulting sized for a small business budget",
+    ],
+  },
 };

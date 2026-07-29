@@ -130,6 +130,33 @@ function ProductSettingsEditor({ categories, onChange }) {
   );
 }
 
+function WelcomePopupEditor({ popup, onChange }) {
+  const cfg = popup || {};
+  const setField = (key, value) => onChange({ ...cfg, [key]: value });
+  return (
+    <section className="admin-editor-card" data-testid="welcome-popup-editor">
+      <h3><Sparkles size={20} /> Welcome Popup</h3>
+      <p style={{ color: "var(--muted)", marginBottom: 18 }}>
+        Shown once to every new visitor, a couple of seconds after they land. Submissions arrive in the Leads panel just like the contact form.
+      </p>
+      <label className="admin-check">
+        <input type="checkbox" checked={cfg.enabled !== false} onChange={(e) => setField("enabled", e.target.checked)} data-testid="welcome-popup-enabled" />
+        Show the welcome popup on the website
+      </label>
+      <div className="admin-form-grid" style={{ marginTop: 14 }}>
+        <TextField label="Eyebrow" value={cfg.eyebrow} onChange={(value) => setField("eyebrow", value)} testId="welcome-popup-eyebrow-input" />
+        <TextField label="Headline" value={cfg.title} onChange={(value) => setField("title", value)} testId="welcome-popup-title-input" />
+        <TextField label="Highlighted words (gradient)" value={cfg.highlight} onChange={(value) => setField("highlight", value)} testId="welcome-popup-highlight-input" />
+        <TextField label="Delay before showing (seconds)" value={cfg.delay_seconds} onChange={(value) => setField("delay_seconds", Number(value) || 0)} testId="welcome-popup-delay-input" />
+        <TextField label="Subtitle" value={cfg.subtitle} onChange={(value) => setField("subtitle", value)} testId="welcome-popup-subtitle-input" multiline />
+        <TextField label="Offer line (above the form)" value={cfg.offer} onChange={(value) => setField("offer", value)} testId="welcome-popup-offer-input" multiline />
+        <TextField label="Button label" value={cfg.cta_label} onChange={(value) => setField("cta_label", value)} testId="welcome-popup-cta-input" />
+      </div>
+      <ArrayEditor title="Bullet Points (max 3 shown)" items={cfg.bullets || []} onChange={(value) => setField("bullets", value)} placeholder="Bullet point" testPrefix="welcome-popup-bullets" />
+    </section>
+  );
+}
+
 function ArrayEditor({ title, items, onChange, placeholder, testPrefix }) {
   const list = items || [];
   return <div className="admin-array" data-testid={`${testPrefix}-array`}><h4>{title}</h4>{list.map((item, index) => <div className="admin-row" key={index}><input value={item} placeholder={placeholder} onChange={(e) => onChange(list.map((entry, i) => i === index ? e.target.value : entry))} data-testid={`${testPrefix}-item-${index}`} /><button type="button" onClick={() => onChange(list.filter((_, i) => i !== index))} data-testid={`${testPrefix}-remove-${index}`}><Trash2 size={15} /></button></div>)}<button type="button" className="admin-mini-btn" onClick={() => onChange([...list, placeholder])} data-testid={`${testPrefix}-add-button`}><Plus size={15} /> Add</button></div>;
@@ -789,6 +816,7 @@ export default function AdminDashboard() {
         {active === "settings" && <>
           <SectionToolbar resetKey="settings" label="Store Settings" onReset={resetSection} />
           <ProductSettingsEditor categories={content.product_categories || []} onChange={(value) => updateContent(["product_categories"], value)} />
+          <WelcomePopupEditor popup={content.welcome_popup || {}} onChange={(value) => updateContent(["welcome_popup"], value)} />
         </>}
 
         {/* ── INACTIVE / SPECIALIZED ── */}

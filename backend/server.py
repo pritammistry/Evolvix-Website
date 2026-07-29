@@ -427,6 +427,21 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
         "Productivity",
         "AI Tools",
     ],
+    "welcome_popup": {
+        "enabled": True,
+        "delay_seconds": 2,
+        "eyebrow": "Welcome to Evolvix Tech Media",
+        "title": "Your idea deserves a",
+        "highlight": "proper build",
+        "subtitle": "AI, web, creative and business solutions — planned, designed and delivered by one team.",
+        "offer": "Free 20-minute consultation. No obligation, no sales script.",
+        "cta_label": "Get My Free Consultation",
+        "bullets": [
+            "Websites, apps and automation built end to end",
+            "Branding, resumes, catalogs and creative design",
+            "AI consulting sized for a small business budget",
+        ],
+    },
 }
 
 
@@ -440,6 +455,9 @@ def merged_site_content(custom_content: Optional[Dict[str, Any]]) -> Dict[str, A
     if not merged["about"].get("values"):
         merged["about"]["values"] = DEFAULT_SITE_CONTENT["about"]["values"]
     merged["analytics_report_settings"] = {**DEFAULT_SITE_CONTENT["analytics_report_settings"], **(custom_content or {}).get("analytics_report_settings", {})}
+    merged["welcome_popup"] = {**DEFAULT_SITE_CONTENT["welcome_popup"], **(custom_content or {}).get("welcome_popup", {})}
+    if not merged["welcome_popup"].get("bullets"):
+        merged["welcome_popup"]["bullets"] = DEFAULT_SITE_CONTENT["welcome_popup"]["bullets"]
     for list_key in ["trust_strip", "how_we_work", "industries_served", "creative_services", "technology_services", "ecosystem", "learning_categories", "music_services", "music_previews", "custom_sections", "testimonials", "why_choose", "demos", "product_categories"]:
         if not merged.get(list_key):
             merged[list_key] = DEFAULT_SITE_CONTENT[list_key]
@@ -1193,7 +1211,7 @@ CONTENT_SECTION_MAP: Dict[str, List[str]] = {
     "music": ["music_services", "music_previews"],
     "custom": ["custom_sections"],
     "demos": ["demos"],
-    "settings": ["product_categories"],
+    "settings": ["product_categories", "welcome_popup"],
     "testimonials": ["testimonials"],
 }
 
