@@ -153,7 +153,42 @@ function WelcomePopupEditor({ popup, onChange }) {
         <TextField label="Button label" value={cfg.cta_label} onChange={(value) => setField("cta_label", value)} testId="welcome-popup-cta-input" />
       </div>
       <ArrayEditor title="Bullet Points (max 3 shown)" items={cfg.bullets || []} onChange={(value) => setField("bullets", value)} placeholder="Bullet point" testPrefix="welcome-popup-bullets" />
+      <CampaignEditor campaign={cfg.campaign || {}} onChange={(value) => setField("campaign", value)} />
     </section>
+  );
+}
+
+function CampaignEditor({ campaign, onChange }) {
+  const cfg = campaign || {};
+  const setField = (key, value) => onChange({ ...cfg, [key]: value });
+  const endsAt = Date.parse(cfg.ends_at);
+  const live = cfg.enabled !== false && !Number.isNaN(endsAt) && Date.now() < endsAt;
+  return (
+    <div className="admin-array" data-testid="welcome-campaign-editor" style={{ marginTop: 22 }}>
+      <h4>Limited-Time Campaign</h4>
+      <p style={{ color: "var(--muted)", fontSize: ".84rem", marginBottom: 12 }}>
+        While a campaign is running, the copy below replaces everything above. It switches back on its own once the end date passes — you do not need to undo anything.
+        {" "}
+        <strong style={{ color: live ? "#25d366" : "var(--muted)" }}>
+          {live ? `Currently LIVE until ${new Date(endsAt).toLocaleString("en-IN")}` : "Not running — evergreen copy is showing."}
+        </strong>
+      </p>
+      <label className="admin-check">
+        <input type="checkbox" checked={cfg.enabled !== false} onChange={(e) => setField("enabled", e.target.checked)} data-testid="welcome-campaign-enabled" />
+        Run this campaign (still respects the end date below)
+      </label>
+      <div className="admin-form-grid" style={{ marginTop: 14 }}>
+        <TextField label="Ends at (ISO date/time, e.g. 2026-08-16T00:00:00+05:30)" value={cfg.ends_at} onChange={(value) => setField("ends_at", value)} testId="welcome-campaign-ends-input" />
+        <TextField label="Eyebrow" value={cfg.eyebrow} onChange={(value) => setField("eyebrow", value)} testId="welcome-campaign-eyebrow-input" />
+        <TextField label="Headline" value={cfg.title} onChange={(value) => setField("title", value)} testId="welcome-campaign-title-input" />
+        <TextField label="Highlighted words (tricolour)" value={cfg.highlight} onChange={(value) => setField("highlight", value)} testId="welcome-campaign-highlight-input" />
+        <TextField label="Offer code (shown to visitors)" value={cfg.code} onChange={(value) => setField("code", value)} testId="welcome-campaign-code-input" />
+        <TextField label="Subtitle" value={cfg.subtitle} onChange={(value) => setField("subtitle", value)} testId="welcome-campaign-subtitle-input" multiline />
+        <TextField label="Offer line (above the form)" value={cfg.offer} onChange={(value) => setField("offer", value)} testId="welcome-campaign-offer-input" multiline />
+        <TextField label="Button label" value={cfg.cta_label} onChange={(value) => setField("cta_label", value)} testId="welcome-campaign-cta-input" />
+      </div>
+      <ArrayEditor title="Campaign Bullet Points" items={cfg.bullets || []} onChange={(value) => setField("bullets", value)} placeholder="Bullet point" testPrefix="welcome-campaign-bullets" />
+    </div>
   );
 }
 

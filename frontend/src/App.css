@@ -196,3 +196,18 @@ select.welcome-input option{background:#0a0c1a;color:white}
   .welcome-submit:after{display:none}
   .welcome-close:hover{transform:none}
 }
+
+/* ── Welcome popup: time-boxed campaign skin ─────────────────── */
+.welcome-deadline{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:22px 0 0;padding:9px 13px;border-radius:12px;border:1px solid rgba(255,153,51,.3);background:linear-gradient(100deg,rgba(255,153,51,.12),rgba(19,136,8,.1));color:#ffcf9e;font-size:.78rem;font-weight:600;letter-spacing:.01em}
+.welcome-deadline strong{color:white;letter-spacing:.06em}
+.welcome-deadline svg{flex-shrink:0;color:#ff9933}
+
+/* Tricolour is used as an accent only — the card, form and CTA keep the
+   Evolvix palette so the popup still reads as ours, not as a flag. */
+.welcome-card.is-campaign:before{background:conic-gradient(from 0deg,#ff9933,#ffffff 25%,#138808 50%,#ffffff 75%,#ff9933);opacity:.42}
+/* No uppercase here: letter-spaced "80TH" misreads as "BOTH" in this face. */
+.welcome-card.is-campaign .welcome-eyebrow{border-color:rgba(255,153,51,.38);background:rgba(255,153,51,.1);color:#ffb066;text-transform:none;letter-spacing:.04em;font-size:.74rem}
+.welcome-card.is-campaign .welcome-title-accent{background:linear-gradient(100deg,#ff9933,#ffffff 52%,#3fbf22);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.welcome-card.is-campaign .welcome-orb--b{background:radial-gradient(circle,rgba(19,136,8,.26),transparent 68%)}
+.welcome-card.is-campaign .welcome-bullet-icon{border-color:rgba(255,153,51,.24);background:linear-gradient(150deg,rgba(255,153,51,.14),rgba(19,136,8,.1));color:#ffb066}
+@media(max-width:520px){.welcome-deadline{margin-top:16px;font-size:.73rem}}

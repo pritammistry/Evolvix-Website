@@ -441,6 +441,25 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
             "Branding, resumes, catalogs and creative design",
             "AI consulting sized for a small business budget",
         ],
+        # Time-boxed campaign copy. It overrides the fields above only until
+        # ends_at passes, then the popup reverts to the evergreen copy on its
+        # own — no manual switch-back needed.
+        "campaign": {
+            "enabled": True,
+            "ends_at": "2026-08-16T00:00:00+05:30",
+            "eyebrow": "80th Independence Day · Freedom Week",
+            "title": "79 years of freedom.",
+            "highlight": "Up to 20% off everything.",
+            "subtitle": "Our Freedom Week offer runs on every product and every service — websites, apps, branding, AI consulting and the full digital store.",
+            "offer": "Up to 20% off all products and services. Offer ends midnight, 15 August.",
+            "cta_label": "Claim My Freedom Week Offer",
+            "code": "FREEDOM20",
+            "bullets": [
+                "Up to 20% off websites, apps and automation",
+                "Up to 20% off branding, resumes and creative work",
+                "Up to 20% off every digital product in the store",
+            ],
+        },
     },
 }
 
@@ -458,6 +477,12 @@ def merged_site_content(custom_content: Optional[Dict[str, Any]]) -> Dict[str, A
     merged["welcome_popup"] = {**DEFAULT_SITE_CONTENT["welcome_popup"], **(custom_content or {}).get("welcome_popup", {})}
     if not merged["welcome_popup"].get("bullets"):
         merged["welcome_popup"]["bullets"] = DEFAULT_SITE_CONTENT["welcome_popup"]["bullets"]
+    merged["welcome_popup"]["campaign"] = {
+        **DEFAULT_SITE_CONTENT["welcome_popup"]["campaign"],
+        **(merged["welcome_popup"].get("campaign") or {}),
+    }
+    if not merged["welcome_popup"]["campaign"].get("bullets"):
+        merged["welcome_popup"]["campaign"]["bullets"] = DEFAULT_SITE_CONTENT["welcome_popup"]["campaign"]["bullets"]
     for list_key in ["trust_strip", "how_we_work", "industries_served", "creative_services", "technology_services", "ecosystem", "learning_categories", "music_services", "music_previews", "custom_sections", "testimonials", "why_choose", "demos", "product_categories"]:
         if not merged.get(list_key):
             merged[list_key] = DEFAULT_SITE_CONTENT[list_key]
