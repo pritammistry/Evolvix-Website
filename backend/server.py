@@ -733,6 +733,26 @@ class AnalyticsEventCreate(BaseModel):
 class CheckoutCreate(BaseModel):
     product_id: str
     origin_url: str
+    # Only the code travels from the browser — never an amount. The server
+    # re-validates it and recomputes the price itself.
+    promo_code: Optional[str] = None
+
+
+class PromoValidateRequest(BaseModel):
+    code: str
+    product_id: str
+
+
+class PromoCodeUpsert(BaseModel):
+    code: str
+    type: str = Field(default="percent", pattern="^(percent|flat)$")
+    value: float = Field(ge=0)
+    starts_at: Optional[str] = None
+    ends_at: Optional[str] = None
+    active: bool = True
+    max_redemptions: Optional[int] = Field(default=None, ge=1)
+    min_order_amount: Optional[float] = Field(default=None, ge=0)
+    applies_to: Optional[List[str]] = None
 
 
 class ProductResponse(BaseModel):
@@ -1721,8 +1741,23 @@ def render_invoice_html(
     igst: float,
     total: float,
     signed_at: str,
+    promo_code: Optional[str] = None,
+    discount_amount: float = 0.0,
+    original_amount: float = 0.0,
 ) -> str:
     # Customer-facing invoice: no SAC/HSN code shown anywhere (kept internal for GST reporting only)
+    # A discount is shown for the customer's record. It is presented above the
+    # taxable value because price is GST-inclusive: the taxable value below is
+    # already derived from the discounted total, not the list price.
+    if discount_amount and discount_amount > 0:
+        label = f"Discount ({promo_code})" if promo_code else "Discount"
+        discount_rows = (
+            f'<tr><td style="padding:4px 0;color:#555">List Price</td><td style="text-align:right;padding:4px 0;color:#555">₹{original_amount:,.2f}</td></tr>'
+            f'<tr><td style="padding:4px 0;color:#0a7d32">{label}</td><td style="text-align:right;padding:4px 0;color:#0a7d32">− ₹{discount_amount:,.2f}</td></tr>'
+        )
+    else:
+        discount_rows = ""
+
     if is_intra_state:
         tax_rows = (
             f'<tr><td style="padding:4px 0;color:#555">CGST @ 9%</td><td style="text-align:right;padding:4px 0;color:#555">₹{cgst:,.2f}</td></tr>'
@@ -1769,6 +1804,7 @@ def render_invoice_html(
   </table>
   <div style="display:flex;justify-content:flex-end">
     <table style="width:280px;font-size:12px">
+      {discount_rows}
       <tr><td style="padding:4px 0;color:#555">Taxable Value</td><td style="text-align:right;padding:4px 0;color:#555">₹{taxable_value:,.2f}</td></tr>
       {tax_rows}
       <tr style="font-weight:700;font-size:14px">
@@ -1808,6 +1844,12 @@ async def build_invoice_for_transaction(transaction: Dict[str, Any], product: Di
         "customer_email": (user or {}).get("email") or transaction.get("metadata", {}).get("user_email", ""),
         "product_title": product.get("title") or transaction.get("metadata", {}).get("product_title", "Evolvix product"),
         "product_description": product.get("description", ""),
+        # Recorded for the customer's records and for GST reconciliation. The
+        # tax figures in `totals` are already computed on the discounted amount,
+        # since price is GST-inclusive and tax is back-calculated from it.
+        "promo_code": transaction.get("promo_code"),
+        "discount_amount": float(transaction.get("discount_amount") or 0),
+        "original_amount": float(transaction.get("original_amount") or transaction.get("amount") or 0),
         **totals,
     }
 
@@ -1835,23 +1877,253 @@ async def render_invoice_for_transaction(transaction: Dict[str, Any]) -> str:
         igst=invoice["igst"],
         total=invoice["total"],
         signed_at=invoice["signed_at"],
+        promo_code=invoice.get("promo_code"),
+        discount_amount=float(invoice.get("discount_amount") or 0),
+        original_amount=float(invoice.get("original_amount") or 0),
     )
+
+
+# ── Promo codes ──────────────────────────────────────────────────────────────
+# Codes are defined in the admin panel and applied server-side only. The
+# /promo/validate endpoint exists purely so the UI can preview a discount; the
+# authoritative calculation always happens inside create_checkout_session, so a
+# tampered client can never choose its own price.
+
+IST_TZ = timezone(IST_OFFSET)
+
+
+def parse_campaign_datetime(value: Any) -> Optional[datetime]:
+    """Parse an admin-entered ISO datetime. Naive values are read as IST."""
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=IST_TZ)
+    return parsed.astimezone(timezone.utc)
+
+
+def normalize_promo_code(value: Any) -> str:
+    return "".join(str(value or "").split()).upper()
+
+
+def promo_status(promo: Dict[str, Any]) -> str:
+    """live | scheduled | expired | exhausted | disabled — for the admin table."""
+    if not promo.get("active", True):
+        return "disabled"
+    now = datetime.now(timezone.utc)
+    # A date that was entered but cannot be parsed fails CLOSED. Unlike the
+    # popup campaign, getting this wrong costs money, so a typo must never
+    # leave a discount running indefinitely.
+    if promo.get("starts_at") and parse_campaign_datetime(promo.get("starts_at")) is None:
+        return "disabled"
+    if promo.get("ends_at") and parse_campaign_datetime(promo.get("ends_at")) is None:
+        return "expired"
+    starts = parse_campaign_datetime(promo.get("starts_at"))
+    ends = parse_campaign_datetime(promo.get("ends_at"))
+    if starts and now < starts:
+        return "scheduled"
+    if ends and now >= ends:
+        return "expired"
+    cap = promo.get("max_redemptions")
+    if cap and int(promo.get("redemption_count", 0)) >= int(cap):
+        return "exhausted"
+    return "live"
+
+
+def compute_discount(promo: Dict[str, Any], price: float) -> float:
+    """Discount in rupees, never negative and never more than the price."""
+    value = float(promo.get("value") or 0)
+    if promo.get("type") == "flat":
+        discount = value
+    else:
+        discount = price * value / 100.0
+    return round(min(max(discount, 0.0), price), 2)
+
+
+async def resolve_promo_for_product(code: str, product: Dict[str, Any]) -> Dict[str, Any]:
+    """Returns {promo, discount, final_amount} or raises HTTPException(400)."""
+    normalized = normalize_promo_code(code)
+    if not normalized:
+        raise HTTPException(status_code=400, detail="Enter a promo code.")
+    promo = await db.promo_codes.find_one({"code": normalized}, {"_id": 0})
+    if not promo:
+        raise HTTPException(status_code=400, detail="That promo code is not valid.")
+
+    status = promo_status(promo)
+    reasons = {
+        "disabled": "That promo code is no longer active.",
+        "scheduled": "That promo code is not active yet.",
+        "expired": "That promo code has expired.",
+        "exhausted": "That promo code has reached its usage limit.",
+    }
+    if status != "live":
+        raise HTTPException(status_code=400, detail=reasons.get(status, "That promo code is not valid."))
+
+    applies_to = promo.get("applies_to") or []
+    if applies_to and product.get("id") not in applies_to and product.get("slug") not in applies_to:
+        raise HTTPException(status_code=400, detail="That promo code does not apply to this product.")
+
+    price = float(product.get("price") or 0)
+    if price <= 0:
+        raise HTTPException(status_code=400, detail="This product is not available for purchase.")
+
+    minimum = float(promo.get("min_order_amount") or 0)
+    if minimum and price < minimum:
+        raise HTTPException(status_code=400, detail=f"This code applies to orders of ₹{minimum:.0f} or more.")
+
+    discount = compute_discount(promo, price)
+    final_amount = round(price - discount, 2)
+    if final_amount < 1:
+        raise HTTPException(status_code=400, detail="This code cannot be applied to this product.")
+    return {"promo": promo, "discount": discount, "final_amount": final_amount, "original_amount": price}
+
+
+async def load_catalog_product(product_id: str) -> Dict[str, Any]:
+    catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
+    products = normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products")
+    product = next((item for item in products if item.get("id") == product_id or item.get("slug") == product_id), None)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
+
+async def record_promo_redemption(transaction: Dict[str, Any]) -> None:
+    """Count a redemption once, and only after payment is confirmed.
+
+    Guarded by promo_counted so the status poll and the webhook cannot both
+    count the same order, and so an abandoned checkout never burns the cap.
+    """
+    code = transaction.get("promo_code")
+    if not code or transaction.get("promo_counted"):
+        return
+    claimed = await db.payment_transactions.find_one_and_update(
+        {"session_id": transaction.get("session_id"), "promo_counted": {"$ne": True}},
+        {"$set": {"promo_counted": True}},
+    )
+    if not claimed:
+        return
+    await db.promo_codes.update_one({"code": code}, {"$inc": {"redemption_count": 1}})
+
+
+@api_router.post("/promo/validate")
+async def validate_promo_code(payload: PromoValidateRequest):
+    product = await load_catalog_product(payload.product_id)
+    resolved = await resolve_promo_for_product(payload.code, product)
+    promo = resolved["promo"]
+    label = f"{int(promo['value'])}% off" if promo.get("type") != "flat" else f"₹{int(promo['value'])} off"
+    return {
+        "valid": True,
+        "code": promo["code"],
+        "label": label,
+        "original_amount": resolved["original_amount"],
+        "discount": resolved["discount"],
+        "final_amount": resolved["final_amount"],
+    }
+
+
+@api_router.get("/admin/promo-codes")
+async def admin_list_promo_codes(request: Request):
+    verify_admin_request(request)
+    codes = await db.promo_codes.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    for promo in codes:
+        promo["status"] = promo_status(promo)
+    return {"items": codes}
+
+
+@api_router.post("/admin/promo-codes")
+async def admin_create_promo_code(payload: PromoCodeUpsert, request: Request):
+    verify_admin_request(request)
+    code = normalize_promo_code(payload.code)
+    if not code:
+        raise HTTPException(status_code=400, detail="Code is required.")
+    if await db.promo_codes.find_one({"code": code}):
+        raise HTTPException(status_code=400, detail=f"Code {code} already exists.")
+    promo = {
+        "id": str(uuid.uuid4()),
+        "code": code,
+        "type": payload.type,
+        "value": float(payload.value),
+        "starts_at": payload.starts_at or None,
+        "ends_at": payload.ends_at or None,
+        "active": payload.active,
+        "max_redemptions": payload.max_redemptions,
+        "min_order_amount": payload.min_order_amount,
+        "applies_to": payload.applies_to or [],
+        "redemption_count": 0,
+        "created_at": now_iso(),
+        "updated_at": now_iso(),
+    }
+    await db.promo_codes.insert_one(dict(promo))
+    promo["status"] = promo_status(promo)
+    return promo
+
+
+@api_router.put("/admin/promo-codes/{promo_id}")
+async def admin_update_promo_code(promo_id: str, payload: PromoCodeUpsert, request: Request):
+    verify_admin_request(request)
+    code = normalize_promo_code(payload.code)
+    if not code:
+        raise HTTPException(status_code=400, detail="Code is required.")
+    clash = await db.promo_codes.find_one({"code": code, "id": {"$ne": promo_id}})
+    if clash:
+        raise HTTPException(status_code=400, detail=f"Code {code} already exists.")
+    updates = {
+        "code": code,
+        "type": payload.type,
+        "value": float(payload.value),
+        "starts_at": payload.starts_at or None,
+        "ends_at": payload.ends_at or None,
+        "active": payload.active,
+        "max_redemptions": payload.max_redemptions,
+        "min_order_amount": payload.min_order_amount,
+        "applies_to": payload.applies_to or [],
+        "updated_at": now_iso(),
+    }
+    result = await db.promo_codes.update_one({"id": promo_id}, {"$set": updates})
+    if not result.matched_count:
+        raise HTTPException(status_code=404, detail="Promo code not found")
+    promo = await db.promo_codes.find_one({"id": promo_id}, {"_id": 0})
+    promo["status"] = promo_status(promo)
+    return promo
+
+
+@api_router.delete("/admin/promo-codes/{promo_id}")
+async def admin_delete_promo_code(promo_id: str, request: Request):
+    verify_admin_request(request)
+    result = await db.promo_codes.delete_one({"id": promo_id})
+    if not result.deleted_count:
+        raise HTTPException(status_code=404, detail="Promo code not found")
+    return {"message": "Promo code deleted"}
 
 
 @api_router.post("/payments/checkout")
 async def create_checkout_session(payload: CheckoutCreate, request: Request):
     user = await require_user(request)
-    catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
-    products = normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products")
-    product = next((item for item in products if item.get("id") == payload.product_id or item.get("slug") == payload.product_id), None)
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
+    product = await load_catalog_product(payload.product_id)
     if not payload.origin_url.startswith("http"):
         raise HTTPException(status_code=400, detail="Invalid origin URL")
 
     currency = str(product["currency"]).upper()
-    amount_subunits = int(round(float(product["price"]) * 100))
+    original_amount = round(float(product["price"]), 2)
+    charged_amount = original_amount
+    discount_amount = 0.0
+    promo_code = None
+
+    # Re-validated here regardless of what the browser was shown, so the amount
+    # Razorpay is asked for is always one the server computed.
+    if payload.promo_code:
+        resolved = await resolve_promo_for_product(payload.promo_code, product)
+        promo_code = resolved["promo"]["code"]
+        discount_amount = resolved["discount"]
+        charged_amount = resolved["final_amount"]
+
+    amount_subunits = int(round(charged_amount * 100))
     metadata = {"product_id": product["id"], "product_title": product["title"], "source": "evolvix_website", "user_id": user["id"], "user_email": user["email"]}
+    if promo_code:
+        metadata["promo_code"] = promo_code
     order = get_razorpay_client().order.create({
         "amount": amount_subunits,
         "currency": currency,
@@ -1863,7 +2135,10 @@ async def create_checkout_session(payload: CheckoutCreate, request: Request):
         "session_id": order["id"],
         "product_id": product["id"],
         "user_id": user["id"],
-        "amount": float(product["price"]),
+        "amount": charged_amount,
+        "original_amount": original_amount,
+        "discount_amount": discount_amount,
+        "promo_code": promo_code,
         "currency": currency,
         "metadata": metadata,
         "status": "initiated",
@@ -1936,6 +2211,8 @@ async def get_payment_status(session_id: str, request: Request):
     if payment_status == "paid" and not transaction.get("invoice"):
         update_doc["invoice"] = await build_invoice_for_transaction(transaction, product)
     await db.payment_transactions.update_one({"session_id": session_id}, {"$set": update_doc})
+    if payment_status == "paid":
+        await record_promo_redemption(transaction)
     return {
         "status": status_value,
         "payment_status": payment_status,
@@ -1968,6 +2245,9 @@ async def razorpay_webhook(request: Request):
             {"$set": {"payment_status": payment_status, "event_type": event_type, "updated_at": now_iso()}},
         )
         if payment_status == "paid":
+            paid_transaction = await db.payment_transactions.find_one({"session_id": order_id}, {"_id": 0})
+            if paid_transaction:
+                await record_promo_redemption(paid_transaction)
             asyncio.create_task(send_purchase_confirmation(order_id))
     return {"received": True}
 

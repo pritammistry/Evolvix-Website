@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { Lock, Save, RotateCcw, Plus, Trash2, Sparkles, Database, Layers3, Package, Newspaper, Image as ImageIcon, LogOut, UploadCloud, BarChart3, Star, DownloadCloud, FileDown, Gamepad2, Monitor, Eye, EyeOff, ChevronUp, ChevronDown, AlertTriangle, RefreshCw, Loader2, Settings } from "lucide-react";
+import { Lock, Save, RotateCcw, Plus, Trash2, Sparkles, Database, Layers3, Package, Newspaper, Image as ImageIcon, LogOut, UploadCloud, BarChart3, Star, DownloadCloud, FileDown, Gamepad2, Monitor, Eye, EyeOff, ChevronUp, ChevronDown, AlertTriangle, RefreshCw, Loader2, Settings, Tag } from "lucide-react";
 import { toast } from "sonner";
-import { adminLogin, adminLogout, createPlaygroundItem, deletePlaygroundItem, deleteProductFile, exportAdminAnalytics, fetchAdminAnalytics, fetchAdminAnalyticsOptions, fetchAdminDashboard, fetchAdminPlayground, resetAdminContent, resetAdminSection, reorderPlayground, saveAdminContent, saveAdminList, updatePlaygroundItem, uploadProductFile, setVisitorAuthToken, fetchAdminLeadsContacts, exportAdminLeadsContacts, fetchAdminLeadsNewsletter, exportAdminLeadsNewsletter } from "../api";
+import { adminLogin, adminLogout, createPlaygroundItem, deletePlaygroundItem, deleteProductFile, exportAdminAnalytics, fetchAdminAnalytics, fetchAdminAnalyticsOptions, fetchAdminDashboard, fetchAdminPlayground, resetAdminContent, resetAdminSection, reorderPlayground, saveAdminContent, saveAdminList, updatePlaygroundItem, uploadProductFile, setVisitorAuthToken, fetchAdminLeadsContacts, exportAdminLeadsContacts, fetchAdminLeadsNewsletter, exportAdminLeadsNewsletter, fetchAdminPromoCodes, createAdminPromoCode, updateAdminPromoCode, deleteAdminPromoCode } from "../api";
 
 const blankProduct = { title: "New Product", slug: "new-product", price: 0, category: "Learning and Growth", tag: "New", summary: "One-line store card summary.", description: "Full product description for the detail page.", image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80", images: [], benefits: [], included: [], file_slots: [] };
 const blankPortfolio = { title: "New Showcase", category: "Digital Products", summary: "Short showcase description.", image: "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?auto=format&fit=crop&w=1200&q=80" };
@@ -35,6 +35,7 @@ const SIDEBAR_GROUPS = [
     items: [
       { id: "leads", label: "Leads & Contacts", type: "ops" },
       { id: "analytics", label: "Analytics", type: "ops" },
+      { id: "promos", label: "Promo Codes", type: "ops" },
       { id: "settings", label: "Store Settings", type: "ops" },
     ],
   },
@@ -374,6 +375,153 @@ function AnalyticsList({ title, rows, testId }) {
 function AnalyticsChart({ title, rows, testId }) {
   const max = Math.max(1, ...rows.map((row) => row.events || 0));
   return <div className="analytics-chart" data-testid={testId}><h4 data-testid={`${testId}-title`}>{title}</h4>{rows.length ? rows.slice(0, 6).map((row, index) => <div className="chart-row" key={`${row.name}-${index}`} data-testid={`${testId}-row-${index}`}><span data-testid={`${testId}-label-${index}`}>{row.name}</span><div><i style={{ width: `${Math.max(6, ((row.events || 0) / max) * 100)}%` }} data-testid={`${testId}-bar-${index}`} /></div><strong data-testid={`${testId}-value-${index}`}>{row.events}</strong></div>) : <p data-testid={`${testId}-empty`}>No chart data yet.</p>}</div>;
+}
+
+const BLANK_PROMO = { code: "", type: "percent", value: 20, starts_at: "", ends_at: "", active: true, max_redemptions: "", min_order_amount: "", applies_to: [] };
+
+const PROMO_STATUS_COLOR = { live: "#25d366", scheduled: "#13dff4", expired: "var(--muted)", exhausted: "#ffb066", disabled: "var(--muted)" };
+
+function PromoCodesPanel() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [draft, setDraft] = useState(BLANK_PROMO);
+  const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const { data } = await fetchAdminPromoCodes();
+      setItems(data.items || []);
+    } catch {
+      toast.error("Could not load promo codes.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const setField = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }));
+  const resetDraft = () => { setDraft(BLANK_PROMO); setEditingId(null); };
+
+  const save = async () => {
+    if (!draft.code.trim()) { toast.error("Enter a code."); return; }
+    const payload = {
+      code: draft.code.trim(),
+      type: draft.type,
+      value: Number(draft.value) || 0,
+      starts_at: draft.starts_at || null,
+      ends_at: draft.ends_at || null,
+      active: draft.active !== false,
+      max_redemptions: draft.max_redemptions ? Number(draft.max_redemptions) : null,
+      min_order_amount: draft.min_order_amount ? Number(draft.min_order_amount) : null,
+      applies_to: draft.applies_to || [],
+    };
+    setSaving(true);
+    try {
+      if (editingId) {
+        await updateAdminPromoCode(editingId, payload);
+        toast.success(`${payload.code} updated.`);
+      } else {
+        await createAdminPromoCode(payload);
+        toast.success(`${payload.code} created.`);
+      }
+      resetDraft();
+      await load();
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || "Could not save the promo code.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const edit = (promo) => {
+    setEditingId(promo.id);
+    setDraft({
+      code: promo.code, type: promo.type || "percent", value: promo.value,
+      starts_at: promo.starts_at || "", ends_at: promo.ends_at || "",
+      active: promo.active !== false,
+      max_redemptions: promo.max_redemptions ?? "",
+      min_order_amount: promo.min_order_amount ?? "",
+      applies_to: promo.applies_to || [],
+    });
+  };
+
+  const remove = async (promo) => {
+    if (!window.confirm(`Delete promo code ${promo.code}? This cannot be undone.`)) return;
+    try {
+      await deleteAdminPromoCode(promo.id);
+      toast.success(`${promo.code} deleted.`);
+      if (editingId === promo.id) resetDraft();
+      await load();
+    } catch {
+      toast.error("Could not delete the promo code.");
+    }
+  };
+
+  return (
+    <section className="admin-editor-card" data-testid="promo-codes-panel">
+      <h3><Tag size={20} /> Promo Codes</h3>
+      <p style={{ color: "var(--muted)", marginBottom: 18 }}>
+        Codes are applied at checkout and verified on the server, so a discount can never be faked from the browser. Leave the dates blank for a code with no time limit. Usage is counted only after a payment succeeds.
+      </p>
+
+      <div className="admin-pair" data-testid="promo-form">
+        <h4 style={{ marginTop: 0 }}>{editingId ? "Edit Code" : "New Code"}</h4>
+        <div className="admin-form-grid">
+          <TextField label="Code (e.g. FREEDOM20)" value={draft.code} onChange={(value) => setField("code", value.toUpperCase())} testId="promo-code-input" />
+          <label className="admin-field" data-testid="promo-type-field">
+            <span>Discount type</span>
+            <select value={draft.type} onChange={(e) => setField("type", e.target.value)} data-testid="promo-type-select">
+              <option value="percent">Percentage off (%)</option>
+              <option value="flat">Flat amount off (₹)</option>
+            </select>
+          </label>
+          <TextField label={draft.type === "flat" ? "Amount off (₹)" : "Percentage off (%)"} value={draft.value} onChange={(value) => setField("value", value)} testId="promo-value-input" />
+          <TextField label="Starts at (blank = immediately)" value={draft.starts_at} onChange={(value) => setField("starts_at", value)} testId="promo-starts-input" />
+          <TextField label="Ends at (blank = never expires)" value={draft.ends_at} onChange={(value) => setField("ends_at", value)} testId="promo-ends-input" />
+          <TextField label="Max redemptions (blank = unlimited)" value={draft.max_redemptions} onChange={(value) => setField("max_redemptions", value)} testId="promo-max-input" />
+          <TextField label="Minimum order ₹ (blank = none)" value={draft.min_order_amount} onChange={(value) => setField("min_order_amount", value)} testId="promo-min-input" />
+        </div>
+        <p style={{ color: "var(--muted)", fontSize: ".8rem", margin: "4px 0 10px" }}>
+          Dates use the format <code>2026-08-16T00:00:00+05:30</code>. A date that cannot be read is treated as expired, so a typo can never leave a discount running.
+        </p>
+        <label className="admin-check">
+          <input type="checkbox" checked={draft.active !== false} onChange={(e) => setField("active", e.target.checked)} data-testid="promo-active-checkbox" />
+          Active
+        </label>
+        <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
+          <button type="button" className="admin-save" onClick={save} disabled={saving} data-testid="promo-save-button">
+            <Save size={16} /> {saving ? "Saving…" : editingId ? "Update Code" : "Create Code"}
+          </button>
+          {editingId && <button type="button" className="admin-mini-btn" onClick={resetDraft} data-testid="promo-cancel-button">Cancel</button>}
+        </div>
+      </div>
+
+      <div className="admin-array" data-testid="promo-list">
+        <h4>All Codes {loading ? "" : `(${items.length})`}</h4>
+        {loading && <p style={{ color: "var(--muted)" }}>Loading…</p>}
+        {!loading && items.length === 0 && <p style={{ color: "var(--muted)" }}>No promo codes yet. Create one above.</p>}
+        {items.map((promo) => (
+          <div className="admin-row" key={promo.id} style={{ alignItems: "center", flexWrap: "wrap", gap: 10 }} data-testid={`promo-row-${promo.code}`}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <strong style={{ color: "white", letterSpacing: ".06em" }}>{promo.code}</strong>
+              <span style={{ color: "var(--muted)", marginLeft: 10, fontSize: ".85rem" }}>
+                {promo.type === "flat" ? `₹${promo.value} off` : `${promo.value}% off`}
+                {" · "}used {promo.redemption_count || 0}{promo.max_redemptions ? ` / ${promo.max_redemptions}` : ""}
+              </span>
+              <span style={{ marginLeft: 10, fontSize: ".74rem", fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: PROMO_STATUS_COLOR[promo.status] || "var(--muted)" }} data-testid={`promo-status-${promo.code}`}>
+                {promo.status}
+              </span>
+            </div>
+            <button type="button" className="admin-mini-btn" onClick={() => edit(promo)} data-testid={`promo-edit-${promo.code}`}>Edit</button>
+            <button type="button" onClick={() => remove(promo)} data-testid={`promo-delete-${promo.code}`}><Trash2 size={15} /></button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function LeadsPanel() {
@@ -847,6 +995,7 @@ export default function AdminDashboard() {
 
         {/* ── OPERATIONS ── */}
         {active === "leads" && <LeadsPanel />}
+        {active === "promos" && <PromoCodesPanel />}
         {active === "analytics" && <AnalyticsPanel reportSettings={content.analytics_report_settings || {}} onReportChange={(value) => updateContent(["analytics_report_settings"], value)} />}
         {active === "settings" && <>
           <SectionToolbar resetKey="settings" label="Store Settings" onReset={resetSection} />
