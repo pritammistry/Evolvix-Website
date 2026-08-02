@@ -437,6 +437,14 @@ export const fallbackSiteContent = {
   products,
   portfolio: portfolioItems,
   blog: blogPosts,
+  // Mirrors the backend defaults. Without this the homepage demo preview
+  // disappears whenever /site-content is slow or unreachable — which is a real
+  // scenario on a cold-starting backend.
+  demos: [
+    { id: "optical-catalog", title: "Smart Store — Spectacle Shop", industry: "Retail / Optical", description: "A fully branded digital catalog for an optical retailer. Customers browse frames, lenses, and accessories with a 'Show Interest' flow that feeds directly into a live leads dashboard.", features: ["Product catalog with categories", "Show Interest / enquiry flow", "Live leads dashboard", "Mobile-first design"], url: "https://evolvix-catalog-demo.vercel.app", icon_key: "shopping", status: "Live Demo", visible: true },
+    { id: "invoice-management", title: "Invoice & Billing Management App", industry: "Finance / Accounting", description: "A smart billing dashboard for small businesses — generate GST invoices, track payments, manage clients, and export reports.", features: ["GST invoice generation", "Payment tracking", "Client management", "Report export"], url: "", icon_key: "chart", status: "Coming Soon", visible: true },
+    { id: "saas-crm-automation", title: "SaaS CRM & Automation Demo", industry: "SaaS / Tech Products", description: "A full CRM with lead pipeline, automated follow-ups, task management, and team dashboard — built for SaaS and service businesses.", features: ["Lead pipeline board", "Automated follow-ups", "Task & team management", "Analytics dashboard"], url: "", icon_key: "zap", status: "Coming Soon", visible: true },
+  ],
   welcome_popup: {
     enabled: true,
     delay_seconds: 2,

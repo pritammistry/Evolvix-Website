@@ -7,11 +7,12 @@ import { logos } from "../data/siteContent";
 import { SectionHeader } from "../components/SectionHeader";
 import { ProductCard } from "../components/ProductCard";
 import { trackNewsletterSubmit } from "../components/AnalyticsTracker";
-import { submitNewsletter, createCheckout } from "../api";
+import { submitNewsletter } from "../api";
 import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
-import { openRazorpayCheckout } from "../lib/razorpay";
-import { redirectToLoginForBuy, consumePendingBuyProductId } from "../lib/authRedirect";
+import { CheckoutPanel } from "../components/CheckoutPanel";
+import { getDemoIcon, statusBadgeClass, sortedVisibleDemos } from "../lib/demoDisplay";
+import { consumePendingBuyProductId, consumePendingPromoCode } from "../lib/authRedirect";
 import { HeroParticle } from "../components/HeroParticle";
 import { TestimonialsCarousel } from "../components/TestimonialsCarousel";
 
@@ -24,35 +25,29 @@ export default function Home() {
   const location = useLocation();
   const brand = content.brand || {};
   const products = loading ? [] : (content.products || []);
-  const portfolioItems = content.portfolio || [];
+  const previewDemos = sortedVisibleDemos(content.demos).slice(0, 3);
+  const [checkoutProduct, setCheckoutProduct] = useState(null);
+  const [pendingPromo, setPendingPromo] = useState("");
   const ecosystem = content.ecosystem || [];
   const whyChoose = content.why_choose || [];
   const trust = content.trust_strip || [];
   const testimonials = (content.testimonials || []).filter((item) => item.visible !== false);
   const customSections = (content.custom_sections || []).filter((section) => section.visible !== false);
-  const buyProduct = async (productId) => {
-    if (!user) {
-      redirectToLoginForBuy(navigate, productId, `${location.pathname}${location.search}`);
+  // Same flow as the Store: open the confirmation panel so a promo code can be
+  // applied here too. Login is only required at the Pay step.
+  const buyProduct = (productId, promoCode) => {
+    const product = products.find((item) => item.id === productId);
+    if (!product) {
+      toast.error("That product is no longer available.");
       return;
     }
-    try {
-      const { data: order } = await createCheckout({ product_id: productId, origin_url: window.location.origin });
-      const product = products.find((item) => item.id === productId) || {};
-      await openRazorpayCheckout({
-        order,
-        product,
-        onSuccess: () => { window.location.href = `/checkout/success?session_id=${order.session_id}&product=${product.slug || productId}`; },
-        onDismiss: () => toast.error("Checkout was cancelled."),
-      });
-    } catch (error) {
-      console.error("Checkout failed:", error);
-      toast.error("Checkout could not start. Please try again or contact Evolvix.");
-    }
+    setPendingPromo(promoCode || "");
+    setCheckoutProduct(product);
   };
   useEffect(() => {
     if (!user) return;
     const pendingProductId = consumePendingBuyProductId();
-    if (pendingProductId) buyProduct(pendingProductId);
+    if (pendingProductId) buyProduct(pendingProductId, consumePendingPromoCode());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
   const join = async (event) => {
@@ -119,10 +114,28 @@ export default function Home() {
         <SectionHeader eyebrow="Product ecosystem" title="A scalable AI-first architecture for learning, building, creativity, business, access, music, and assets." />
         <div className="ecosystem-grid" data-testid="home-ecosystem-grid">{ecosystem.slice(0, 4).map((item) => <article className="ecosystem-card" key={item.name} data-testid={`home-ecosystem-${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><span>{item.status}</span><h3>{item.name}</h3><p>{item.description}</p></article>)}</div>
       </section>
-      <section className="section" data-testid="home-portfolio-preview-section">
-        <SectionHeader eyebrow="Portfolio preview" title="Selected work with a clear future-facing point of view." />
-        <div className="preview-grid">{portfolioItems.slice(0, 3).map((item) => <article className="visual-card" key={item.id} data-testid={`home-portfolio-card-${item.id}`}><img src={item.image} alt={item.title} /><span>{item.category}</span><h3>{item.title}</h3><p>{item.summary}</p></article>)}</div>
-      </section>
+      {previewDemos.length > 0 && (
+        <section className="section" data-testid="home-demos-preview-section">
+          <SectionHeader eyebrow="Live demos" title="Real, working builds you can open right now." text="Every Evolvix project starts as a working demo — not a mockup. Here is what we have built so far." />
+          <div className="preview-grid" data-testid="home-demos-grid">
+            {previewDemos.map((demo) => (
+              <article className="visual-card home-demo-card" key={demo.id} data-testid={`home-demo-card-${demo.id}`}>
+                <div className="home-demo-top">
+                  <span className="home-demo-icon">{getDemoIcon(demo, 24)}</span>
+                  <span className={statusBadgeClass(demo.status)}>{demo.status}</span>
+                </div>
+                <span className="mini">{demo.industry}</span>
+                <h3>{demo.title}</h3>
+                <p>{demo.description}</p>
+                {demo.status === "Live Demo" && demo.url
+                  ? <Link to="/demo" className="icon-link" data-testid={`home-demo-link-${demo.id}`}>Open demo <ArrowRight size={16} /></Link>
+                  : <Link to="/contact" className="icon-link" data-testid={`home-demo-link-${demo.id}`}>Talk to us about this <ArrowRight size={16} /></Link>}
+              </article>
+            ))}
+          </div>
+          <div className="home-demo-footer"><Link to="/demo" className="secondary-btn" data-testid="home-demos-all-link">See all demos <ArrowRight size={16} /></Link></div>
+        </section>
+      )}
       <section className="section" data-testid="home-shop-preview-section">
         <SectionHeader eyebrow="Featured products / services" title="Actionable AI resources and creator-ready digital products." />
         <div className="product-grid">{loading ? [1,2,3].map((i) => <div key={i} className="product-card product-card--skeleton" aria-hidden="true"><div className="skeleton-thumb" /><div className="skeleton-body"><div className="skeleton-line" style={{height:10,width:"40%"}} /><div className="skeleton-line" style={{height:20,width:"75%"}} /><div className="skeleton-line" style={{height:14,width:"90%"}} /></div></div>) : products.slice(0, 3).map((product) => <ProductCard key={product.id} product={product} onBuy={buyProduct} />)}</div>
@@ -142,6 +155,7 @@ export default function Home() {
       <section className="section home-micro-strip" data-testid="home-micro-strip">
         {["Innovate", "Automate", "Transform", "Grow"].map((word) => <span key={word} data-testid={`home-micro-strip-${word.toLowerCase()}`}>{word}</span>)}
       </section>
+      {checkoutProduct && <CheckoutPanel key={`${checkoutProduct.id}-${pendingPromo}`} product={checkoutProduct} initialCode={pendingPromo} onClose={() => setCheckoutProduct(null)} />}
     </>
   );
 }

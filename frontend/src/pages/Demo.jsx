@@ -7,17 +7,7 @@ import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
 import { redirectToLoginForDemo, consumePendingDemo } from "../lib/authRedirect";
 import { useSEO } from "../hooks/useSEO";
-
-const ICON_MAP = {
-  shopping: <ShoppingBag size={28} />,
-  monitor: <Monitor size={28} />,
-  book: <BookOpen size={28} />,
-  food: <Utensils size={28} />,
-  health: <Stethoscope size={28} />,
-  phone: <Smartphone size={28} />,
-  chart: <BarChart3 size={28} />,
-  zap: <Zap size={28} />,
-};
+import { getDemoIcon, statusBadgeClass } from "../lib/demoDisplay";
 
 const DEMO_SITES = [
   {
@@ -60,17 +50,6 @@ const VERTICALS = [
   { icon: <Monitor size={22} />, label: "SaaS & Tech Products" },
   { icon: <Smartphone size={22} />, label: "Service Businesses" },
 ];
-
-function getDemoIcon(demo) {
-  if (demo.icon) return demo.icon;
-  return ICON_MAP[demo.icon_key] || <Monitor size={28} />;
-}
-
-function statusBadgeClass(status) {
-  if (status === "Coming Soon") return "demo-live-badge demo-badge--coming-soon";
-  if (status === "Now Building") return "demo-live-badge demo-badge--now-building";
-  return "demo-live-badge";
-}
 
 export default function Demo() {
   useSEO({ title: "Live Product Demos — See Before You Commit", description: "Explore live demos of Evolvix-built web products across retail, SaaS, and more. Request a custom demo for your business before spending a rupee.", path: "/demo" });
