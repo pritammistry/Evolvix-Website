@@ -5,6 +5,7 @@ import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
 import { trackFormSubmit } from "./AnalyticsTracker";
 import { markLeadCaptured, hasLeadBeenCaptured } from "../lib/leadCapture";
+import { activeCampaign, daysRemaining } from "../lib/campaign";
 
 // sessionStorage, not localStorage: the popup returns once per browser session,
 // so a visitor who comes back in a new tab or a new browsing session sees it
@@ -56,22 +57,6 @@ const BULLET_ICONS = [Rocket, Palette, Bot];
 // delay_seconds) deliberately stay under the main config.
 const CAMPAIGN_COPY_FIELDS = ["eyebrow", "title", "highlight", "subtitle", "offer", "cta_label", "bullets"];
 
-// Returns the campaign only while it is genuinely running. A missing or
-// unparseable end date counts as expired, so a typo fails safe to the
-// evergreen copy rather than leaving a stale offer up forever.
-function activeCampaign(cfg) {
-  const campaign = cfg.campaign;
-  if (!campaign || campaign.enabled === false) return null;
-  const endsAt = Date.parse(campaign.ends_at);
-  if (Number.isNaN(endsAt) || Date.now() >= endsAt) return null;
-  return campaign;
-}
-
-function daysRemaining(endsAt) {
-  const ms = Date.parse(endsAt) - Date.now();
-  if (Number.isNaN(ms) || ms <= 0) return 0;
-  return Math.ceil(ms / 86400000);
-}
 
 const INTERESTS = [
   "Business inquiry",

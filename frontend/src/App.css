@@ -249,3 +249,12 @@ select.welcome-input option{background:#0a0c1a;color:white}
 .checkout-spin{animation:checkoutSpin .9s linear infinite}
 @keyframes checkoutSpin{to{transform:rotate(1turn)}}
 @media(prefers-reduced-motion:reduce){.checkout-overlay,.checkout-card,.checkout-spin{animation:none!important}}
+
+/* ── Store campaign banner ───────────────────────────────────── */
+.shop-promo-banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 22px;padding:13px 18px;border-radius:16px;border:1px solid rgba(255,153,51,.3);background:linear-gradient(100deg,rgba(255,153,51,.11),rgba(19,136,8,.09));color:#ffcf9e;font-size:.86rem;line-height:1.5}
+.shop-promo-banner svg{flex-shrink:0;color:#ff9933}
+.shop-promo-banner span{flex:1;min-width:220px}
+.shop-promo-banner strong{color:white;font-weight:700}
+.shop-promo-banner b{color:white;letter-spacing:.08em;font-weight:800}
+.shop-promo-banner em{flex-shrink:0;padding:4px 11px;border-radius:999px;background:rgba(255,153,51,.16);color:#ffb066;font-size:.74rem;font-style:normal;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+@media(max-width:560px){.shop-promo-banner{font-size:.8rem;padding:12px 14px}}

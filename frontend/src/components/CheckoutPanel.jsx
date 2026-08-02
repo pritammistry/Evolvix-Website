@@ -1,16 +1,22 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
-import { X, Tag, Check, Loader2, ShieldCheck } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { X, Tag, Check, Loader2, ShieldCheck, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { createCheckout, validatePromoCode } from "../api";
 import { openRazorpayCheckout } from "../lib/razorpay";
+import { useAuth } from "../hooks/useAuth";
+import { redirectToLoginForBuy } from "../lib/authRedirect";
 
 // Order confirmation step between "Buy Now" and the Razorpay sheet. It exists
 // so a promo code can be entered, and so the customer sees what they are about
 // to pay for. The discount previewed here is advisory only — the server
 // re-validates the code and recomputes the amount when the order is created.
-export function CheckoutPanel({ product, onClose }) {
-  const [code, setCode] = useState("");
+export function CheckoutPanel({ product, onClose, initialCode }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [code, setCode] = useState(initialCode || "");
   const [applied, setApplied] = useState(null);
   const [checking, setChecking] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -33,8 +39,8 @@ export function CheckoutPanel({ product, onClose }) {
     };
   }, [onClose, paying]);
 
-  const applyCode = async () => {
-    const trimmed = code.trim();
+  const applyCode = useCallback(async (raw) => {
+    const trimmed = (typeof raw === "string" ? raw : code).trim();
     if (!trimmed) { setError("Enter a promo code."); return; }
     setError("");
     setChecking(true);
@@ -48,11 +54,23 @@ export function CheckoutPanel({ product, onClose }) {
     } finally {
       setChecking(false);
     }
-  };
+  }, [code, product.id]);
+
+  // Re-apply a code the customer entered before being sent off to log in.
+  useEffect(() => {
+    if (initialCode) applyCode(initialCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const removeCode = () => { setApplied(null); setCode(""); setError(""); };
 
   const pay = async () => {
+    // Login is required to pay, but deliberately not to see the price or apply
+    // a code — the customer sees the value before being asked to sign up.
+    if (!user) {
+      redirectToLoginForBuy(navigate, product.id, `${location.pathname}${location.search}`, applied?.code);
+      return;
+    }
     setPaying(true);
     try {
       const { data: order } = await createCheckout({
@@ -142,9 +160,17 @@ export function CheckoutPanel({ product, onClose }) {
         </div>
 
         <button className="checkout-pay" onClick={pay} disabled={paying} data-testid="checkout-pay-button">
-          {paying ? <><Loader2 size={16} className="checkout-spin" /> Opening payment…</> : <>Pay ₹{total.toFixed(2)}</>}
+          {paying
+            ? <><Loader2 size={16} className="checkout-spin" /> Opening payment…</>
+            : user
+              ? <>Pay ₹{total.toFixed(2)}</>
+              : <><LogIn size={15} /> Log in to pay ₹{total.toFixed(2)}</>}
         </button>
-        <p className="checkout-secure"><ShieldCheck size={13} /> Secure payment via Razorpay</p>
+        <p className="checkout-secure">
+          {user
+            ? <><ShieldCheck size={13} /> Secure payment via Razorpay</>
+            : <>Your {applied ? "discount and " : ""}order is saved while you log in.</>}
+        </p>
       </div>
     </div>,
     document.body
