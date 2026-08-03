@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { SectionHeader } from "../components/SectionHeader";
 import { useAuth } from "../hooks/useAuth";
@@ -239,7 +239,16 @@ export default function Login() {
         <aside className="contact-panel" data-testid="login-switch-panel">
           {mode === "login" ? (
             <>
-              <p data-testid="login-switch-to-signup-text">New to Evolvix? <button type="button" className="text-btn" onClick={() => setMode("signup")} data-testid="login-switch-to-signup-button">Create an account</button></p>
+              {/* Signup is the primary path for anyone sent here by a demo or
+                  Buy Now click, so it gets a real CTA rather than sitting as a
+                  text link next to "Forgot your password?". */}
+              <div className="login-signup-cta" data-testid="login-signup-cta">
+                <p className="login-signup-cta-title" data-testid="login-switch-to-signup-text">First time here?</p>
+                <p className="login-signup-cta-text">Create a free account to open live demos, buy products, and access downloads.</p>
+                <button type="button" className="login-signup-btn" onClick={() => setMode("signup")} data-testid="login-switch-to-signup-button">
+                  <UserPlus size={17} /> Create New Account
+                </button>
+              </div>
               <p data-testid="login-forgot-link-text"><button type="button" className="text-btn" onClick={() => { setForgotEmail(form.email); setMode("forgot"); }} data-testid="login-forgot-link">Forgot your password?</button></p>
             </>
           ) : (
