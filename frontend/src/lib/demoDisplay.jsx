@@ -1,4 +1,4 @@
-import { BarChart3, Monitor, Smartphone, ShoppingBag, BookOpen, Utensils, Stethoscope, Zap } from "lucide-react";
+import { BarChart3, Monitor, Smartphone, ShoppingBag, BookOpen, Utensils, Stethoscope, Zap, Lock } from "lucide-react";
 
 // Shared by the Demos page and the homepage demo preview so a demo looks the
 // same in both places.
@@ -11,6 +11,7 @@ const ICON_MAP = {
   phone: Smartphone,
   chart: BarChart3,
   zap: Zap,
+  lock: Lock,
 };
 
 export function getDemoIcon(demo, size = 28) {

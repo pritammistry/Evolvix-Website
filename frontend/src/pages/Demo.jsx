@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BarChart3, ArrowRight, ExternalLink, Monitor, Smartphone, ShoppingBag, BookOpen, Utensils, Stethoscope, Zap } from "lucide-react";
+import { BarChart3, ArrowRight, ExternalLink, Monitor, Smartphone, ShoppingBag, BookOpen, Utensils, Stethoscope, Zap, Lock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { SectionHeader } from "../components/SectionHeader";
@@ -18,6 +18,20 @@ const DEMO_SITES = [
     features: ["Product catalog with categories", "Show Interest / enquiry flow", "Live leads dashboard", "Mobile-first design"],
     url: "https://evolvix-catalog-demo.vercel.app",
     icon: <ShoppingBag size={28} />,
+    status: "Live Demo",
+  },
+  {
+    id: "unlock-file-delivery",
+    title: "Unlock — Payment-Locked File Delivery",
+    industry: "Freelancers / Digital Services",
+    description: "Stop chasing payments after delivery. Send your client a personal link where their files stay locked until you confirm payment — then unlock instantly with a 15-day download window. Built for anyone delivering digital work.",
+    features: ["Files locked until payment is confirmed", "WhatsApp order confirmation with invoice link", "15-day download window with live countdown", "Multiple orders per customer", "Special permission — 2-day grace access", "Admin dashboard with payment-due tracking"],
+    url: "https://evolvix-unlock-demo.vercel.app/c/demo-rahul-sharma/cv-package-locked",
+    primary_label: "View Customer Experience",
+    secondary_url: "https://evolvix-unlock-demo.vercel.app/admin/login",
+    secondary_label: "View Admin Panel",
+    note: "Admin demo login — demo@evolvixtech.in / demo1234",
+    icon: <Lock size={28} />,
     status: "Live Demo",
   },
   {
@@ -75,12 +89,14 @@ export default function Demo() {
     return () => clearTimeout(t);
   }, [user]);
 
-  function handleDemoClick(demo) {
+  // `url` is passed explicitly so a card can offer more than one destination
+  // (e.g. the customer-facing view and the admin panel of the same product).
+  function handleDemoClick(demo, url = demo.url) {
     if (!user) {
-      redirectToLoginForDemo(navigate, demo.id, demo.url);
+      redirectToLoginForDemo(navigate, demo.id, url);
       return;
     }
-    window.open(demo.url, "_blank", "noopener,noreferrer");
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -121,9 +137,16 @@ export default function Demo() {
             </ul>
             <div className="demo-card-actions">
               {demo.status === "Live Demo" ? (
-                <button onClick={() => handleDemoClick(demo)} className="primary-btn" data-testid={`demo-visit-${demo.id}`}>
-                  View Live Demo <ExternalLink size={16} />
-                </button>
+                <>
+                  <button onClick={() => handleDemoClick(demo, demo.url)} className="primary-btn" data-testid={`demo-visit-${demo.id}`}>
+                    {demo.primary_label || "View Live Demo"} <ExternalLink size={16} />
+                  </button>
+                  {demo.secondary_url && (
+                    <button onClick={() => handleDemoClick(demo, demo.secondary_url)} className="secondary-btn" data-testid={`demo-visit-secondary-${demo.id}`}>
+                      {demo.secondary_label || "View Admin Panel"} <ExternalLink size={16} />
+                    </button>
+                  )}
+                </>
               ) : (
                 <span className="primary-btn demo-btn--disabled" data-testid={`demo-visit-${demo.id}`}>
                   {demo.status === "Now Building" ? "In Progress" : "Coming Soon"}
@@ -133,6 +156,7 @@ export default function Demo() {
                 Request This for My Business
               </Link>
             </div>
+            {demo.note && <p className="demo-card-note" data-testid={`demo-note-${demo.id}`}>{demo.note}</p>}
           </article>
         ))}
       </div>
