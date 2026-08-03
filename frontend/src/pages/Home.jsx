@@ -11,7 +11,7 @@ import { submitNewsletter } from "../api";
 import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
 import { CheckoutPanel } from "../components/CheckoutPanel";
-import { getDemoIcon, statusBadgeClass, sortedVisibleDemos } from "../lib/demoDisplay";
+import { getDemoIcon, statusBadgeClass, visibleDemos } from "../lib/demoDisplay";
 import { consumePendingBuyProductId, consumePendingPromoCode } from "../lib/authRedirect";
 import { HeroParticle } from "../components/HeroParticle";
 import { TestimonialsCarousel } from "../components/TestimonialsCarousel";
@@ -25,7 +25,8 @@ export default function Home() {
   const location = useLocation();
   const brand = content.brand || {};
   const products = loading ? [] : (content.products || []);
-  const previewDemos = sortedVisibleDemos(content.demos).slice(0, 3);
+  // Empty while loading so placeholder demos never render and then swap.
+  const previewDemos = loading ? [] : visibleDemos(content.demos).slice(0, 3);
   const [checkoutProduct, setCheckoutProduct] = useState(null);
   const [pendingPromo, setPendingPromo] = useState("");
   const ecosystem = content.ecosystem || [];
@@ -114,10 +115,19 @@ export default function Home() {
         <SectionHeader eyebrow="Product ecosystem" title="A scalable AI-first architecture for learning, building, creativity, business, access, music, and assets." />
         <div className="ecosystem-grid" data-testid="home-ecosystem-grid">{ecosystem.slice(0, 4).map((item) => <article className="ecosystem-card" key={item.name} data-testid={`home-ecosystem-${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><span>{item.status}</span><h3>{item.name}</h3><p>{item.description}</p></article>)}</div>
       </section>
-      {previewDemos.length > 0 && (
+      {(loading || previewDemos.length > 0) && (
         <section className="section" data-testid="home-demos-preview-section">
           <SectionHeader eyebrow="Live demos" title="Real, working builds you can open right now." text="Every Evolvix project starts as a working demo — not a mockup. Here is what we have built so far." />
           <div className="preview-grid" data-testid="home-demos-grid">
+            {loading && [1, 2, 3].map((i) => (
+              <article className="visual-card home-demo-card home-demo-card--skeleton" key={`home-demo-skeleton-${i}`} aria-hidden="true">
+                <div className="home-demo-top"><span className="skeleton-block skeleton-icon" /></div>
+                <span className="skeleton-line" style={{ height: 9, width: "34%", display: "block" }} />
+                <span className="skeleton-line" style={{ height: 18, width: "70%", display: "block", marginTop: 4 }} />
+                <span className="skeleton-line" style={{ height: 11, width: "94%", display: "block", marginTop: 10 }} />
+                <span className="skeleton-line" style={{ height: 11, width: "78%", display: "block", marginTop: 7 }} />
+              </article>
+            ))}
             {previewDemos.map((demo) => (
               <article className="visual-card home-demo-card" key={demo.id} data-testid={`home-demo-card-${demo.id}`}>
                 <div className="home-demo-top">

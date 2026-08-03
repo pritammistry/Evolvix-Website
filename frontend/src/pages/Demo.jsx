@@ -53,10 +53,15 @@ const VERTICALS = [
 
 export default function Demo() {
   useSEO({ title: "Live Product Demos — See Before You Commit", description: "Explore live demos of Evolvix-built web products across retail, SaaS, and more. Request a custom demo for your business before spending a rupee.", path: "/demo" });
-  const { content } = useSiteContent();
+  const { content, loading } = useSiteContent();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const demos = (content?.demos?.length ? content.demos.filter((d) => d.visible !== false) : null) || DEMO_SITES;
+  // While the real list is still in flight, show skeletons rather than the
+  // built-in defaults — otherwise the placeholder demos render first and visibly
+  // swap for the real ones a second later.
+  const demos = loading
+    ? []
+    : ((content?.demos?.length ? content.demos.filter((d) => d.visible !== false) : null) || DEMO_SITES);
   const [highlighted, setHighlighted] = useState(null);
 
   useEffect(() => {
@@ -86,6 +91,20 @@ export default function Demo() {
         text="Every Evolvix project starts with a working demo — real design, real functionality, built for your industry. Browse live examples below, then tell us what you want built."
       />
       <div className="demo-cards" data-testid="demo-cards">
+        {loading && [1, 2, 3].map((i) => (
+          <article className="demo-card demo-card--skeleton" key={`demo-skeleton-${i}`} aria-hidden="true">
+            <div className="demo-card-meta">
+              <span className="skeleton-block skeleton-icon" />
+              <div style={{ flex: 1 }}>
+                <span className="skeleton-line" style={{ height: 10, width: "28%", display: "block", marginBottom: 8 }} />
+                <span className="skeleton-line" style={{ height: 20, width: "56%", display: "block" }} />
+              </div>
+            </div>
+            <span className="skeleton-line" style={{ height: 12, width: "92%", display: "block", marginTop: 14 }} />
+            <span className="skeleton-line" style={{ height: 12, width: "74%", display: "block", marginTop: 8 }} />
+            <span className="skeleton-line" style={{ height: 38, width: 190, display: "block", marginTop: 18, borderRadius: 999 }} />
+          </article>
+        ))}
         {demos.map((demo) => (
           <article className={`demo-card${highlighted === demo.id ? " demo-card--highlighted" : ""}`} key={demo.id} data-testid={`demo-card-${demo.id}`}>
             <div className="demo-card-meta">

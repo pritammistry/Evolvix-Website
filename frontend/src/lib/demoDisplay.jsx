@@ -25,10 +25,8 @@ export function statusBadgeClass(status) {
   return "demo-live-badge";
 }
 
-// Live demos first — real, clickable work should lead.
-export function sortedVisibleDemos(demos) {
-  return (demos || [])
-    .filter((demo) => demo.visible !== false)
-    .slice()
-    .sort((a, b) => (a.status === "Live Demo" ? 0 : 1) - (b.status === "Live Demo" ? 0 : 1));
+// Admin order is preserved exactly — the Demos section has up/down arrows, so
+// re-sorting here would silently override a deliberate choice.
+export function visibleDemos(demos) {
+  return (demos || []).filter((demo) => demo.visible !== false);
 }
