@@ -234,6 +234,12 @@ export default function Login() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
+          {/* Sits with the password it belongs to, not over in the signup panel. */}
+          {mode === "login" && (
+            <div className="login-forgot-row" data-testid="login-forgot-link-text">
+              <button type="button" className="text-btn" onClick={() => { setForgotEmail(form.email); setMode("forgot"); }} data-testid="login-forgot-link">Forgot your password?</button>
+            </div>
+          )}
           <button type="submit" className="primary-btn" disabled={submitting} data-testid="login-submit-button">{submitting ? "Please wait..." : mode === "signup" ? "Create Account" : "Log In"}</button>
         </form>
         <aside className="contact-panel" data-testid="login-switch-panel">
@@ -249,7 +255,6 @@ export default function Login() {
                   <UserPlus size={17} /> Create New Account
                 </button>
               </div>
-              <p data-testid="login-forgot-link-text"><button type="button" className="text-btn" onClick={() => { setForgotEmail(form.email); setMode("forgot"); }} data-testid="login-forgot-link">Forgot your password?</button></p>
             </>
           ) : (
             <p data-testid="login-switch-to-login-text">Already have an account? <button type="button" className="text-btn" onClick={() => setMode("login")} data-testid="login-switch-to-login-button">Log in</button></p>

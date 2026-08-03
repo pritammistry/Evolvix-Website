@@ -294,3 +294,8 @@ select.welcome-input option{background:#0a0c1a;color:white}
 .login-signup-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 18px;border:none;border-radius:12px;background:linear-gradient(120deg,var(--cyan),var(--blue) 52%,var(--violet));color:#02040a;font-size:.9rem;font-weight:800;transition:transform .2s ease,box-shadow .2s ease}
 .login-signup-btn:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(19,223,244,.3)}
 @media(prefers-reduced-motion:reduce){.login-signup-btn:hover{transform:none}}
+.login-forgot-row{display:flex;justify-content:flex-end;margin:-4px 0 2px}
+/* .contact-form button gives every button in the form a pill border; this one
+   is a link, so strip it back. */
+.login-forgot-row .text-btn{min-height:0;padding:0;border:none;border-radius:0;background:none;font-size:.82rem}
+.login-forgot-row .text-btn:hover{color:white}
