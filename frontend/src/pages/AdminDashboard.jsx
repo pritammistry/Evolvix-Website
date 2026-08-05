@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Lock, Save, RotateCcw, Plus, Trash2, Sparkles, Database, Layers3, Package, Newspaper, Image as ImageIcon, LogOut, UploadCloud, BarChart3, Star, DownloadCloud, FileDown, Gamepad2, Monitor, Eye, EyeOff, ChevronUp, ChevronDown, AlertTriangle, RefreshCw, Loader2, Settings, Tag } from "lucide-react";
+import { Lock, Save, RotateCcw, Plus, Trash2, Sparkles, Database, Layers3, Package, Newspaper, Image as ImageIcon, LogOut, UploadCloud, BarChart3, Star, DownloadCloud, FileDown, Gamepad2, Monitor, Eye, EyeOff, ChevronUp, ChevronDown, AlertTriangle, RefreshCw, Loader2, Settings, Tag, Phone } from "lucide-react";
+import { CONTACT_ICON_OPTIONS } from "../lib/contactDisplay";
 import { toast } from "sonner";
 import { adminLogin, adminLogout, createPlaygroundItem, deletePlaygroundItem, deleteProductFile, exportAdminAnalytics, fetchAdminAnalytics, fetchAdminAnalyticsOptions, fetchAdminDashboard, fetchAdminPlayground, resetAdminContent, resetAdminSection, reorderPlayground, saveAdminContent, saveAdminList, updatePlaygroundItem, uploadProductFile, setVisitorAuthToken, fetchAdminLeadsContacts, exportAdminLeadsContacts, fetchAdminLeadsNewsletter, exportAdminLeadsNewsletter, fetchAdminPromoCodes, createAdminPromoCode, updateAdminPromoCode, deleteAdminPromoCode } from "../api";
 
@@ -23,6 +24,7 @@ const SIDEBAR_GROUPS = [
       { id: "testimonials", label: "Testimonials", type: "frequent" },
       { id: "custom", label: "Custom Sections", type: "frequent" },
       { id: "brand", label: "Brand & Contact", type: "caution" },
+      { id: "contactpage", label: "Contact Page", type: "caution" },
       { id: "about", label: "About Page", type: "caution" },
       { id: "services", label: "Services", type: "caution" },
       { id: "ecosystem", label: "Ecosystem", type: "caution" },
@@ -661,6 +663,113 @@ function CatalogEditor({ title, icon: Icon, items, onChange, kind, onRefresh, ca
   return <section className="admin-editor-card catalog-card" data-testid={`${kind}-editor`}><h3><Icon size={20} /> {title}<button type="button" className="admin-reset" style={{marginLeft:"auto",fontSize:12,padding:"4px 10px"}} onClick={resetSection} data-testid={`${kind}-reset-button`}><RotateCcw size={13} /> Reset {kind}</button></h3>{items.map((item, index) => <details className="admin-catalog-item" key={`${item.id || item.title}-${index}`} open={index === 0}><summary data-testid={`${kind}-summary-${index}`}>{item.title || `Item ${index + 1}`}</summary>{kind === "products" && <ProductImageUploader product={item} index={index} onUpdate={update} />}{kind === "products" && <ProductFileManager product={item} index={index} onRefresh={onRefresh} />}<div className="admin-form-grid">{fields.map((field) => renderField(field, item, index))}</div>{kind === "blog" && <BlogSeoTools post={item} index={index} />}{kind === "products" && <><ArrayEditor title="Benefits" items={item.benefits || []} onChange={(value) => update(index, "benefits", value)} placeholder="Benefit" testPrefix={`${kind}-benefits-${index}`} /><ArrayEditor title="Included" items={item.included || []} onChange={(value) => update(index, "included", value)} placeholder="Included item" testPrefix={`${kind}-included-${index}`} /><ArrayEditor title="File slots" items={item.file_slots || item.fileSlots || []} onChange={(value) => update(index, "file_slots", value)} placeholder="Download file slot" testPrefix={`${kind}-files-${index}`} /></>}<button type="button" className="danger-btn" onClick={() => onChange(items.filter((_, i) => i !== index))} data-testid={`${kind}-delete-${index}`}><Trash2 size={16} /> Remove</button></details>)}<button type="button" className="admin-mini-btn" onClick={() => onChange([...items, { ...template, id: `${kind}-${Date.now()}` }])} data-testid={`${kind}-add-button`}><Plus size={16} /> Add {kind}</button></section>;
 }
 
+const URL_TOKEN_HELP = "Tokens: {phone} {whatsapp} {email} {facebook} {google_location} {gumroad} {address} — filled from Brand & Contact, so a number only has to change in one place.";
+
+// Shared by the quick-action buttons and the social links, which differ only in
+// whether they carry a status.
+function LinkListEditor({ title, items, onChange, testPrefix, withStatus, blank, help }) {
+  const list = items || [];
+  const update = (index, key, value) => onChange(list.map((item, i) => i === index ? { ...item, [key]: value } : item));
+  const move = (index, direction) => {
+    const target = index + direction;
+    if (target < 0 || target >= list.length) return;
+    const next = list.slice();
+    [next[index], next[target]] = [next[target], next[index]];
+    onChange(next);
+  };
+  return (
+    <div className="admin-array" data-testid={`${testPrefix}-editor`} style={{ marginTop: 20 }}>
+      <h4>{title}</h4>
+      {help && <p style={{ color: "var(--muted)", fontSize: ".82rem", margin: "0 0 12px" }}>{help}</p>}
+      {list.length === 0 && <p style={{ color: "var(--muted)", fontSize: ".85rem" }}>None — the section is hidden on the website.</p>}
+      {list.map((item, index) => (
+        <div className="admin-pair" key={`${testPrefix}-${index}`}>
+          <div className="admin-reorder-bar" data-testid={`${testPrefix}-reorder-${index}`}>
+            <span className="admin-reorder-pos">#{index + 1}</span>
+            <span className="admin-reorder-name">{item.label || "Untitled"}</span>
+            <button type="button" className="admin-mini-btn" onClick={() => move(index, -1)} disabled={index === 0} aria-label="Move up" data-testid={`${testPrefix}-up-${index}`}><ChevronUp size={15} /></button>
+            <button type="button" className="admin-mini-btn" onClick={() => move(index, 1)} disabled={index === list.length - 1} aria-label="Move down" data-testid={`${testPrefix}-down-${index}`}><ChevronDown size={15} /></button>
+          </div>
+          <div className="admin-form-grid">
+            <TextField label="Button label" value={item.label} onChange={(v) => update(index, "label", v)} testId={`${testPrefix}-label-${index}`} />
+            <label className="admin-field" data-testid={`${testPrefix}-icon-${index}-field`}>
+              <span>Icon</span>
+              <select value={item.icon_key || "globe"} onChange={(e) => update(index, "icon_key", e.target.value)} data-testid={`${testPrefix}-icon-${index}`}>
+                {CONTACT_ICON_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </label>
+            <TextField label="Link / URL" value={item.url} onChange={(v) => update(index, "url", v)} testId={`${testPrefix}-url-${index}`} />
+            {withStatus && (
+              <label className="admin-field" data-testid={`${testPrefix}-status-${index}-field`}>
+                <span>Status</span>
+                <select value={item.status || "Coming Soon"} onChange={(e) => update(index, "status", e.target.value)} data-testid={`${testPrefix}-status-${index}`}>
+                  <option>Live</option>
+                  <option>Coming Soon</option>
+                </select>
+              </label>
+            )}
+          </div>
+          <label className="admin-check">
+            <input type="checkbox" checked={item.visible !== false} onChange={(e) => update(index, "visible", e.target.checked)} data-testid={`${testPrefix}-visible-${index}`} /> Show on website
+          </label>
+          <button type="button" className="danger-btn" onClick={() => onChange(list.filter((_, i) => i !== index))} data-testid={`${testPrefix}-delete-${index}`}><Trash2 size={16} /> Remove</button>
+        </div>
+      ))}
+      <button type="button" className="admin-mini-btn" onClick={() => onChange([...list, { ...blank, id: `${testPrefix}-${Date.now()}` }])} data-testid={`${testPrefix}-add`}><Plus size={16} /> Add</button>
+    </div>
+  );
+}
+
+function ContactPageEditor({ page, onChange }) {
+  const cfg = page || {};
+  const form = cfg.form || {};
+  const setField = (key, value) => onChange({ ...cfg, [key]: value });
+  const setFormField = (key, value) => onChange({ ...cfg, form: { ...form, [key]: value } });
+  return (
+    <section className="admin-editor-card" data-testid="contact-page-editor">
+      <h3><Phone size={20} /> Contact Page</h3>
+      <p style={{ color: "var(--muted)", marginBottom: 18 }}>
+        Full control of the Contact page — heading, buttons, social links, the enquiry dropdown, and the form itself. Phone numbers and addresses still come from Brand &amp; Contact; use the tokens below to point buttons at them.
+      </p>
+      <div className="admin-form-grid">
+        <TextField label="Eyebrow" value={cfg.eyebrow} onChange={(v) => setField("eyebrow", v)} testId="contact-page-eyebrow" />
+        <TextField label="Heading" value={cfg.title} onChange={(v) => setField("title", v)} testId="contact-page-title" />
+        <TextField label="Intro paragraph" value={cfg.intro} onChange={(v) => setField("intro", v)} testId="contact-page-intro" multiline />
+        <TextField label="Registration note (below socials)" value={cfg.business_note} onChange={(v) => setField("business_note", v)} testId="contact-page-note" multiline />
+      </div>
+      <label className="admin-check"><input type="checkbox" checked={cfg.show_email !== false} onChange={(e) => setField("show_email", e.target.checked)} data-testid="contact-page-show-email" /> Show email address</label>
+      <label className="admin-check"><input type="checkbox" checked={cfg.show_address !== false} onChange={(e) => setField("show_address", e.target.checked)} data-testid="contact-page-show-address" /> Show postal address</label>
+      <label className="admin-check"><input type="checkbox" checked={cfg.show_map !== false} onChange={(e) => setField("show_map", e.target.checked)} data-testid="contact-page-show-map" /> Show Google map</label>
+
+      <LinkListEditor
+        title="Quick Action Buttons" items={cfg.quick_actions} onChange={(v) => setField("quick_actions", v)}
+        testPrefix="contact-action" blank={{ label: "New Button", icon_key: "globe", url: "", visible: true }}
+        help={URL_TOKEN_HELP}
+      />
+      <LinkListEditor
+        title="Social Links" items={cfg.social_links} onChange={(v) => setField("social_links", v)}
+        testPrefix="contact-social" withStatus blank={{ label: "New Social", icon_key: "globe", url: "", status: "Coming Soon", visible: true }}
+        help="Set status to Live once the URL is filled in — a Live link with no URL stays greyed out."
+      />
+      <ArrayEditor title="Enquiry Type Dropdown" items={cfg.inquiry_types || []} onChange={(v) => setField("inquiry_types", v)} placeholder="Enquiry type" testPrefix="contact-inquiry-types" />
+
+      <div className="admin-array" style={{ marginTop: 20 }}>
+        <h4>Contact Form</h4>
+        <div className="admin-form-grid">
+          <TextField label="Name placeholder" value={form.name_placeholder} onChange={(v) => setFormField("name_placeholder", v)} testId="contact-form-name-ph" />
+          <TextField label="Phone placeholder" value={form.phone_placeholder} onChange={(v) => setFormField("phone_placeholder", v)} testId="contact-form-phone-ph" />
+          <TextField label="Email placeholder" value={form.email_placeholder} onChange={(v) => setFormField("email_placeholder", v)} testId="contact-form-email-ph" />
+          <TextField label="Message placeholder ({min} = minimum length)" value={form.message_placeholder} onChange={(v) => setFormField("message_placeholder", v)} testId="contact-form-message-ph" />
+          <TextField label="Minimum message length (0 = no minimum)" value={form.message_min_length} onChange={(v) => setFormField("message_min_length", Number(v) || 0)} testId="contact-form-min" />
+          <TextField label="Submit button label" value={form.submit_label} onChange={(v) => setFormField("submit_label", v)} testId="contact-form-submit-label" />
+        </div>
+        <label className="admin-check"><input type="checkbox" checked={form.show_phone !== false} onChange={(e) => setFormField("show_phone", e.target.checked)} data-testid="contact-form-show-phone" /> Show phone field</label>
+        <label className="admin-check"><input type="checkbox" checked={form.phone_required !== false} onChange={(e) => setFormField("phone_required", e.target.checked)} data-testid="contact-form-phone-required" /> Phone is required</label>
+      </div>
+    </section>
+  );
+}
+
 function DemosEditor({ items, onChange }) {
   const demos = items || [];
   const update = (index, key, value) => onChange(demos.map((item, i) => i === index ? { ...item, [key]: value } : item));
@@ -947,6 +1056,11 @@ export default function AdminDashboard() {
             <ArrayEditor title="Trust Strip" items={content.trust_strip || []} onChange={(value) => updateContent(["trust_strip"], value)} placeholder="Trust item" testPrefix="admin-trust" />
           </section>
         )}
+
+        {active === "contactpage" && <>
+          <SectionToolbar resetKey="contactpage" label="Contact Page" onReset={resetSection} />
+          <ContactPageEditor page={content.contact_page || {}} onChange={(value) => updateContent(["contact_page"], value)} />
+        </>}
 
         {active === "about" && (
           <section className="admin-editor-card" data-testid="admin-about-editor">

@@ -428,6 +428,52 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
         "Productivity",
         "AI Tools",
     ],
+    # Contact page. URLs support {phone} {whatsapp} {email} {facebook}
+    # {google_location} {gumroad} {address} tokens, filled from the Brand &
+    # Contact section, so changing a number in one place updates every button.
+    "contact_page": {
+        "eyebrow": "Contact",
+        "title": "Let’s build a smarter future together.",
+        "intro": "Reach out for AI consulting, creative services, websites, applications, Learning and Growth products, automation, music, or business transformation.",
+        "business_note": "GST Registered • Udyam Registered MSME • IEC Registered • GST Invoice Available",
+        "show_map": True,
+        "show_email": True,
+        "show_address": True,
+        "quick_actions": [
+            {"id": "call", "label": "Call", "icon_key": "phone", "url": "tel:{phone}", "visible": True},
+            {"id": "whatsapp", "label": "WhatsApp", "icon_key": "whatsapp", "url": "https://wa.me/{whatsapp}", "visible": True},
+            {"id": "facebook", "label": "Facebook", "icon_key": "facebook", "url": "{facebook}", "visible": True},
+            {"id": "reviews", "label": "Reviews", "icon_key": "star", "url": "{google_location}", "visible": True},
+            {"id": "location", "label": "Location", "icon_key": "map", "url": "{google_location}", "visible": True},
+            {"id": "gumroad", "label": "Gumroad", "icon_key": "shopping", "url": "{gumroad}", "visible": True},
+        ],
+        "social_links": [
+            {"id": "linkedin", "label": "LinkedIn", "icon_key": "linkedin", "url": "", "status": "Coming Soon", "visible": True},
+            {"id": "instagram", "label": "Instagram", "icon_key": "instagram", "url": "", "status": "Coming Soon", "visible": True},
+            {"id": "youtube", "label": "YouTube", "icon_key": "youtube", "url": "", "status": "Coming Soon", "visible": True},
+            {"id": "x", "label": "X", "icon_key": "twitter", "url": "", "status": "Coming Soon", "visible": True},
+        ],
+        "inquiry_types": [
+            "Business inquiry",
+            "AI Business Consulting",
+            "Creative Digital Services",
+            "Website / App / Software",
+            "Learning and Growth Product Support",
+            "Music for Creators",
+            "Branding / Portfolio / Resume",
+            "Collaboration inquiry",
+        ],
+        "form": {
+            "name_placeholder": "Your full name *",
+            "phone_placeholder": "+91 98765 43210 *",
+            "email_placeholder": "Email address *",
+            "message_placeholder": "Tell me what you need (min {min} characters) *",
+            "submit_label": "Send Message",
+            "message_min_length": 20,
+            "show_phone": True,
+            "phone_required": True,
+        },
+    },
     "welcome_popup": {
         "enabled": True,
         "delay_seconds": 2,
@@ -475,6 +521,16 @@ def merged_site_content(custom_content: Optional[Dict[str, Any]]) -> Dict[str, A
     if not merged["about"].get("values"):
         merged["about"]["values"] = DEFAULT_SITE_CONTENT["about"]["values"]
     merged["analytics_report_settings"] = {**DEFAULT_SITE_CONTENT["analytics_report_settings"], **(custom_content or {}).get("analytics_report_settings", {})}
+    merged["contact_page"] = {**DEFAULT_SITE_CONTENT["contact_page"], **(custom_content or {}).get("contact_page", {})}
+    merged["contact_page"]["form"] = {
+        **DEFAULT_SITE_CONTENT["contact_page"]["form"],
+        **(merged["contact_page"].get("form") or {}),
+    }
+    # Lists here are intentionally allowed to be empty — removing every quick
+    # action or social link is a legitimate choice, so don't restore defaults.
+    for key in ["quick_actions", "social_links", "inquiry_types"]:
+        if merged["contact_page"].get(key) is None:
+            merged["contact_page"][key] = DEFAULT_SITE_CONTENT["contact_page"][key]
     merged["welcome_popup"] = {**DEFAULT_SITE_CONTENT["welcome_popup"], **(custom_content or {}).get("welcome_popup", {})}
     if not merged["welcome_popup"].get("bullets"):
         merged["welcome_popup"]["bullets"] = DEFAULT_SITE_CONTENT["welcome_popup"]["bullets"]
@@ -1250,6 +1306,7 @@ async def admin_reset(request: Request):
 
 CONTENT_SECTION_MAP: Dict[str, List[str]] = {
     "brand": ["brand", "contact", "trust_strip"],
+    "contactpage": ["contact_page"],
     "about": ["about"],
     "services": ["creative_services", "technology_services"],
     "ecosystem": ["ecosystem"],
