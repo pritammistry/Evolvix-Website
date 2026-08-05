@@ -299,3 +299,6 @@ select.welcome-input option{background:#0a0c1a;color:white}
    is a link, so strip it back. */
 .login-forgot-row .text-btn{min-height:0;padding:0;border:none;border-radius:0;background:none;font-size:.82rem}
 .login-forgot-row .text-btn:hover{color:white}
+.quick-action--skeleton{width:104px;height:38px;border-color:transparent;background:rgba(255,255,255,.08);position:relative;overflow:hidden;pointer-events:none}
+.quick-action--skeleton::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.18) 50%,transparent 70%);background-size:200% 100%;animation:skeletonShimmer 1.4s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.quick-action--skeleton::after{animation:none}}

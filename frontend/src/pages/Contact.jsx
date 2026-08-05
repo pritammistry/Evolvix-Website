@@ -33,13 +33,16 @@ function validate(form, cfg) {
 
 export default function Contact() {
   useSEO({ title: "Contact Evolvix Tech Media", description: "Reach out for AI consulting, website development, digital products, branding, or creative services. Based in Bardhaman, serving clients across India.", path: "/contact" });
-  const { content } = useSiteContent();
+  const { content, loading } = useSiteContent();
   const contact = content.contact || contactDetails;
   const page = content.contact_page || {};
   const formCfg = page.form || {};
   const inquiryTypes = page.inquiry_types?.length ? page.inquiry_types : ["Business inquiry"];
-  const actions = usableActions(page.quick_actions, contact);
-  const socials = (page.social_links || []).filter((item) => item.visible !== false);
+  // Empty while loading: the fallback content lists every default button, so
+  // rendering it would show buttons you have hidden and then snatch them away
+  // once the real content lands.
+  const actions = loading ? [] : usableActions(page.quick_actions, contact);
+  const socials = loading ? [] : (page.social_links || []).filter((item) => item.visible !== false);
   const [searchParams] = useSearchParams();
   const prefillType = inquiryTypes.includes(searchParams.get("type")) ? searchParams.get("type") : inquiryTypes[0];
   const prefillService = searchParams.get("service") || "";
@@ -98,6 +101,11 @@ export default function Contact() {
           <button type="submit" className="primary-btn" data-testid="contact-submit-button">{formCfg.submit_label || "Send Message"} <Send size={18} /></button>
         </form>
         <aside className="contact-panel" data-testid="contact-details-panel">
+          {loading && (
+            <div className="quick-action-grid" data-testid="contact-actions-skeleton" aria-hidden="true">
+              {[1, 2, 3, 4].map((i) => <span key={i} className="quick-action quick-action--skeleton" />)}
+            </div>
+          )}
           {actions.length > 0 && (
             <div className="quick-action-grid" data-testid="contact-quick-actions">
               {actions.map((action) => (
