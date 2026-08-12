@@ -153,6 +153,7 @@ async def issue_otp(user: Dict[str, Any]) -> None:
     try:
         resend.Emails.send({
             "from": os.environ.get("RESEND_FROM_EMAIL", "Evolvix Tech Media <onboarding@resend.dev>"),
+            "reply_to": os.environ.get("REPLY_TO_EMAIL", "hi@evolvixtech.in"),
             "to": [user["email"]],
             "subject": "Your Evolvix verification code",
             "html": f"<p>Your Evolvix Tech Media verification code is:</p><h2 style=\"letter-spacing:4px\">{otp}</h2><p>This code expires in {OTP_TTL_MINUTES} minutes. If you didn't request this, you can ignore this email.</p>",
@@ -178,6 +179,7 @@ async def issue_reset_otp(user: Dict[str, Any]) -> None:
     try:
         resend.Emails.send({
             "from": os.environ.get("RESEND_FROM_EMAIL", "Evolvix Tech Media <onboarding@resend.dev>"),
+            "reply_to": os.environ.get("REPLY_TO_EMAIL", "hi@evolvixtech.in"),
             "to": [user["email"]],
             "subject": "Reset your Evolvix password",
             "html": f"<p>Your Evolvix Tech Media password reset code is:</p><h2 style=\"letter-spacing:4px\">{otp}</h2><p>This code expires in {OTP_TTL_MINUTES} minutes. If you didn't request this, you can safely ignore this email.</p>",
@@ -187,17 +189,26 @@ async def issue_reset_otp(user: Dict[str, Any]) -> None:
         raise HTTPException(status_code=502, detail="Could not send reset email. Please try again in a moment.") from exc
 
 
-OWNER_EMAIL = os.environ.get("OWNER_EMAIL", "evolvixtech0pm@gmail.com")
+# Comma-separated so lead notifications can reach more than one inbox. Both the
+# domain address and the original Gmail are listed while hi@evolvixtech.in is
+# being set up — drop the Gmail once its MX records are confirmed working.
+REPLY_TO_EMAIL = lambda: os.environ.get("REPLY_TO_EMAIL", "hi@evolvixtech.in")
+
+OWNER_EMAILS = list(dict.fromkeys(
+    e.strip() for e in os.environ.get("OWNER_EMAIL", "hi@evolvixtech.in,evolvixtech0pm@gmail.com").split(",") if e.strip()
+))
 FROM_EMAIL = lambda: os.environ.get("RESEND_FROM_EMAIL", "Evolvix Tech Media <onboarding@resend.dev>")
 
 
-def send_notification_email(to: str, subject: str, html: str) -> None:
+def send_notification_email(to, subject: str, html: str) -> None:
+    """`to` accepts a single address or a list of them."""
     if not EMAIL_VERIFICATION_ENABLED:
         return
+    recipients = to if isinstance(to, (list, tuple)) else [to]
     try:
-        resend.Emails.send({"from": FROM_EMAIL(), "to": [to], "subject": subject, "html": html})
+        resend.Emails.send({"from": FROM_EMAIL(), "reply_to": REPLY_TO_EMAIL(), "to": list(recipients), "subject": subject, "html": html})
     except Exception as exc:
-        logger.warning("Notification email to %s failed: %s", to, exc)
+        logger.warning("Notification email to %s failed: %s", recipients, exc)
 
 
 ORDERS_FROM_EMAIL = lambda: os.environ.get("RESEND_ORDERS_FROM_EMAIL", os.environ.get("RESEND_FROM_EMAIL", "Evolvix Store <onboarding@resend.dev>"))
@@ -294,6 +305,7 @@ async def send_purchase_confirmation(session_id: str) -> None:
         )
         send_result = resend.Emails.send({
             "from": ORDERS_FROM_EMAIL(),
+            "reply_to": REPLY_TO_EMAIL(),
             "to": [user["email"]],
             "subject": f"Your Evolvix purchase is confirmed — {product_title}",
             "html": html,
@@ -321,7 +333,7 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
         "address": "Chhotonilpur, Bardhaman, West Bengal 713103",
         "phone": "+91 98318 42869",
         "whatsapp": "+91 98318 42869",
-        "email": "evolvixtech0pm@gmail.com",
+        "email": "hi@evolvixtech.in",
         "facebook": "https://facebook.com/evolvixtech",
         "google_location": "https://www.google.com/maps?cid=2428437874850568706",
         "gumroad": "https://gumroad.com/",
@@ -1461,7 +1473,7 @@ async def create_contact_message(payload: ContactMessageCreate):
     doc.update({"id": str(uuid.uuid4()), "created_at": now_iso(), "status": "new"})
     await db.contact_messages.insert_one(doc)
     send_notification_email(
-        to=OWNER_EMAIL,
+        to=OWNER_EMAILS,
         subject=f"New enquiry [{doc.get('inquiry_type', 'Contact')}] from {doc.get('name', 'Unknown')}",
         html=f"""
 <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
@@ -1497,7 +1509,7 @@ async def create_newsletter_signup(payload: NewsletterCreate):
 </div>""",
         )
         send_notification_email(
-            to=OWNER_EMAIL,
+            to=OWNER_EMAILS,
             subject=f"New newsletter signup: {payload.email}",
             html=f"<p style=\"font-family:sans-serif\"><strong>{payload.email}</strong> just joined the Evolvix update list.</p>",
         )

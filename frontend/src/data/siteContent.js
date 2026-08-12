@@ -8,7 +8,7 @@ export const contactDetails = {
   address: "Chhotonilpur, Bardhaman, West Bengal 713103",
   phone: "+91 98318 42869",
   whatsapp: "+91 98318 42869",
-  email: "evolvixtech0pm@gmail.com",
+  email: "hi@evolvixtech.in",
   facebook: "https://facebook.com/evolvixtech",
   google_location: "https://www.google.com/maps?cid=2428437874850568706",
   gumroad: "https://gumroad.com/",
@@ -180,7 +180,7 @@ export const legalContent = {
           { type: "list", items: [
             "Evolvix Tech Media",
             "Chhotonilpur, Bardhaman, West Bengal 713103",
-            "Email: evolvixtech0pm@gmail.com",
+            "Email: hi@evolvixtech.in",
             "Phone/WhatsApp: +91 98318 42869",
           ] },
         ],
@@ -243,7 +243,7 @@ export const legalContent = {
             "Request deletion of your account and associated data",
             "Withdraw consent for marketing communications at any time",
           ] },
-          { type: "p", text: "To exercise any of these rights, email us at evolvixtech0pm@gmail.com. We'll respond within a reasonable time." },
+          { type: "p", text: "To exercise any of these rights, email us at hi@evolvixtech.in. We'll respond within a reasonable time." },
         ],
       },
       {
@@ -277,7 +277,7 @@ export const legalContent = {
           { type: "list", items: [
             "Pritam Mistry",
             "Evolvix Tech Media, Chhotonilpur, Bardhaman, West Bengal 713103",
-            "Email: evolvixtech0pm@gmail.com",
+            "Email: hi@evolvixtech.in",
           ] },
         ],
       },
@@ -290,7 +290,7 @@ export const legalContent = {
       {
         heading: "11. Contact",
         blocks: [
-          { type: "p", text: "For any privacy questions, reach us at evolvixtech0pm@gmail.com or +91 98318 42869." },
+          { type: "p", text: "For any privacy questions, reach us at hi@evolvixtech.in or +91 98318 42869." },
         ],
       },
     ],
@@ -310,7 +310,7 @@ export const legalContent = {
             "A technical error on our end prevented delivery of the product you paid for",
             "You were charged but did not receive access to the product due to a payment/webhook error",
           ] },
-          { type: "p", text: "To request a refund under these circumstances, email evolvixtech0pm@gmail.com within 48 hours of your purchase, including your order ID and a description of the issue. We'll review and respond within 2-3 business days." },
+          { type: "p", text: "To request a refund under these circumstances, email hi@evolvixtech.in within 48 hours of your purchase, including your order ID and a description of the issue. We'll review and respond within 2-3 business days." },
         ],
       },
       {
@@ -336,7 +336,7 @@ export const legalContent = {
         blocks: [
           { type: "list", items: [
             "Evolvix Tech Media",
-            "Email: evolvixtech0pm@gmail.com",
+            "Email: hi@evolvixtech.in",
             "Phone/WhatsApp: +91 98318 42869",
             "Chhotonilpur, Bardhaman, West Bengal 713103",
           ] },
@@ -376,7 +376,7 @@ export const fallbackSiteContent = {
     address: "Chhotonilpur, Bardhaman, West Bengal 713103",
     phone: "+91 98318 42869",
     whatsapp: "+91 98318 42869",
-    email: "evolvixtech0pm@gmail.com",
+    email: "hi@evolvixtech.in",
     facebook: "https://facebook.com/evolvixtech",
     google_location: "https://www.google.com/maps?cid=2428437874850568706",
     gumroad: "https://gumroad.com/",
