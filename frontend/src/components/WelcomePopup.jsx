@@ -37,7 +37,7 @@ const DEFAULTS = {
     // Offer runs until the end of 15 August 2026, IST.
     ends_at: "2026-08-16T00:00:00+05:30",
     eyebrow: "80th Independence Day · Freedom Week",
-    title: "79 years of freedom.",
+    title: "Celebrating freedom.",
     highlight: "Up to 20% off everything.",
     subtitle: "Our Freedom Week offer runs on every product and every service — websites, apps, branding, AI consulting and the full digital store.",
     offer: "Up to 20% off all products and services. Offer ends midnight, 15 August.",

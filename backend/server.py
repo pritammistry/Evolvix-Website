@@ -494,8 +494,11 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
         "campaign": {
             "enabled": True,
             "ends_at": "2026-08-16T00:00:00+05:30",
+            # 15 Aug 2026 is the 80th Independence Day (1947 was the 1st) but only
+            # 79 completed years. Both are correct, and showing both on one card
+            # reads as a contradiction — so the ordinal appears once, here.
             "eyebrow": "80th Independence Day · Freedom Week",
-            "title": "79 years of freedom.",
+            "title": "Celebrating freedom.",
             "highlight": "Up to 20% off everything.",
             "subtitle": "Our Freedom Week offer runs on every product and every service — websites, apps, branding, AI consulting and the full digital store.",
             "offer": "Up to 20% off all products and services. Offer ends midnight, 15 August.",
