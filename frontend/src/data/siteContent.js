@@ -368,7 +368,8 @@ export const fallbackSiteContent = {
     name: "Evolvix Tech Media",
     tagline: "CREATE • INNOVATE • ELEVATE",
     headline: "Empowering People & Businesses Through AI.",
-    subheadline: "From creative digital services to intelligent business solutions.",
+    subheadline: "AI • Digital • Business • Creative Solutions",
+    vision: "We're a technology and creative solutions company helping individuals and businesses turn ideas into intelligent digital outcomes — combining creativity, technology, and AI to drive real growth, efficiency, and impact.",
     gstin: "19BVTPM1874M1ZK",
     core_areas: ["AI", "Digital", "Business", "Creative Solutions"],
   },
@@ -382,7 +383,111 @@ export const fallbackSiteContent = {
     gumroad: "https://gumroad.com/",
     website_status: "Coming Soon",
   },
-  trust_strip: ["GST Registered Business", "Udyam Registered MSME", "IEC Registered", "Facebook", "Google Location", "Bardhaman, West Bengal"],
+  about: {
+    "title": "Humanizing the digital AI era.",
+    "intro": "Evolvix Tech Media exists because the future should not feel confusing, cold, or reserved for experts. It should feel approachable, useful, and creative for every age and skill level.",
+    "description": "Evolvix Tech Media is a technology and creative solutions company helping individuals and businesses transform ideas into intelligent digital outcomes. We combine creativity, technology, and AI to deliver solutions that drive growth, efficiency, and real impact.",
+    "why_title": "Why Evolvix exists",
+    "why_text": "The brand helps people cope with change, learn practical AI skills, discover useful digital products, and experience creative media that speaks to emotion and mood.",
+    "mission_title": "The mission",
+    "mission_text": "Simplify technology without reducing its power. Give students, professionals, parents, elderly users, and creators tools that make growth feel possible.",
+    "creative_title": "The creative side",
+    "creative_text": "AI music and mood-based digital expression bring feeling into the technology conversation, connecting calm, focus, nostalgia, energy, romance, and reflection.",
+    "values": [
+      "Clarity",
+      "Creativity",
+      "Innovation",
+      "Accessibility",
+      "Trust"
+    ],
+    "what_we_do": [
+      {
+        "title": "We Create",
+        "text": "Design, content, and digital experiences that bring ideas to life."
+      },
+      {
+        "title": "We Build",
+        "text": "Websites, apps, software, and AI-powered products built to last."
+      },
+      {
+        "title": "We Automate",
+        "text": "Workflows and business processes that save time and reduce friction."
+      },
+      {
+        "title": "We Grow",
+        "text": "Strategy and support that turns early traction into lasting growth."
+      }
+    ]
+  },
+  how_we_work: [
+    {
+      "step": "Discover",
+      "text": "We learn your goals, audience, and constraints before proposing anything."
+    },
+    {
+      "step": "Strategize",
+      "text": "We map the right mix of creative, technology, and AI for your specific situation."
+    },
+    {
+      "step": "Design & Develop",
+      "text": "We build the actual deliverable — designs, code, workflows, or content."
+    },
+    {
+      "step": "Deploy & Test",
+      "text": "We launch, verify everything works as intended, and fix what needs fixing."
+    },
+    {
+      "step": "Grow & Support",
+      "text": "We stay involved after launch — updates, support, and next steps."
+    }
+  ],
+  industries_served: [
+    "Education",
+    "Healthcare",
+    "Real Estate",
+    "E-commerce",
+    "Manufacturing",
+    "Startups",
+    "Corporate",
+    "Retail",
+    "Finance"
+  ],
+  music_previews: [
+    {
+      "id": "mp-pin-drop-chaos",
+      "mood": "Featured Creator",
+      "title": "Pin Drop Chaos",
+      "description": "Original tracks and creative audio drops from Pin Drop Chaos — follow on YouTube and Facebook for new releases.",
+      "audio_url": "https://www.youtube.com/@PinDropChaos-t8i",
+      "secondary_url": "https://www.facebook.com/people/Pin-Drop-Chaos/61589625935745",
+      "secondary_label": "Facebook",
+      "visible": true
+    },
+    {
+      "id": "mp-ember-sounds-by-pritam",
+      "mood": "Featured Creator",
+      "title": "Ember Sounds by Pritam",
+      "description": "New music releases from Ember Sounds by Pritam — follow on YouTube for the latest drops.",
+      "audio_url": "https://www.youtube.com/@EmberSoundsbyPritam",
+      "visible": true
+    }
+  ],
+  product_categories: [
+    "Learning and Growth",
+    "Brand Assets",
+    "Music",
+    "Business",
+    "Bundle",
+    "Digital Products",
+    "Kids & Learning",
+    "Career & Jobs",
+    "Productivity",
+    "AI Tools"
+  ],
+  // Kept in sync with DEFAULT_SITE_CONTENT in backend/server.py. Anything the
+  // backend serves but this file omits renders blank on first paint and then
+  // pops in when the API answers, so these must not drift apart.
+  trust_strip: ["AI – Smarter Solutions", "Digital – Powerful Experiences", "Business – Scalable Growth", "Creative – Impactful Designs"],
   creative_services: [
     { title: "AI Resume & CV Design", text: "Stand out. Get noticed." },
     { title: "Professional Portfolio Design", text: "Showcase your best work." },
