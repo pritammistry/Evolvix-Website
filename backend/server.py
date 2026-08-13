@@ -881,14 +881,86 @@ async def get_states():
     return {"states": INDIAN_STATES}
 
 
+def public_base_url(request: Request) -> str:
+    """Absolute origin of this API, for URLs the browser will load directly.
+
+    Relative paths would resolve against the frontend's origin, which is a
+    different host, so image URLs have to be absolute. Forced to https off
+    localhost because a proxied request can report http and a mixed-content
+    image is silently blocked.
+    """
+    base = str(request.base_url).rstrip("/")
+    if not base.startswith("http://localhost") and not base.startswith("http://127."):
+        base = base.replace("http://", "https://", 1)
+    return base
+
+
+def externalize_product_images(products: List[Dict[str, Any]], base: str) -> List[Dict[str, Any]]:
+    """Swap inline base64 images for URLs the browser fetches separately.
+
+    Images pasted into the admin panel are stored as data URIs. Left inline they
+    are serialised into every /site-content response — megabytes of base64 on
+    every page of the site, including pages that show no products at all. The
+    bytes stay in the database untouched; only the public payload changes, so
+    the admin panel still sees and re-saves the originals.
+    """
+    external = []
+    for product in products:
+        item = dict(product)
+        pid = item.get("id") or item.get("slug")
+        if isinstance(item.get("image"), str) and item["image"].startswith("data:"):
+            item["image"] = f"{base}/api/products/{pid}/image"
+        if isinstance(item.get("images"), list):
+            item["images"] = [
+                f"{base}/api/products/{pid}/images/{index}"
+                if isinstance(value, str) and value.startswith("data:") else value
+                for index, value in enumerate(item["images"])
+            ]
+        external.append(item)
+    return external
+
+
+async def _product_image_response(product_id: str, request: Request, index: Optional[int]) -> Response:
+    catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
+    products = catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values())
+    product = next((p for p in products if p.get("id") == product_id or p.get("slug") == product_id), None)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    raw = product.get("image") if index is None else (product.get("images") or [None])[index] if index < len(product.get("images") or []) else None
+    if not isinstance(raw, str) or not raw.startswith("data:"):
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    image_bytes, content_type = parse_data_url(raw)
+    etag = '"%s"' % hashlib.md5(image_bytes).hexdigest()
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=304, headers={"ETag": etag, "Cache-Control": "public, max-age=3600"})
+    return Response(
+        content=image_bytes,
+        media_type=content_type or "image/jpeg",
+        headers={"ETag": etag, "Cache-Control": "public, max-age=3600"},
+    )
+
+
+@api_router.get("/products/{product_id}/image")
+async def get_product_image(product_id: str, request: Request):
+    return await _product_image_response(product_id, request, None)
+
+
+@api_router.get("/products/{product_id}/images/{index}")
+async def get_product_gallery_image(product_id: str, index: int, request: Request):
+    return await _product_image_response(product_id, request, index)
+
+
 @api_router.get("/site-content")
-async def get_site_content():
+async def get_site_content(request: Request):
     custom = await db.site_content.find_one({"id": "primary"}, {"_id": 0})
     editable_content = merged_site_content(custom.get("content") if custom else None)
     catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
+    products = normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products")
     return {
         **editable_content,
-        "products": normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products"),
+        "products": externalize_product_images(products, public_base_url(request)),
         "portfolio": catalog.get("portfolio", PORTFOLIO) if catalog else PORTFOLIO,
         "blog": normalize_catalog_items(catalog.get("blog", BLOG_POSTS) if catalog else BLOG_POSTS, "blog"),
     }
