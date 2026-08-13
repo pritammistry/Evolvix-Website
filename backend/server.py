@@ -19,7 +19,7 @@ import hashlib
 import secrets
 import bcrypt
 from datetime import datetime, timezone, timedelta
-from starlette.responses import StreamingResponse
+from starlette.responses import StreamingResponse, JSONResponse
 import razorpay
 import resend
 
@@ -952,18 +952,47 @@ async def get_product_gallery_image(product_id: str, index: int, request: Reques
     return await _product_image_response(product_id, request, index)
 
 
+# Building this response means reading the whole catalog out of MongoDB —
+# including megabytes of base64 image data that are then discarded. That read
+# dominates the response time, so the finished payload is cached in process.
+#
+# The cache key is the updated_at of both content documents rather than a TTL,
+# and it is fetched with a projection so the check itself stays tiny. Every
+# write path stamps updated_at, so an admin save invalidates this automatically
+# — nothing has to remember to clear it.
+_SITE_CONTENT_CACHE: Dict[str, Any] = {"key": None, "payload": None, "etag": None}
+
+
+async def site_content_version() -> str:
+    content_doc = await db.site_content.find_one({"id": "primary"}, {"_id": 0, "updated_at": 1})
+    catalog_doc = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0, "updated_at": 1})
+    return f"{(content_doc or {}).get('updated_at', '-')}|{(catalog_doc or {}).get('updated_at', '-')}"
+
+
 @api_router.get("/site-content")
 async def get_site_content(request: Request):
-    custom = await db.site_content.find_one({"id": "primary"}, {"_id": 0})
-    editable_content = merged_site_content(custom.get("content") if custom else None)
-    catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
-    products = normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products")
-    return {
-        **editable_content,
-        "products": externalize_product_images(products, public_base_url(request)),
-        "portfolio": catalog.get("portfolio", PORTFOLIO) if catalog else PORTFOLIO,
-        "blog": normalize_catalog_items(catalog.get("blog", BLOG_POSTS) if catalog else BLOG_POSTS, "blog"),
-    }
+    base = public_base_url(request)
+    cache_key = f"{await site_content_version()}|{base}"
+
+    if _SITE_CONTENT_CACHE["key"] == cache_key:
+        payload, etag = _SITE_CONTENT_CACHE["payload"], _SITE_CONTENT_CACHE["etag"]
+    else:
+        custom = await db.site_content.find_one({"id": "primary"}, {"_id": 0})
+        editable_content = merged_site_content(custom.get("content") if custom else None)
+        catalog = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0})
+        products = normalize_catalog_items(catalog.get("products", list(PRODUCTS.values())) if catalog else list(PRODUCTS.values()), "products")
+        payload = {
+            **editable_content,
+            "products": externalize_product_images(products, base),
+            "portfolio": catalog.get("portfolio", PORTFOLIO) if catalog else PORTFOLIO,
+            "blog": normalize_catalog_items(catalog.get("blog", BLOG_POSTS) if catalog else BLOG_POSTS, "blog"),
+        }
+        etag = '"%s"' % hashlib.md5(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
+        _SITE_CONTENT_CACHE.update({"key": cache_key, "payload": payload, "etag": etag})
+
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=304, headers={"ETag": etag, "Cache-Control": "no-cache"})
+    return JSONResponse(payload, headers={"ETag": etag, "Cache-Control": "no-cache"})
 
 
 @api_router.put("/site-content")
