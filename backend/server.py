@@ -294,7 +294,11 @@ async def send_purchase_confirmation(session_id: str) -> None:
         amount_str = f"{float(amount):.0f}" if amount else "—"
         origin = os.environ.get("FRONTEND_URL", "https://evolvixtech.in")
         download_url = f"{origin}/checkout/success?session_id={session_id}&product={product.get('slug', product_id or '')}"
-        invoice_url = f"https://evolvix-website.onrender.com/api/payments/{session_id}/invoice"
+        # Configurable because this link is emailed to customers and outlives the
+        # email — hardcoding the host would break every past invoice link the
+        # day the backend moves to a different service or region.
+        api_origin = os.environ.get("PUBLIC_API_URL", "https://evolvix-website.onrender.com").rstrip("/")
+        invoice_url = f"{api_origin}/api/payments/{session_id}/invoice"
         customer_name = user.get("name") or user["email"].split("@")[0].capitalize()
         html = _PURCHASE_CONFIRMATION_HTML.format(
             customer_name=customer_name,
