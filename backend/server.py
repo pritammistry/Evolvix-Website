@@ -964,8 +964,12 @@ _SITE_CONTENT_CACHE: Dict[str, Any] = {"key": None, "payload": None, "etag": Non
 
 
 async def site_content_version() -> str:
-    content_doc = await db.site_content.find_one({"id": "primary"}, {"_id": 0, "updated_at": 1})
-    catalog_doc = await db.editable_catalog.find_one({"id": "primary"}, {"_id": 0, "updated_at": 1})
+    # Issued concurrently: the database round trip dominates these two tiny
+    # reads, so running them in sequence pays that latency twice.
+    content_doc, catalog_doc = await asyncio.gather(
+        db.site_content.find_one({"id": "primary"}, {"_id": 0, "updated_at": 1}),
+        db.editable_catalog.find_one({"id": "primary"}, {"_id": 0, "updated_at": 1}),
+    )
     return f"{(content_doc or {}).get('updated_at', '-')}|{(catalog_doc or {}).get('updated_at', '-')}"
 
 
