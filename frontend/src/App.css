@@ -302,3 +302,28 @@ select.welcome-input option{background:#0a0c1a;color:white}
 .quick-action--skeleton{width:104px;height:38px;border-color:transparent;background:rgba(255,255,255,.08);position:relative;overflow:hidden;pointer-events:none}
 .quick-action--skeleton::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.18) 50%,transparent 70%);background-size:200% 100%;animation:skeletonShimmer 1.4s ease-in-out infinite}
 @media(prefers-reduced-motion:reduce){.quick-action--skeleton::after{animation:none}}
+
+/* ── Demo cards on small screens ─────────────────────────────── */
+/* The badge, icon and title shared one row, leaving the title roughly 68px at
+   375px — narrow enough that long words broke mid-word ("Manage/ment"). Icon
+   and badge now share the top row and the title gets the full card width. */
+@media(max-width:680px){
+  .demo-card{padding:24px 20px;gap:16px}
+  .demo-card-meta{align-items:center;gap:12px}
+  .demo-card-icon{order:0;width:44px;height:44px;border-radius:12px}
+  .demo-card-meta .demo-live-badge{order:1;margin-left:auto}
+  .demo-card-meta>div{order:2;flex:1 0 100%;min-width:0}
+  .demo-card-meta h2{font-size:clamp(1.3rem,5.4vw,1.65rem);line-height:1.18;text-wrap:balance}
+  .demo-card-meta .eyebrow{margin-bottom:2px!important;font-size:11px;letter-spacing:.1em}
+  .demo-feature-list li{font-size:.85rem}
+  .demo-card-actions{gap:10px}
+  .demo-card-actions>*{flex:1 1 100%;justify-content:center}
+}
+@media(max-width:400px){
+  .demo-card{padding:20px 16px}
+  .demo-card-meta h2{font-size:1.25rem}
+  /* Buttons are nowrap by default, so the longest labels overflow their box at
+     320px. They use min-height rather than a fixed height, so letting the label
+     wrap simply grows the button. */
+  .demo-card-actions>*{white-space:normal;padding:10px 14px;line-height:1.3;text-align:center}
+}
