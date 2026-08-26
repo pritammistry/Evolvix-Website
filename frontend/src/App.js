@@ -14,6 +14,7 @@ import ProductDetail from "./pages/ProductDetail";
 import CreativeLab from "./pages/CreativeLab";
 import Demo from "./pages/Demo";
 import Playground from "./pages/Playground";
+import MindTheShop from "./pages/MindTheShop";
 import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
 import FAQ from "./pages/FAQ";
@@ -37,6 +38,7 @@ function AppRoutes() {
       <Route path="/ecosystem" element={<Ecosystem />} />
       <Route path="/portfolio" element={<Portfolio />} />
       <Route path="/playground" element={<Playground />} />
+      <Route path="/playground/mind-the-shop" element={<MindTheShop />} />
       <Route path="/learning-growth" element={<Shop />} />
       <Route path="/shop" element={<Shop />} />
       <Route path="/products/:slug" element={<ProductDetail />} />

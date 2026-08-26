@@ -5,7 +5,8 @@ import { ArrowRight, BookOpen, Download, ExternalLink, Gamepad2, Music2, Pause, 
 import { SectionHeader } from "../components/SectionHeader";
 import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
-import { fetchPlayground, trackAnalyticsEvent } from "../api";
+import { fetchPlayground } from "../api";
+import { trackEvent } from "../components/AnalyticsTracker";
 import { toast } from "sonner";
 
 const MUSIC_MAX = 10;
@@ -212,7 +213,7 @@ export default function Playground() {
       navigate("/login?next=/playground");
       return;
     }
-    trackAnalyticsEvent({ event_type: "playground_download", label: item.title, section_id: item.category, product_id: item.id }).catch(() => {});
+    trackEvent({ event_type: "playground_download", label: item.title, section_id: item.category, product_id: item.id });
     window.open(item.url, "_blank", "noopener,noreferrer");
   }
 
@@ -283,10 +284,24 @@ export default function Playground() {
           <Gamepad2 size={22} />
           <h2>Fun AI Games</h2>
         </div>
+        <p className="playground-block-sub">
+          Free to play, right here. No sign-in, nothing to install.
+        </p>
+        <div className="mts-launch" data-testid="playground-mts-launch">
+          <span className="mts-launch-icon" aria-hidden="true">🏪</span>
+          <div className="mts-launch-body">
+            <h3>Mind the Shop</h3>
+            <p>Customers never say what they actually want. Read between the lines and hand over the right thing before the clock runs out.</p>
+          </div>
+          <Link to="/playground/mind-the-shop" className="primary-btn" data-testid="playground-mts-play">
+            Play Now <ArrowRight size={15} />
+          </Link>
+        </div>
+
         {gameItems.length > 0 ? (
           <>
             <p className="playground-block-sub">
-              {user ? "You're signed in — click to launch." : "Sign in to access these interactive experiences."}
+              {user ? "You're signed in — click to launch." : "Sign in to access the downloadable experiences below."}
             </p>
             <div className="playground-thumb-grid playground-thumb-grid--games" data-testid="playground-games-grid">
               {gameItems.map((item) => <ThumbnailCard key={item.id} item={item} onDownload={handleDownload} btnLabel="Play Now" />)}
@@ -294,8 +309,8 @@ export default function Playground() {
           </>
         ) : (
           <div className="playground-coming-soon" data-testid="playground-games-coming-soon">
-            <span className="playground-coming-badge">Coming Soon</span>
-            <p>Interactive AI-powered experiences are being built here. Check back soon for games, quizzes, and creative tools.</p>
+            <span className="playground-coming-badge">More Coming Soon</span>
+            <p>Mind the Shop is live above. More games, quizzes and creative tools are being built — check back.</p>
           </div>
         )}
       </div>

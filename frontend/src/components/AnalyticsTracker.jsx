@@ -85,6 +85,13 @@ export function AnalyticsTracker() {
   return null;
 }
 
+// General-purpose event helper. Fills in session_id and path, both of which the
+// API requires — calling trackAnalyticsEvent directly without them fails
+// validation silently, because every caller swallows the rejection.
+export function trackEvent({ event_type, label, section_id, product_id, metadata = {}, path = window.location.pathname }) {
+  sendEvent({ event_type, path, label, section_id, product_id, metadata });
+}
+
 export function trackFormSubmit(label, path = window.location.pathname, metadata = {}) {
   sendEvent({ event_type: "form_submit", path, label, metadata });
 }
