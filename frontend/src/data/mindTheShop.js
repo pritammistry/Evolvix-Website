@@ -14,6 +14,7 @@ export const SCENARIOS = [
   // ── Warm-up: the link between request and item is direct ──
   {
     request: "There's no salt left and the curry is already on the stove.",
+    difficulty: 1,
     options: [
       { label: "Salt", icon: "🧂", correct: true },
       { label: "Sugar", icon: "🍬" },
@@ -24,6 +25,7 @@ export const SCENARIOS = [
   },
   {
     request: "It's started raining and I've come out without mine.",
+    difficulty: 1,
     options: [
       { label: "Umbrella", icon: "☂️", correct: true },
       { label: "Torch", icon: "🔦" },
@@ -33,6 +35,7 @@ export const SCENARIOS = [
   },
   {
     request: "The bathroom light went out last night.",
+    difficulty: 1,
     options: [
       { label: "Bulb", icon: "💡", correct: true },
       { label: "Candle", icon: "🕯️" },
@@ -42,6 +45,7 @@ export const SCENARIOS = [
   },
   {
     request: "Guests are coming for tea — I need something to put out with it.",
+    difficulty: 1,
     options: [
       { label: "Biscuits", icon: "🍪", correct: true },
       { label: "Rice", icon: "🍚" },
@@ -53,6 +57,7 @@ export const SCENARIOS = [
   // ── Middle: one step of inference ──
   {
     request: "My son's pen ran out right in the middle of his exam.",
+    difficulty: 2,
     options: [
       { label: "Pen", icon: "🖊️", correct: true },
       { label: "Notebook", icon: "📓" },
@@ -63,6 +68,7 @@ export const SCENARIOS = [
   },
   {
     request: "Mosquitoes have been eating us alive since the rain.",
+    difficulty: 2,
     options: [
       { label: "Mosquito coil", icon: "🌀", correct: true },
       { label: "Room freshener", icon: "🌸" },
@@ -72,6 +78,7 @@ export const SCENARIOS = [
   },
   {
     request: "I spilled curry down my white shirt at lunch.",
+    difficulty: 2,
     options: [
       { label: "Detergent", icon: "🧴", correct: true },
       { label: "Bath soap", icon: "🧼" },
@@ -82,6 +89,7 @@ export const SCENARIOS = [
   },
   {
     request: "My head has been paining since morning.",
+    difficulty: 2,
     options: [
       { label: "Pain balm", icon: "🧴", correct: true },
       { label: "Cough syrup", icon: "🍯" },
@@ -91,6 +99,7 @@ export const SCENARIOS = [
   },
   {
     request: "Cricket match tonight — a few friends are coming over.",
+    difficulty: 2,
     options: [
       { label: "Chips", icon: "🍟", correct: true },
       { label: "Rice", icon: "🍚" },
@@ -100,6 +109,7 @@ export const SCENARIOS = [
   },
   {
     request: "The milk finished and my husband is waiting for his tea.",
+    difficulty: 2,
     options: [
       { label: "Milk", icon: "🥛", correct: true },
       { label: "Tea leaves", icon: "🍵" },
@@ -110,6 +120,7 @@ export const SCENARIOS = [
   },
   {
     request: "Tomorrow is the puja at home.",
+    difficulty: 2,
     options: [
       { label: "Incense sticks", icon: "🪔", correct: true },
       { label: "Tea leaves", icon: "🍵" },
@@ -119,6 +130,7 @@ export const SCENARIOS = [
   },
   {
     request: "I cut my finger chopping onions.",
+    difficulty: 2,
     options: [
       { label: "Bandage", icon: "🩹", correct: true },
       { label: "Pain balm", icon: "🧴" },
@@ -128,6 +140,7 @@ export const SCENARIOS = [
   },
   {
     request: "The kids have holidays and they're driving me mad with boredom.",
+    difficulty: 2,
     options: [
       { label: "Colouring book", icon: "🖍️", correct: true },
       { label: "Notebook", icon: "📓" },
@@ -137,6 +150,7 @@ export const SCENARIOS = [
   },
   {
     request: "My neighbour's son is getting married next week.",
+    difficulty: 2,
     options: [
       { label: "Box of sweets", icon: "🍬", correct: true },
       { label: "Rice", icon: "🍚" },
@@ -146,6 +160,7 @@ export const SCENARIOS = [
   },
   {
     request: "It's my turn to bring something for the office on Friday.",
+    difficulty: 2,
     options: [
       { label: "Chocolates", icon: "🍫", correct: true },
       { label: "Rice", icon: "🍚" },
@@ -155,6 +170,7 @@ export const SCENARIOS = [
   },
   {
     request: "The tea tastes bitter without it.",
+    difficulty: 2,
     options: [
       { label: "Sugar", icon: "🍬", correct: true },
       { label: "Salt", icon: "🧂" },
@@ -166,6 +182,7 @@ export const SCENARIOS = [
   // ── Harder: the request names a constraint, not the item ──
   {
     request: "Something sweet for my father — but he's diabetic.",
+    difficulty: 3,
     options: [
       { label: "Sugar-free biscuits", icon: "🍪", correct: true },
       { label: "Box of sweets", icon: "🍬" },
@@ -176,6 +193,7 @@ export const SCENARIOS = [
   },
   {
     request: "I'm travelling overnight and there's no plug point on the train.",
+    difficulty: 3,
     options: [
       { label: "Power bank", icon: "🔋", correct: true },
       { label: "Charger cable", icon: "🔌" },
@@ -186,6 +204,7 @@ export const SCENARIOS = [
   },
   {
     request: "The power keeps going at night and the children get frightened.",
+    difficulty: 3,
     options: [
       { label: "Torch", icon: "🔦", correct: true },
       { label: "Bulb", icon: "💡" },
@@ -196,6 +215,7 @@ export const SCENARIOS = [
   },
   {
     request: "My son says everyone in his class has the one with a spiral.",
+    difficulty: 3,
     options: [
       { label: "Notebook", icon: "📓", correct: true },
       { label: "Pen", icon: "🖊️" },
@@ -205,6 +225,7 @@ export const SCENARIOS = [
   },
   {
     request: "I need to send some papers to the bank tomorrow.",
+    difficulty: 2,
     options: [
       { label: "Envelope", icon: "✉️", correct: true },
       { label: "Notebook", icon: "📓" },
@@ -214,6 +235,7 @@ export const SCENARIOS = [
   },
   {
     request: "Winter is starting and my mother's knees trouble her again.",
+    difficulty: 2,
     options: [
       { label: "Pain balm", icon: "🧴", correct: true },
       { label: "Cough syrup", icon: "🍯" },
@@ -223,6 +245,7 @@ export const SCENARIOS = [
   },
   {
     request: "The floor has gone sticky after yesterday's function.",
+    difficulty: 3,
     options: [
       { label: "Floor cleaner", icon: "🪣", correct: true },
       { label: "Detergent", icon: "🧴" },
@@ -233,6 +256,7 @@ export const SCENARIOS = [
   },
   {
     request: "Her birthday is Sunday and I've bought the present already.",
+    difficulty: 3,
     options: [
       { label: "Wrapping paper", icon: "🎁", correct: true },
       { label: "Chocolates", icon: "🍫" },
@@ -241,10 +265,61 @@ export const SCENARIOS = [
     ],
     note: "The gift is bought. Something is still missing.",
   },
+  {
+    request: "The neighbours have started complaining about the smell from the bin.",
+    difficulty: 3,
+    options: [
+      { label: "Garbage bags", icon: "🗑️", correct: true },
+      { label: "Room freshener", icon: "🌸" },
+      { label: "Floor cleaner", icon: "🪣" },
+      { label: "Soap", icon: "🧼" },
+    ],
+    note: "Freshener hides the smell. Bags stop it.",
+  },
+  {
+    request: "I keep forgetting to take them after lunch.",
+    difficulty: 3,
+    options: [
+      { label: "Pill box", icon: "💊", correct: true },
+      { label: "Cough syrup", icon: "🍯" },
+      { label: "Notebook", icon: "📓" },
+      { label: "Water bottle", icon: "🍶" },
+    ],
+    note: "He already has the medicine. He needs a way to remember it.",
+  },
+  {
+    request: "There's a function at home tomorrow and the fan is thick with dust.",
+    difficulty: 3,
+    options: [
+      { label: "Cleaning cloth", icon: "🧻", correct: true },
+      { label: "Floor cleaner", icon: "🪣" },
+      { label: "Detergent", icon: "🧴" },
+      { label: "Room freshener", icon: "🌸" },
+    ],
+    note: "You can't mop a ceiling fan.",
+  },
+  {
+    request: "The children will only finish their milk if it tastes of something.",
+    difficulty: 3,
+    options: [
+      { label: "Health drink powder", icon: "🥤", correct: true },
+      { label: "Milk", icon: "🥛" },
+      { label: "Sugar", icon: "🍬" },
+      { label: "Biscuits", icon: "🍪" },
+    ],
+    note: "They have milk. It needs flavouring, not more milk.",
+  },
 ];
 
 export const ROUNDS_PER_GAME = 8;
-export const SECONDS_PER_ROUND = 10;
+
+// How many rounds come from each difficulty tier, in order of play. The game
+// opens easy so nobody bounces on round one, then gets genuinely harder.
+export const DIFFICULTY_CURVE = [1, 1, 2, 2, 2, 3, 3, 3];
+
+// Harder rounds also get less time, so the pressure rises with the puzzle.
+export const SECONDS_BY_DIFFICULTY = { 1: 12, 2: 10, 3: 8 };
+export const SECONDS_PER_ROUND = SECONDS_BY_DIFFICULTY[2];
 
 // Fisher-Yates, so a game is a fresh sample rather than the same first eight.
 export function shuffle(list) {
@@ -256,10 +331,27 @@ export function shuffle(list) {
   return out;
 }
 
+// Draws one unused scenario per step of the curve. If a tier ever runs dry it
+// falls back to any remaining scenario, so the game never returns short.
 export function buildRounds() {
-  return shuffle(SCENARIOS)
-    .slice(0, ROUNDS_PER_GAME)
-    .map((scenario) => ({ ...scenario, options: shuffle(scenario.options) }));
+  const pools = { 1: shuffle(SCENARIOS.filter((s) => s.difficulty === 1)),
+                  2: shuffle(SCENARIOS.filter((s) => s.difficulty === 2)),
+                  3: shuffle(SCENARIOS.filter((s) => s.difficulty === 3)) };
+  const used = new Set();
+  return DIFFICULTY_CURVE.map((tier) => {
+    let scenario = pools[tier].find((s) => !used.has(s.request));
+    if (!scenario) scenario = SCENARIOS.find((s) => !used.has(s.request));
+    used.add(scenario.request);
+    return {
+      ...scenario,
+      seconds: SECONDS_BY_DIFFICULTY[scenario.difficulty] || SECONDS_PER_ROUND,
+      options: shuffle(scenario.options),
+    };
+  });
+}
+
+export function maxScoreFor(rounds) {
+  return rounds.reduce((total, r) => total + 100 + r.seconds * 10, 0);
 }
 
 export function rankFor(score, maxScore) {

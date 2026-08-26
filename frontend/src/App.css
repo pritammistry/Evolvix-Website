@@ -420,3 +420,4 @@ select.welcome-input option{background:#0a0c1a;color:white}
   .mts-primary:hover,.mts-item:not(:disabled):hover{transform:none}
   .mts-clock--urgent{animation:none}
 }
+.mts-gate-note{margin:16px 0 0;color:var(--muted);font-size:.82rem;line-height:1.6;max-width:46ch}

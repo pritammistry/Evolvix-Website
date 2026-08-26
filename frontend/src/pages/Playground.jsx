@@ -285,7 +285,7 @@ export default function Playground() {
           <h2>Fun AI Games</h2>
         </div>
         <p className="playground-block-sub">
-          Free to play, right here. No sign-in, nothing to install.
+          Free to play with an Evolvix account — nothing to install.
         </p>
         <div className="mts-launch" data-testid="playground-mts-launch">
           <span className="mts-launch-icon" aria-hidden="true">🏪</span>

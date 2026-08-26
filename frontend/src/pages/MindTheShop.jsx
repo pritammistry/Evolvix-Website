@@ -1,24 +1,27 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Clock, RotateCcw, Share2, Store, Trophy } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, ArrowRight, Clock, LogIn, RotateCcw, Share2, Store, Trophy } from "lucide-react";
 import { useSEO } from "../hooks/useSEO";
+import { useAuth } from "../hooks/useAuth";
 import { trackEvent } from "../components/AnalyticsTracker";
-import { buildRounds, rankFor, ROUNDS_PER_GAME, SECONDS_PER_ROUND } from "../data/mindTheShop";
+import { buildRounds, maxScoreFor, rankFor, ROUNDS_PER_GAME, SECONDS_PER_ROUND } from "../data/mindTheShop";
 
 // Scoring: a correct answer is worth 100, plus 10 for every whole second left.
-// Speed matters, but a slow correct answer still beats a fast wrong one.
+// Speed matters, but a slow correct answer still beats a fast wrong one. Harder
+// rounds allow less time, so the ceiling per round varies — the maximum is
+// computed from the actual rounds drawn rather than assumed.
 const POINTS_CORRECT = 100;
 const POINTS_PER_SECOND = 10;
-const MAX_ROUND_SCORE = POINTS_CORRECT + SECONDS_PER_ROUND * POINTS_PER_SECOND;
-const MAX_SCORE = ROUNDS_PER_GAME * MAX_ROUND_SCORE;
 
 export default function MindTheShop() {
   useSEO({
     title: "Mind the Shop — a 60-second game by Evolvix",
-    description: "Customers never say what they mean. Read between the lines and hand over the right thing before the timer runs out. Free, no sign-up.",
+    description: "Customers never say what they mean. Read between the lines and hand over the right thing before the timer runs out. Free with an Evolvix account.",
     path: "/playground/mind-the-shop",
   });
 
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [phase, setPhase] = useState("intro"); // intro | playing | done
   const [rounds, setRounds] = useState([]);
   const [index, setIndex] = useState(0);
@@ -40,14 +43,12 @@ export default function MindTheShop() {
     setScore(0);
     setCorrectCount(0);
     setPicked(null);
-    setTimeLeft(SECONDS_PER_ROUND);
     setPhase("playing");
     trackEvent({ event_type: "game_start", label: "mind-the-shop" });
   };
 
   const next = useCallback(() => {
     setPicked(null);
-    setTimeLeft(SECONDS_PER_ROUND);
     setIndex((current) => {
       if (current + 1 >= rounds.length) {
         setPhase("done");
@@ -70,6 +71,12 @@ export default function MindTheShop() {
     advanceTimer.current = setTimeout(next, 1500);
   }, [picked, timeLeft, next]);
 
+  // The clock is reset by the round on screen, not by the handlers, so a round
+  // with a tighter tier limit gets its own time without threading it through.
+  useEffect(() => {
+    if (phase === "playing" && rounds[index]) setTimeLeft(rounds[index].seconds);
+  }, [phase, index, rounds]);
+
   // One interval per round; cleared on answer so the clock stops on reveal.
   useEffect(() => {
     if (phase !== "playing" || revealed) return undefined;
@@ -85,7 +92,7 @@ export default function MindTheShop() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
-  const rank = rankFor(score, MAX_SCORE);
+  const rank = rankFor(score, maxScoreFor(rounds.length ? rounds : []));
   const shareText = `I scored ${score} at Mind the Shop — "${rank.title}" (${correctCount}/${ROUNDS_PER_GAME} customers understood). Think you can read a customer better? evolvixtech.in/playground/mind-the-shop`;
 
   const share = async () => {
@@ -106,7 +113,32 @@ export default function MindTheShop() {
         <ArrowLeft size={16} /> Back to Playground
       </Link>
 
-      {phase === "intro" && (
+      {!authLoading && !user && (
+        <div className="mts-card mts-intro" data-testid="mts-login-gate">
+          <span className="mts-eyebrow"><Store size={14} /> Evolvix Playground</span>
+          <h1>Mind the Shop</h1>
+          <p className="mts-lede">
+            Customers never say what they actually want. Read between the lines,
+            hand over the right thing, and beat the clock.
+          </p>
+          <p className="mts-lede">
+            Sign in with a free Evolvix account to play and keep your score.
+          </p>
+          <button
+            className="mts-primary"
+            onClick={() => navigate("/login?next=/playground/mind-the-shop")}
+            data-testid="mts-login-button"
+          >
+            <LogIn size={17} /> Log in to play
+          </button>
+          <p className="mts-gate-note">
+            No account yet? Creating one takes a minute and also unlocks the live
+            demos and free downloads.
+          </p>
+        </div>
+      )}
+
+      {user && phase === "intro" && (
         <div className="mts-card mts-intro" data-testid="mts-intro">
           <span className="mts-eyebrow"><Store size={14} /> Evolvix Playground</span>
           <h1>Mind the Shop</h1>
@@ -116,9 +148,9 @@ export default function MindTheShop() {
             before the clock runs out.
           </p>
           <ul className="mts-rules">
-            <li><strong>{ROUNDS_PER_GAME} customers.</strong> {SECONDS_PER_ROUND} seconds each.</li>
+            <li><strong>{ROUNDS_PER_GAME} customers</strong>, and they get harder as you go.</li>
+            <li><strong>Less time on the tough ones</strong> — 12 seconds down to 8.</li>
             <li><strong>Faster is worth more</strong> — but a wrong answer is worth nothing.</li>
-            <li>No sign-up. Nothing to install.</li>
           </ul>
           <button className="mts-primary" onClick={start} data-testid="mts-start-button">
             Open the Shop <ArrowRight size={17} />
@@ -126,7 +158,7 @@ export default function MindTheShop() {
         </div>
       )}
 
-      {phase === "playing" && round && (
+      {user && phase === "playing" && round && (
         <div className="mts-card" data-testid="mts-playing">
           <div className="mts-hud">
             <span data-testid="mts-progress">Customer {index + 1} / {rounds.length}</span>
@@ -174,7 +206,7 @@ export default function MindTheShop() {
         </div>
       )}
 
-      {phase === "done" && (
+      {user && phase === "done" && (
         <div className="mts-card mts-result" data-testid="mts-result">
           <span className="mts-trophy"><Trophy size={26} /></span>
           <p className="mts-eyebrow">{rank.title}</p>
