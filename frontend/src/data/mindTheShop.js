@@ -32,6 +32,7 @@ export const SCENARIOS = [
       { label: "Slippers", icon: "🩴" },
       { label: "Cap", icon: "🧢" },
     ],
+    note: "\"Mine\" is doing all the work in that sentence. Rain plus a thing you own and forgot means one thing.",
   },
   {
     request: "The bathroom light went out last night.",
@@ -42,6 +43,7 @@ export const SCENARIOS = [
       { label: "Matchbox", icon: "🔥" },
       { label: "Extension wire", icon: "🔌" },
     ],
+    note: "A light that goes out and stays out is a dead bulb. A candle would only prove the point.",
   },
   {
     request: "Guests are coming for tea — I need something to put out with it.",
@@ -52,6 +54,7 @@ export const SCENARIOS = [
       { label: "Soap", icon: "🧼" },
       { label: "Batteries", icon: "🔋" },
     ],
+    note: "They have the tea. What they need is the thing that goes beside it on the plate.",
   },
 
   // ── Middle: one step of inference ──
@@ -75,6 +78,7 @@ export const SCENARIOS = [
       { label: "Table fan", icon: "🌬️" },
       { label: "Soap", icon: "🧼" },
     ],
+    note: "A fan moves them around and a freshener perfumes the room. Only one of these kills anything.",
   },
   {
     request: "I spilled curry down my white shirt at lunch.",
@@ -96,6 +100,7 @@ export const SCENARIOS = [
       { label: "Bandage", icon: "🩹" },
       { label: "Face cream", icon: "🧴" },
     ],
+    note: "Cough syrup treats a cough and a bandage covers a cut. A headache needs the one you rub on.",
   },
   {
     request: "Cricket match tonight — a few friends are coming over.",
@@ -106,6 +111,7 @@ export const SCENARIOS = [
       { label: "Flour", icon: "🌾" },
       { label: "Washing powder", icon: "🧴" },
     ],
+    note: "Nobody watches a match over a bowl of rice. Friends in the room means something to open and share.",
   },
   {
     request: "The milk finished and my husband is waiting for his tea.",
@@ -127,6 +133,7 @@ export const SCENARIOS = [
       { label: "Salt", icon: "🧂" },
       { label: "Notebook", icon: "📓" },
     ],
+    note: "A puja needs what you light and offer, not what you cook. Incense is the one item no puja skips.",
   },
   {
     request: "I cut my finger chopping onions.",
@@ -137,6 +144,7 @@ export const SCENARIOS = [
       { label: "Cough syrup", icon: "🍯" },
       { label: "Soap", icon: "🧼" },
     ],
+    note: "It is an open cut, not an ache. Balm on a fresh cut would only sting.",
   },
   {
     request: "The kids have holidays and they're driving me mad with boredom.",
@@ -147,6 +155,7 @@ export const SCENARIOS = [
       { label: "Newspaper", icon: "📰" },
       { label: "Pen", icon: "🖊️" },
     ],
+    note: "A notebook is for school, which is exactly what they are escaping. They need something to do, not homework.",
   },
   {
     request: "My neighbour's son is getting married next week.",
@@ -157,6 +166,7 @@ export const SCENARIOS = [
       { label: "Soap", icon: "🧼" },
       { label: "Notebook", icon: "📓" },
     ],
+    note: "You are not invited into the kitchen, you are turning up at the door. Sweets are what you carry.",
   },
   {
     request: "It's my turn to bring something for the office on Friday.",
@@ -167,6 +177,7 @@ export const SCENARIOS = [
       { label: "Detergent", icon: "🧴" },
       { label: "Bulb", icon: "💡" },
     ],
+    note: "It has to be shareable, need no plates, and survive a desk drawer. Chocolates do all three.",
   },
   {
     request: "The tea tastes bitter without it.",
@@ -177,6 +188,7 @@ export const SCENARIOS = [
       { label: "Milk", icon: "🥛" },
       { label: "Tea leaves", icon: "🍵" },
     ],
+    note: "The tea already exists — the leaves and the milk are in it. Bitter without it points at exactly one missing thing.",
   },
 
   // ── Harder: the request names a constraint, not the item ──
@@ -222,6 +234,7 @@ export const SCENARIOS = [
       { label: "School bag", icon: "🎒" },
       { label: "Eraser", icon: "🧽" },
     ],
+    note: "The spiral is the clue, and the only stationery it describes is a notebook's binding.",
   },
   {
     request: "I need to send some papers to the bank tomorrow.",
@@ -232,6 +245,7 @@ export const SCENARIOS = [
       { label: "Stapler", icon: "📎" },
       { label: "Cello tape", icon: "🎞️" },
     ],
+    note: "The papers already exist. What they lack is something to travel in.",
   },
   {
     request: "Winter is starting and my mother's knees trouble her again.",
@@ -242,6 +256,7 @@ export const SCENARIOS = [
       { label: "Face cream", icon: "🧴" },
       { label: "Bandage", icon: "🩹" },
     ],
+    note: "Old joints in the cold want heat rubbed in. A bandage holds a wound, not an ache.",
   },
   {
     request: "The floor has gone sticky after yesterday's function.",
@@ -319,6 +334,7 @@ export const SCENARIOS = [
       { label: "Detergent", icon: "🧴" },
       { label: "Toothpaste", icon: "🪥" },
     ],
+    note: "Four things lather. Only one of them is what sits by a bathroom tap.",
   },
   {
     request: "My toothpaste tube is completely empty.",
@@ -329,6 +345,7 @@ export const SCENARIOS = [
       { label: "Shampoo", icon: "🧖" },
       { label: "Face cream", icon: "🧴" },
     ],
+    note: "The thing that ran out is named in the sentence. Not every customer makes you work for it.",
   },
   {
     request: "The rice is over and we haven't cooked yet.",
@@ -339,6 +356,7 @@ export const SCENARIOS = [
       { label: "Salt", icon: "🧂" },
       { label: "Cooking oil", icon: "🫗" },
     ],
+    note: "Nothing else on the shelf becomes dinner in the next hour.",
   },
   {
     request: "There's no shampoo left and I have to wash my hair.",
@@ -349,6 +367,7 @@ export const SCENARIOS = [
       { label: "Detergent", icon: "🧴" },
       { label: "Face cream", icon: "🧴" },
     ],
+    note: "Bath soap on hair is what people do when the shop has failed them.",
   },
   {
     request: "We've run out of cooking oil halfway through frying.",
@@ -359,6 +378,7 @@ export const SCENARIOS = [
       { label: "Flour", icon: "🌾" },
       { label: "Sugar", icon: "🍬" },
     ],
+    note: "Mid-fry means it is urgent, and it has to be the same thing rather than a substitute.",
   },
   {
     request: "I need something to write the shopping list on.",
@@ -369,6 +389,7 @@ export const SCENARIOS = [
       { label: "Envelope", icon: "✉️" },
       { label: "Newspaper", icon: "📰" },
     ],
+    note: "They have the shop and the list in their head. What is missing is the paper.",
   },
   {
     request: "I want to boil a few eggs for the children's breakfast.",
@@ -379,6 +400,7 @@ export const SCENARIOS = [
       { label: "Bread", icon: "🍞" },
       { label: "Rice", icon: "🍚" },
     ],
+    note: "Everything needed to boil them is already at home. The eggs themselves are not.",
   },
   {
     request: "It's her birthday and the cake is ready, but bare on top.",
@@ -389,6 +411,7 @@ export const SCENARIOS = [
       { label: "Chocolates", icon: "🍫" },
       { label: "Wrapping paper", icon: "🎁" },
     ],
+    note: "The cake is baked and iced. What a bare top is missing is the thing you light.",
   },
 
   // ── More middles ──
@@ -423,6 +446,7 @@ export const SCENARIOS = [
       { label: "Newspaper", icon: "📰" },
       { label: "Cello tape", icon: "🎞️" },
     ],
+    note: "The sweets are already bought. Keeping them is an air problem, not a cold problem.",
   },
   {
     request: "The children's school shoes have gone dull and grey.",
@@ -433,6 +457,7 @@ export const SCENARIOS = [
       { label: "Floor cleaner", icon: "🪣" },
       { label: "Bath soap", icon: "🧼" },
     ],
+    note: "Dull is not dirty. Washing them leaves them clean and still grey — polish is what brings the colour back.",
   },
 
   // ── More hard ones: the answer is never the noun in the sentence ──

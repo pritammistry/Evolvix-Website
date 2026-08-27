@@ -13,6 +13,11 @@ import { buildRounds, maxScoreFor, rankFor, ROUNDS_PER_GAME, SECONDS_PER_ROUND }
 const POINTS_CORRECT = 100;
 const POINTS_PER_SECOND = 10;
 
+// How long the reveal stays up before moving on. The explanation is the part
+// that teaches, so this has to be long enough to actually read a sentence of
+// it; players who don't want to wait can tap through.
+const REVEAL_MS = 3600;
+
 export default function MindTheShop() {
   useSEO({
     title: "Mind the Shop — a 60-second game by Evolvix",
@@ -38,7 +43,9 @@ export default function MindTheShop() {
   useEffect(() => () => clearTimeout(advanceTimer.current), []);
 
   const start = () => {
-    setRounds(buildRounds());
+    const fresh = buildRounds();
+    setRounds(fresh);
+    setTimeLeft(fresh[0].seconds);
     setIndex(0);
     setScore(0);
     setCorrectCount(0);
@@ -47,16 +54,20 @@ export default function MindTheShop() {
     trackEvent({ event_type: "game_start", label: "mind-the-shop" });
   };
 
+  // The clock is set here, in the same batch as the index, rather than by an
+  // effect watching the index. An effect runs a step too late: the new round
+  // would render with the previous round's expired clock still at zero, and the
+  // timer below would fire "time's up" and reveal the answer before the player
+  // had seen the question.
   const next = useCallback(() => {
+    if (index + 1 >= rounds.length) {
+      setPhase("done");
+      return;
+    }
     setPicked(null);
-    setIndex((current) => {
-      if (current + 1 >= rounds.length) {
-        setPhase("done");
-        return current;
-      }
-      return current + 1;
-    });
-  }, [rounds.length]);
+    setIndex(index + 1);
+    setTimeLeft(rounds[index + 1].seconds);
+  }, [index, rounds]);
 
   // `answer` is called with null when the clock runs out, which scores zero but
   // still reveals the right item — being told the answer is the point.
@@ -68,14 +79,15 @@ export default function MindTheShop() {
       setScore((s) => s + POINTS_CORRECT + Math.max(0, timeLeft) * POINTS_PER_SECOND);
       setCorrectCount((c) => c + 1);
     }
-    advanceTimer.current = setTimeout(next, 1500);
+    advanceTimer.current = setTimeout(next, REVEAL_MS);
   }, [picked, timeLeft, next]);
 
-  // The clock is reset by the round on screen, not by the handlers, so a round
-  // with a tighter tier limit gets its own time without threading it through.
-  useEffect(() => {
-    if (phase === "playing" && rounds[index]) setTimeLeft(rounds[index].seconds);
-  }, [phase, index, rounds]);
+  // Tapping through cancels the pending auto-advance, so the two can't both
+  // fire and skip a customer.
+  const skipAhead = useCallback(() => {
+    clearTimeout(advanceTimer.current);
+    next();
+  }, [next]);
 
   // One interval per round; cleared on answer so the clock stops on reveal.
   useEffect(() => {
@@ -197,11 +209,16 @@ export default function MindTheShop() {
           </div>
 
           {revealed && (
-            <p className="mts-feedback" data-testid="mts-feedback">
-              {picked?.correct
-                ? <><strong>Right.</strong> {round.note || "That's exactly what they meant."}</>
-                : <><strong>Not quite.</strong> {round.note || `They wanted the ${round.options.find((o) => o.correct).label.toLowerCase()}.`}</>}
-            </p>
+            <>
+              <p className="mts-feedback" data-testid="mts-feedback">
+                {picked?.correct
+                  ? <><strong>Right — {round.options.find((o) => o.correct).label.toLowerCase()}.</strong> {round.note}</>
+                  : <><strong>They wanted the {round.options.find((o) => o.correct).label.toLowerCase()}.</strong> {round.note}</>}
+              </p>
+              <button className="mts-skip" onClick={skipAhead} data-testid="mts-skip-button">
+                {index + 1 >= rounds.length ? "See your score" : "Next customer"} <ArrowRight size={15} />
+              </button>
+            </>
           )}
         </div>
       )}

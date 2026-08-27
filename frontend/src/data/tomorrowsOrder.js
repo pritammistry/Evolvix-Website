@@ -13,6 +13,9 @@
 //     out (no ice cream on a day the power is off).
 //   - The verdict explains the reasoning in one sentence. That sentence is the
 //     whole point of the round; write it before writing the shelf.
+//   - `why` carries one sentence per item that sells out, saying what made it
+//     sell rather than restating that it did. A player who guessed wrong should
+//     finish the round understanding the day, not just seeing the answer.
 
 export const ITEMS = {
   umbrella: { label: "Umbrella", icon: "☂️" },
@@ -90,6 +93,11 @@ export const NIGHTS = [
     ],
     shelf: ["umbrella", "raincoat", "torch", "ice_cream", "sunscreen", "cold_drinks", "kite", "sunglasses"],
     demand: ["umbrella", "raincoat", "torch"],
+    why: {
+      umbrella: "The rain is the loudest signal, and an umbrella is the first thing people reach for when they left home without one.",
+      raincoat: "School is still on. A child cycling there needs both hands free, which an umbrella will not allow.",
+      torch: "The evening cut has happened all week, so it will happen tomorrow too — this time in the dark and the wet.",
+    },
     verdict: "Children still have to reach school in the rain, and the evening cut sells a torch every single time.",
   },
   {
@@ -102,6 +110,11 @@ export const NIGHTS = [
     ],
     shelf: ["diyas", "sweets", "gift_wrap", "notebooks", "detergent", "mosquito_coil", "rice", "soap"],
     demand: ["diyas", "sweets", "gift_wrap"],
+    why: {
+      diyas: "Diwali is a festival of lamps before it is anything else. Every house buys a fresh set, and nobody buys just one.",
+      sweets: "Relatives arriving means sweets going out. In this lane, nobody visits or receives empty-handed.",
+      gift_wrap: "Three houses expecting guests means gifts changing hands, and gifts get wrapped the night before, not the week before.",
+    },
     verdict: "Nobody buys detergent on Diwali eve. They buy what they can light, eat and hand over.",
   },
   {
@@ -114,6 +127,11 @@ export const NIGHTS = [
     ],
     shelf: ["pens", "notebooks", "geometry_box", "kite", "detergent", "ice_cream", "mosquito_coil", "cold_drinks"],
     demand: ["pens", "notebooks", "geometry_box"],
+    why: {
+      pens: "A pen that dies mid-exam is a small disaster, so students buy spares. Most will buy two or three.",
+      notebooks: "Revision burns through rough notebooks faster than any other week in the school year.",
+      geometry_box: "The school printed the list itself. A circulated stationery list is an order form you get to read in advance.",
+    },
     verdict: "A stationery list before an exam is an order form. Stock what's printed on it.",
   },
   {
@@ -126,6 +144,11 @@ export const NIGHTS = [
     ],
     shelf: ["cold_drinks", "water_bottles", "ice_cream", "woollens", "umbrella", "candles", "mosquito_coil", "hot_water_bag"],
     demand: ["cold_drinks", "water_bottles", "ice_cream"],
+    why: {
+      cold_drinks: "At 42 degrees the decision to buy something cold stops being a decision at all.",
+      water_bottles: "The water cut is the sharper signal. With taps dry till evening, bottled water stops being a luxury.",
+      ice_cream: "Children playing outside all afternoon will reach your counter long before they reach home.",
+    },
     verdict: "A water cut in a heatwave turns bottled water into the fastest-moving thing on the shelf.",
   },
   {
@@ -138,6 +161,11 @@ export const NIGHTS = [
     ],
     shelf: ["gift_wrap", "flowers", "sweets", "notebooks", "phenyl", "mosquito_coil", "batteries", "rice"],
     demand: ["gift_wrap", "flowers", "sweets"],
+    why: {
+      gift_wrap: "Half the street is invited, and every one of them has a gift that needs covering before they walk over.",
+      flowers: "The decorators handle the venue. Guests still want something in their own hands at the door.",
+      sweets: "A sweet box is the safe gift when you don't know the family well — and half a street never knows the family well.",
+    },
     verdict: "Everyone invited needs something to carry in their hands, and they'll buy it on the way.",
   },
   {
@@ -150,6 +178,11 @@ export const NIGHTS = [
     ],
     shelf: ["chips", "cold_drinks", "biscuits", "notebooks", "detergent", "umbrella", "incense", "rice"],
     demand: ["chips", "cold_drinks", "biscuits"],
+    why: {
+      chips: "Nobody watches a final empty-handed. Six people in one room is six packets of something.",
+      cold_drinks: "The match runs three hours. Tea does not last three hours in a crowded room.",
+      biscuits: "The extra chairs tell you the size of the gathering. Bigger gatherings buy the cheap thing in bulk.",
+    },
     verdict: "Nobody watches a final empty-handed. Six people in one room is six packets of something.",
   },
   {
@@ -162,6 +195,11 @@ export const NIGHTS = [
     ],
     shelf: ["mosquito_coil", "phenyl", "mosquito_net", "kite", "sunscreen", "ice_cream", "hair_oil", "chocolates"],
     demand: ["mosquito_coil", "phenyl", "mosquito_net"],
+    why: {
+      mosquito_coil: "Standing water plus fever in the lane means every mother in it is thinking about mosquitoes tonight.",
+      phenyl: "Fever in the house sends people cleaning floors, and the drain outside is the reason they are worried.",
+      mosquito_net: "A coil lasts one night. After a child falls ill, parents want the thing that lasts every night.",
+    },
     verdict: "Standing water plus fever in the lane means every mother is thinking about mosquitoes tonight.",
   },
 
@@ -176,6 +214,11 @@ export const NIGHTS = [
     ],
     shelf: ["hand_fan", "water_bottles", "batteries", "ice_cream", "curd", "cold_drinks", "umbrella", "notebooks"],
     demand: ["hand_fan", "water_bottles", "batteries"],
+    why: {
+      hand_fan: "Hot, humid, and no fan for eight hours. The fan that needs no electricity is the only one that works.",
+      water_bottles: "Nothing stays cold with the power off, so people buy their water already bottled instead of chilling it.",
+      batteries: "The cut is announced, so this one is planned for — torches and radios get fresh batteries the night before.",
+    },
     verdict: "With the power off all day nothing stays cold — the ice cream would have melted in your own freezer.",
   },
   {
@@ -188,6 +231,11 @@ export const NIGHTS = [
     ],
     shelf: ["flour", "cooking_oil", "biscuits", "gift_wrap", "school_bag", "sunscreen", "kite", "hair_oil"],
     demand: ["flour", "cooking_oil", "biscuits"],
+    why: {
+      flour: "No trucks means no fresh supply. People fill the kitchen with what keeps, and flour keeps.",
+      cooking_oil: "A whole day at home is a whole day of cooking, and oil is the thing every household runs out of mid-recipe.",
+      biscuits: "Shut shops all day means no tea shop and no snacks. Biscuits fill both gaps.",
+    },
     verdict: "A shut-down day sends people to the kitchen shelf, not the gift shelf.",
   },
   {
@@ -200,6 +248,11 @@ export const NIGHTS = [
     ],
     shelf: ["fruits", "sabudana", "milk", "rice", "flour", "biscuits", "chips", "cooking_oil"],
     demand: ["fruits", "sabudana", "milk"],
+    why: {
+      fruits: "Fruit is permitted where grain is not, which makes it the one thing the whole lane needs at once.",
+      sabudana: "It is the staple of a fasting kitchen. On any other day it moves slowly; tomorrow it will not.",
+      milk: "The fast breaks after sunset, and it usually breaks on something light rather than a full meal.",
+    },
     verdict: "Grain is exactly what they cannot eat. Stock the things that are allowed instead.",
   },
   {
@@ -212,6 +265,11 @@ export const NIGHTS = [
     ],
     shelf: ["tea", "cold_cream", "lip_balm", "ice_cream", "cold_drinks", "sunscreen", "mosquito_coil", "umbrella"],
     demand: ["tea", "cold_cream", "lip_balm"],
+    why: {
+      tea: "The chai stall doubling its order is your forecast — it already knows what the cold does to demand.",
+      cold_cream: "Dry cold cracks skin before it makes anyone ill. Cream sells long before medicine does.",
+      lip_balm: "The dry wind is the detail that matters. Wind, not temperature, is what splits lips.",
+    },
     verdict: "Dry cold cracks skin before it makes anyone ill — it sells cream and balm long before medicine.",
   },
   {
@@ -224,6 +282,11 @@ export const NIGHTS = [
     ],
     shelf: ["water_bottles", "biscuits", "glucose", "hair_oil", "gift_wrap", "shampoo", "ice_cream", "sweets"],
     demand: ["water_bottles", "biscuits", "glucose"],
+    why: {
+      water_bottles: "Twelve men working in the sun with no tap on site. They will be at your counter by eleven.",
+      biscuits: "A one o'clock break with nowhere to go means whatever they can eat standing up.",
+      glucose: "Heat plus heavy work is exactly when a labourer reaches for glucose — cheap, and it works fast.",
+    },
     verdict: "Twelve men working in the sun with no tap. They'll be at your counter by eleven.",
   },
   {
@@ -236,6 +299,11 @@ export const NIGHTS = [
     ],
     shelf: ["gulal", "pichkari", "coconut_oil", "umbrella", "notebooks", "mosquito_coil", "incense", "batteries"],
     demand: ["gulal", "pichkari", "coconut_oil"],
+    why: {
+      gulal: "The obvious one, and still the one you must not run out of. Everyone plays, and everyone buys colour.",
+      pichkari: "Children decide how much colour gets bought, and a pichkari is the thing they actually ask for.",
+      coconut_oil: "The oil goes on before the colour does, to get it off afterwards. That is the one everybody forgets to stock.",
+    },
     verdict: "The oil goes on before the colour does. That's the one everybody forgets to stock.",
   },
   {
@@ -248,6 +316,11 @@ export const NIGHTS = [
     ],
     shelf: ["rice", "cooking_oil", "detergent", "chocolates", "ice_cream", "kite", "hair_oil", "sunglasses"],
     demand: ["rice", "cooking_oil", "detergent"],
+    why: {
+      rice: "The first of the month is when the whole monthly list gets filled at once, starting with the sack of rice.",
+      cooking_oil: "Bulk buying follows the salary. Oil is bought by the tin on pay day and by the packet otherwise.",
+      detergent: "Cleared credit books tell you people have cash. Cash is when the non-urgent monthly items finally get bought.",
+    },
     verdict: "Pay day is when the whole monthly list gets filled at once. Stock the bulk, not the treats.",
   },
 
@@ -262,6 +335,11 @@ export const NIGHTS = [
     ],
     shelf: ["umbrella", "tarpaulin", "gift_wrap", "sweets", "flowers", "cold_drinks", "ice_cream", "sunscreen"],
     demand: ["umbrella", "tarpaulin", "gift_wrap"],
+    why: {
+      umbrella: "The caterer covered the food. What nobody plans for is rain landing on a procession in the open.",
+      tarpaulin: "The tent is already up, and a tent that was pitched for a dry evening will need covering by six.",
+      gift_wrap: "The wedding is still a wedding. Guests walking to it still have gifts that need wrapping first.",
+    },
     verdict: "The caterer covered the food. What nobody plans for is rain landing on a procession.",
   },
   {
@@ -274,6 +352,11 @@ export const NIGHTS = [
     ],
     shelf: ["water_bottles", "paper_plates", "wet_wipes", "detergent", "phenyl", "soap", "floor_cleaner", "shampoo"],
     demand: ["water_bottles", "paper_plates", "wet_wipes"],
+    why: {
+      water_bottles: "Two days without a tap turns drinking water into the only thing that really matters.",
+      paper_plates: "Wash day cancelled and no water to rinse with. People buy the plate they can throw away.",
+      wet_wipes: "Five cleaning products on that shelf and not a drop of water to use them with. Wipes need none.",
+    },
     verdict: "Five cleaning products on that shelf and not a drop of water to use them with. People buy what saves washing.",
   },
   {
@@ -286,6 +369,11 @@ export const NIGHTS = [
     ],
     shelf: ["candles", "batteries", "mosquito_coil", "cold_drinks", "ice_cream", "notebooks", "pens", "umbrella"],
     demand: ["candles", "batteries", "mosquito_coil"],
+    why: {
+      candles: "The cut starts at eleven, which is exactly when students are still working and need to see.",
+      batteries: "An emergency light or a small fan is what gets a family through the hottest night of the year.",
+      mosquito_coil: "Windows open all night with no fan. It is a mosquito problem before it is a light problem.",
+    },
     verdict: "Windows open all night with no fan. It's a mosquito problem before it's a light problem.",
   },
   {
@@ -298,6 +386,11 @@ export const NIGHTS = [
     ],
     shelf: ["candles", "halogen_tablets", "biscuits", "kite", "sunscreen", "school_bag", "hair_oil", "gift_wrap"],
     demand: ["candles", "halogen_tablets", "biscuits"],
+    why: {
+      candles: "Flooding takes the power with it, and it takes it for longer than an ordinary evening cut.",
+      halogen_tablets: "When the lane floods, tap water is the first thing people stop trusting.",
+      biscuits: "A flooded kitchen is a kitchen that cannot cook. Families stock what needs no stove and no water.",
+    },
     verdict: "When the lane floods the tap water is the first thing people stop trusting — and the stove is the second.",
   },
   {
@@ -310,6 +403,11 @@ export const NIGHTS = [
     ],
     shelf: ["bread", "eggs", "milk", "pain_balm", "cough_syrup", "bandage", "sanitiser", "thermometer"],
     demand: ["bread", "eggs", "milk"],
+    why: {
+      bread: "You cannot beat a chemist at medicine. You can beat them at breakfast.",
+      eggs: "Opening two hours earlier is your only real advantage, so stock what people want in those two hours.",
+      milk: "The morning customer is a daily customer. A daily customer is worth more than an occasional sale of medicine.",
+    },
     verdict: "You can't beat a chemist at medicine. You can beat them at breakfast.",
   },
   {
@@ -322,6 +420,11 @@ export const NIGHTS = [
     ],
     shelf: ["dates", "milk", "fruits", "kite", "shampoo", "school_bag", "hair_oil", "chips"],
     demand: ["dates", "milk", "fruits"],
+    why: {
+      dates: "The fast opens on dates almost everywhere. It is the single most predictable purchase of the month.",
+      milk: "A meal at four in the morning has to be light and quick. Milk is the base of most of them.",
+      fruits: "Two meals, both outside daylight, both needing to carry someone through a long day of no food.",
+    },
     verdict: "Two meals, both outside daylight — and the fast opens with dates almost everywhere.",
   },
   {
@@ -334,6 +437,11 @@ export const NIGHTS = [
     ],
     shelf: ["tea", "biscuits", "newspaper", "phenyl", "school_bag", "hair_oil", "incense", "rice"],
     demand: ["tea", "biscuits", "newspaper"],
+    why: {
+      tea: "A bus stop at your door brings a breakfast crowd, and breakfast in this lane starts with tea.",
+      biscuits: "Four minutes to spare means whatever can be bought, paid for and eaten while walking.",
+      newspaper: "The commuter has a bus journey ahead. The newspaper is bought for the ride, not for the house.",
+    },
     verdict: "A bus stop at your door brings a breakfast crowd, not a grocery crowd. Nobody carries rice onto a bus.",
   },
 ];

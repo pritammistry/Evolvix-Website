@@ -52,7 +52,9 @@ export default function TomorrowsOrder() {
   const night = nights[index];
 
   const start = () => {
-    setNights(buildGame());
+    const fresh = buildGame();
+    setNights(fresh);
+    setTimeLeft(fresh[0].seconds);
     setIndex(0);
     setPicks([]);
     setLocked(false);
@@ -85,18 +87,18 @@ export default function TomorrowsOrder() {
     setLocked(true);
   }, [locked, picks, nights, index, timeLeft]);
 
+  // The clock is set here, in the same batch as the index, rather than by an
+  // effect watching the index. An effect runs a step too late: the new night
+  // would render with the previous night's expired clock still at zero, and the
+  // timer below would lock the order and reveal the day before the player had
+  // chosen anything.
   const nextNight = () => {
     if (index + 1 >= nights.length) { setPhase("done"); return; }
     setIndex(index + 1);
+    setTimeLeft(nights[index + 1].seconds);
     setPicks([]);
     setLocked(false);
   };
-
-  // The clock is reset by the night on screen rather than by the handlers, so
-  // a tier with a tighter limit gets its own time without threading it through.
-  useEffect(() => {
-    if (phase === "playing" && nights[index]) setTimeLeft(nights[index].seconds);
-  }, [phase, index, nights]);
 
   useEffect(() => {
     if (phase !== "playing" || locked) return undefined;
@@ -244,6 +246,20 @@ export default function TomorrowsOrder() {
               <p className="mts-feedback" data-testid="tmo-verdict">
                 <strong>{nightScore > 0 ? "Day's end." : "A quiet day."}</strong> {night.verdict}
               </p>
+
+              {/* Every item that sold out is explained, whether or not the
+                  player chose it. Seeing why the two you missed sold is the
+                  part that makes the next night easier. */}
+              <ul className="tmo-why" data-testid="tmo-why">
+                {night.demand.map((id) => (
+                  <li key={id} className={picks.includes(id) ? "tmo-why--got" : "tmo-why--missed"}>
+                    <span className="tmo-why-icon" aria-hidden="true">{ITEMS[id].icon}</span>
+                    <span>
+                      <strong>{ITEMS[id].label}</strong> {night.why[id]}
+                    </span>
+                  </li>
+                ))}
+              </ul>
               <button className="mts-primary tmo-lock" onClick={nextNight} data-testid="tmo-next-button">
                 {index + 1 >= nights.length ? "See the week" : "Next night"} <ArrowRight size={16} />
               </button>
