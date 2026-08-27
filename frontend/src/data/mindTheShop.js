@@ -309,6 +309,199 @@ export const SCENARIOS = [
     ],
     note: "They have milk. It needs flavouring, not more milk.",
   },
+  // ── More warm-ups: the item is all but named ──
+  {
+    request: "The soap in the bathroom has finished.",
+    difficulty: 1,
+    options: [
+      { label: "Bath soap", icon: "🧼", correct: true },
+      { label: "Shampoo", icon: "🧖" },
+      { label: "Detergent", icon: "🧴" },
+      { label: "Toothpaste", icon: "🪥" },
+    ],
+  },
+  {
+    request: "My toothpaste tube is completely empty.",
+    difficulty: 1,
+    options: [
+      { label: "Toothpaste", icon: "🪥", correct: true },
+      { label: "Bath soap", icon: "🧼" },
+      { label: "Shampoo", icon: "🧖" },
+      { label: "Face cream", icon: "🧴" },
+    ],
+  },
+  {
+    request: "The rice is over and we haven't cooked yet.",
+    difficulty: 1,
+    options: [
+      { label: "Rice", icon: "🍚", correct: true },
+      { label: "Flour", icon: "🌾" },
+      { label: "Salt", icon: "🧂" },
+      { label: "Cooking oil", icon: "🫗" },
+    ],
+  },
+  {
+    request: "There's no shampoo left and I have to wash my hair.",
+    difficulty: 1,
+    options: [
+      { label: "Shampoo", icon: "🧖", correct: true },
+      { label: "Bath soap", icon: "🧼" },
+      { label: "Detergent", icon: "🧴" },
+      { label: "Face cream", icon: "🧴" },
+    ],
+  },
+  {
+    request: "We've run out of cooking oil halfway through frying.",
+    difficulty: 1,
+    options: [
+      { label: "Cooking oil", icon: "🫗", correct: true },
+      { label: "Salt", icon: "🧂" },
+      { label: "Flour", icon: "🌾" },
+      { label: "Sugar", icon: "🍬" },
+    ],
+  },
+  {
+    request: "I need something to write the shopping list on.",
+    difficulty: 1,
+    options: [
+      { label: "Notepad", icon: "📓", correct: true },
+      { label: "Pen", icon: "🖊️" },
+      { label: "Envelope", icon: "✉️" },
+      { label: "Newspaper", icon: "📰" },
+    ],
+  },
+  {
+    request: "I want to boil a few eggs for the children's breakfast.",
+    difficulty: 1,
+    options: [
+      { label: "Eggs", icon: "🥚", correct: true },
+      { label: "Milk", icon: "🥛" },
+      { label: "Bread", icon: "🍞" },
+      { label: "Rice", icon: "🍚" },
+    ],
+  },
+  {
+    request: "It's her birthday and the cake is ready, but bare on top.",
+    difficulty: 1,
+    options: [
+      { label: "Candles", icon: "🕯️", correct: true },
+      { label: "Matchbox", icon: "🔥" },
+      { label: "Chocolates", icon: "🍫" },
+      { label: "Wrapping paper", icon: "🎁" },
+    ],
+  },
+
+  // ── More middles ──
+  {
+    request: "The torch is fine but nothing happens when I press it.",
+    difficulty: 2,
+    options: [
+      { label: "Batteries", icon: "🔋", correct: true },
+      { label: "Torch", icon: "🔦" },
+      { label: "Bulb", icon: "💡" },
+      { label: "Extension wire", icon: "🔌" },
+    ],
+    note: "The torch works. Something inside it doesn't.",
+  },
+  {
+    request: "My daughter's bottle leaked all over her school bag again.",
+    difficulty: 2,
+    options: [
+      { label: "Water bottle", icon: "🍶", correct: true },
+      { label: "School bag", icon: "🎒" },
+      { label: "Tiffin box", icon: "🍱" },
+      { label: "Napkin", icon: "🧻" },
+    ],
+    note: "Replace what leaked, not what it leaked into.",
+  },
+  {
+    request: "I want the sweets to still be good on Sunday.",
+    difficulty: 2,
+    options: [
+      { label: "Airtight container", icon: "🫙", correct: true },
+      { label: "Paper bag", icon: "🛍️" },
+      { label: "Newspaper", icon: "📰" },
+      { label: "Cello tape", icon: "🎞️" },
+    ],
+  },
+  {
+    request: "The children's school shoes have gone dull and grey.",
+    difficulty: 2,
+    options: [
+      { label: "Shoe polish", icon: "🥾", correct: true },
+      { label: "Detergent", icon: "🧴" },
+      { label: "Floor cleaner", icon: "🪣" },
+      { label: "Bath soap", icon: "🧼" },
+    ],
+  },
+
+  // ── More hard ones: the answer is never the noun in the sentence ──
+  {
+    request: "The tap has been dripping all night and nobody can sleep.",
+    difficulty: 3,
+    options: [
+      { label: "Tap washer", icon: "🔧", correct: true },
+      { label: "Bucket", icon: "🪣" },
+      { label: "Cleaning cloth", icon: "🧻" },
+      { label: "Bath soap", icon: "🧼" },
+    ],
+    note: "A bucket catches it. Only one of these stops it.",
+  },
+  {
+    request: "My mother complains the tea is never hot by the time she drinks it.",
+    difficulty: 3,
+    options: [
+      { label: "Flask", icon: "🫖", correct: true },
+      { label: "Tea leaves", icon: "🍵" },
+      { label: "Milk", icon: "🥛" },
+      { label: "Sugar", icon: "🍬" },
+    ],
+    note: "Nothing wrong with the tea. It's the waiting.",
+  },
+  {
+    request: "His lunch is packed by seven but he only eats it at one.",
+    difficulty: 3,
+    options: [
+      { label: "Insulated tiffin", icon: "🍱", correct: true },
+      { label: "Tiffin box", icon: "🥡" },
+      { label: "Aluminium foil", icon: "🎞️" },
+      { label: "Napkin", icon: "🧻" },
+    ],
+    note: "An ordinary box holds it. It doesn't keep it warm.",
+  },
+  {
+    request: "The clothes in the almirah have started smelling of damp.",
+    difficulty: 3,
+    options: [
+      { label: "Naphthalene balls", icon: "⚪", correct: true },
+      { label: "Room freshener", icon: "🌸" },
+      { label: "Detergent", icon: "🧴" },
+      { label: "Bath soap", icon: "🧼" },
+    ],
+    note: "Freshener perfumes the room, not the cupboard.",
+  },
+  {
+    request: "I've bought the sweets but the box got crushed on the way home.",
+    difficulty: 3,
+    options: [
+      { label: "Gift box", icon: "🎁", correct: true },
+      { label: "Box of sweets", icon: "🍬" },
+      { label: "Wrapping paper", icon: "🎀" },
+      { label: "Cello tape", icon: "🎞️" },
+    ],
+    note: "The sweets are fine. The box isn't.",
+  },
+  {
+    request: "I've written the address on the parcel but it keeps coming open.",
+    difficulty: 3,
+    options: [
+      { label: "Packing tape", icon: "📦", correct: true },
+      { label: "Envelope", icon: "✉️" },
+      { label: "Glue stick", icon: "🖇️" },
+      { label: "Stapler", icon: "📎" },
+    ],
+    note: "Glue won't hold a parcel shut.",
+  },
 ];
 
 export const ROUNDS_PER_GAME = 8;
@@ -331,14 +524,45 @@ export function shuffle(list) {
   return out;
 }
 
-// Draws one unused scenario per step of the curve. If a tier ever runs dry it
-// falls back to any remaining scenario, so the game never returns short.
+// Scenarios seen in recent games, oldest first. Without this a fresh shuffle
+// each game means the same scenario can land in three plays running, which is
+// what makes a small pool feel smaller than it is.
+const RECENT_KEY = "evolvix_mts_recent";
+const RECENT_MEMORY = 24; // roughly the last three games
+
+function readRecent() {
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY)) || []; } catch { return []; }
+}
+
+export function rememberRounds(rounds) {
+  try {
+    const merged = [...readRecent(), ...rounds.map((r) => r.request)];
+    localStorage.setItem(RECENT_KEY, JSON.stringify(merged.slice(-RECENT_MEMORY)));
+  } catch {
+    // Storage unavailable — the game still works, it just repeats sooner.
+  }
+}
+
+// Unseen scenarios first, then the ones seen longest ago. Shuffled beforehand
+// so scenarios with equal staleness don't always come out in the same order.
+function freshestFirst(pool, recent) {
+  return shuffle(pool).sort(
+    (a, b) => recent.indexOf(a.request) - recent.indexOf(b.request)
+  );
+}
+
+// Draws one scenario per step of the curve, preferring ones the player has not
+// seen lately. Falls back across tiers if a tier ever runs dry, so a game is
+// never returned short.
 export function buildRounds() {
-  const pools = { 1: shuffle(SCENARIOS.filter((s) => s.difficulty === 1)),
-                  2: shuffle(SCENARIOS.filter((s) => s.difficulty === 2)),
-                  3: shuffle(SCENARIOS.filter((s) => s.difficulty === 3)) };
+  const recent = readRecent();
+  const pools = {
+    1: freshestFirst(SCENARIOS.filter((s) => s.difficulty === 1), recent),
+    2: freshestFirst(SCENARIOS.filter((s) => s.difficulty === 2), recent),
+    3: freshestFirst(SCENARIOS.filter((s) => s.difficulty === 3), recent),
+  };
   const used = new Set();
-  return DIFFICULTY_CURVE.map((tier) => {
+  const rounds = DIFFICULTY_CURVE.map((tier) => {
     let scenario = pools[tier].find((s) => !used.has(s.request));
     if (!scenario) scenario = SCENARIOS.find((s) => !used.has(s.request));
     used.add(scenario.request);
@@ -348,6 +572,8 @@ export function buildRounds() {
       options: shuffle(scenario.options),
     };
   });
+  rememberRounds(rounds);
+  return rounds;
 }
 
 export function maxScoreFor(rounds) {
