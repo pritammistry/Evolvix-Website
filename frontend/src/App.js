@@ -1,4 +1,5 @@
 import "@/App.css";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { Layout } from "./components/Layout";
@@ -14,7 +15,10 @@ import ProductDetail from "./pages/ProductDetail";
 import CreativeLab from "./pages/CreativeLab";
 import Demo from "./pages/Demo";
 import Playground from "./pages/Playground";
-import MindTheShop from "./pages/MindTheShop";
+// The games carry their own scenario banks, which nobody visiting the home
+// page needs to download. Split out so they cost nothing until played.
+const MindTheShop = lazy(() => import("./pages/MindTheShop"));
+const TomorrowsOrder = lazy(() => import("./pages/TomorrowsOrder"));
 import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
 import FAQ from "./pages/FAQ";
@@ -31,6 +35,7 @@ function AppRoutes() {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith("/admin");
   const routes = (
+    <Suspense fallback={null}>
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/about" element={<About />} />
@@ -39,6 +44,7 @@ function AppRoutes() {
       <Route path="/portfolio" element={<Portfolio />} />
       <Route path="/playground" element={<Playground />} />
       <Route path="/playground/mind-the-shop" element={<MindTheShop />} />
+      <Route path="/playground/tomorrows-order" element={<TomorrowsOrder />} />
       <Route path="/learning-growth" element={<Shop />} />
       <Route path="/shop" element={<Shop />} />
       <Route path="/products/:slug" element={<ProductDetail />} />
@@ -58,6 +64,7 @@ function AppRoutes() {
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </Suspense>
   );
 
   if (isAdmin) return routes;

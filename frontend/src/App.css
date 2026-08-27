@@ -402,22 +402,50 @@ select.welcome-input option{background:#0a0c1a;color:white}
 .mts-pitch strong{color:white}
 .mts-pitch-link{display:inline-flex;align-items:center;gap:7px;color:var(--cyan);font-size:.88rem;font-weight:700}
 
-.mts-launch{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:22px;border-radius:20px;border:1px solid rgba(19,223,244,.26);background:linear-gradient(140deg,rgba(19,223,244,.09),rgba(138,49,255,.06));margin-bottom:20px}
-.mts-launch-icon{font-size:2.6rem;line-height:1;flex-shrink:0}
-.mts-launch-body{flex:1;min-width:190px}
-.mts-launch-body h3{margin:0 0 5px;font-size:1.15rem;color:white}
-.mts-launch-body p{margin:0;color:var(--muted);font-size:.87rem;line-height:1.55}
+/* Playground game shelf — one card per browser game */
+.pg-games{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:16px;margin-bottom:20px}
+.pg-game{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:24px 22px;border-radius:20px;border:1px solid rgba(19,223,244,.26);background:linear-gradient(140deg,rgba(19,223,244,.09),rgba(138,49,255,.06))}
+.pg-game-icon{font-size:2.4rem;line-height:1}
+.pg-game h3{margin:2px 0 0;font-size:1.15rem;color:white}
+.pg-game-hook{margin:0;color:var(--cyan);font-size:.8rem;font-weight:700}
+.pg-game-desc{margin:0 0 6px;color:var(--muted);font-size:.87rem;line-height:1.55}
+.pg-game .primary-btn{margin-top:auto}
+
+/* Tomorrow's Order — signals panel, then the shelf you order from */
+.tmo-signals{padding:16px 18px;border-radius:18px;border:1px solid rgba(19,223,244,.2);background:rgba(19,223,244,.06);margin-bottom:18px}
+.tmo-signals-label{display:block;color:var(--cyan);font-size:.66rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px}
+.tmo-signal{display:flex;align-items:flex-start;gap:11px;margin:0;padding:5px 0;color:white;font-size:.95rem;line-height:1.45;text-wrap:pretty}
+.tmo-signal-icon{font-size:1.15rem;line-height:1.3;flex-shrink:0}
+.tmo-order-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;color:var(--muted);font-size:.82rem;font-weight:600}
+.tmo-counter{color:var(--cyan);font-weight:800;font-variant-numeric:tabular-nums}
+.tmo-shelf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.tmo-item{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:7px;min-height:98px;padding:14px 8px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.04);color:#dce4ff;font-size:.76rem;font-weight:600;line-height:1.3;text-align:center;transition:transform .15s,border-color .2s,background .2s,opacity .25s}
+.tmo-item:not(:disabled):hover{transform:translateY(-3px);border-color:rgba(19,223,244,.5);background:rgba(19,223,244,.08)}
+.tmo-item-icon{font-size:1.8rem;line-height:1}
+.tmo-item-tag{font-size:.62rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;opacity:.9}
+.tmo-item--chosen{border-color:rgba(19,223,244,.65);background:rgba(19,223,244,.13);color:white}
+.tmo-item--sold{border-color:rgba(37,211,102,.65);background:rgba(37,211,102,.14);color:#8ef0b4}
+.tmo-item--missed{border-color:rgba(255,190,92,.6);background:rgba(255,190,92,.1);color:#ffd79a}
+.tmo-item--unsold{border-color:rgba(255,107,138,.6);background:rgba(255,107,138,.12);color:#ffb3c2}
+.tmo-item--idle{opacity:.34}
+.tmo-item:disabled{cursor:default}
+.tmo-lock{width:100%;margin-top:18px}
+.tmo-lock:disabled{opacity:.42;cursor:not-allowed}
+.tmo-lock:disabled:hover{transform:none;box-shadow:none}
 
 @media(max-width:560px){
   .mts-bubble p{font-size:.97rem}
   .mts-item{min-height:94px;font-size:.83rem}
   .mts-item-icon{font-size:1.7rem}
   .mts-result-actions>*{flex:1 1 100%}
-  .mts-launch{gap:14px;padding:18px}
-  .mts-launch .primary-btn{flex:1 1 100%;justify-content:center}
+  .pg-game{padding:20px 18px}
+  .pg-game .primary-btn{align-self:stretch;justify-content:center}
+  .tmo-shelf{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .tmo-item{min-height:92px;font-size:.78rem}
+  .tmo-signal{font-size:.89rem}
 }
 @media(prefers-reduced-motion:reduce){
-  .mts-primary:hover,.mts-item:not(:disabled):hover{transform:none}
+  .mts-primary:hover,.mts-item:not(:disabled):hover,.tmo-item:not(:disabled):hover{transform:none}
   .mts-clock--urgent{animation:none}
 }
 .mts-gate-note{margin:16px 0 0;color:var(--muted);font-size:.82rem;line-height:1.6;max-width:46ch}

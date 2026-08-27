@@ -9,6 +9,27 @@ import { fetchPlayground } from "../api";
 import { trackEvent } from "../components/AnalyticsTracker";
 import { toast } from "sonner";
 
+// Games that live on the site itself, as opposed to the downloadable items the
+// admin manages. Adding one here is the only step needed to shelve it.
+const BROWSER_GAMES = [
+  {
+    id: "mind-the-shop",
+    path: "/playground/mind-the-shop",
+    icon: "🏪",
+    title: "Mind the Shop",
+    hook: "Can you read a customer?",
+    description: "Customers never say what they actually want. Read between the lines and hand over the right thing before the clock runs out.",
+  },
+  {
+    id: "tomorrows-order",
+    path: "/playground/tomorrows-order",
+    icon: "📋",
+    title: "Tomorrow's Order",
+    hook: "Can you read a day that hasn't happened?",
+    description: "Rain in the forecast. A wedding two lanes over. You're closing up — stock the three things that will actually sell tomorrow.",
+  },
+];
+
 const MUSIC_MAX = 10;
 const FREEBIE_MAX = 6;
 const GAME_MAX = 4;
@@ -287,15 +308,18 @@ export default function Playground() {
         <p className="playground-block-sub">
           Free to play with an Evolvix account — nothing to install.
         </p>
-        <div className="mts-launch" data-testid="playground-mts-launch">
-          <span className="mts-launch-icon" aria-hidden="true">🏪</span>
-          <div className="mts-launch-body">
-            <h3>Mind the Shop</h3>
-            <p>Customers never say what they actually want. Read between the lines and hand over the right thing before the clock runs out.</p>
-          </div>
-          <Link to="/playground/mind-the-shop" className="primary-btn" data-testid="playground-mts-play">
-            Play Now <ArrowRight size={15} />
-          </Link>
+        <div className="pg-games" data-testid="playground-games-shelf">
+          {BROWSER_GAMES.map((game) => (
+            <article className="pg-game" key={game.path} data-testid={`playground-game-${game.id}`}>
+              <span className="pg-game-icon" aria-hidden="true">{game.icon}</span>
+              <h3>{game.title}</h3>
+              <p className="pg-game-hook">{game.hook}</p>
+              <p className="pg-game-desc">{game.description}</p>
+              <Link to={game.path} className="primary-btn" data-testid={`playground-play-${game.id}`}>
+                Play Now <ArrowRight size={15} />
+              </Link>
+            </article>
+          ))}
         </div>
 
         {gameItems.length > 0 ? (
@@ -310,7 +334,7 @@ export default function Playground() {
         ) : (
           <div className="playground-coming-soon" data-testid="playground-games-coming-soon">
             <span className="playground-coming-badge">More Coming Soon</span>
-            <p>Mind the Shop is live above. More games, quizzes and creative tools are being built — check back.</p>
+            <p>Two games are live above. More games, quizzes and creative tools are being built — check back.</p>
           </div>
         )}
       </div>
