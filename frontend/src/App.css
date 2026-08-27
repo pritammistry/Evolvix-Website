@@ -405,6 +405,33 @@ select.welcome-input option{background:#0a0c1a;color:white}
 .mts-pitch strong{color:white}
 .mts-pitch-link{display:inline-flex;align-items:center;gap:7px;color:var(--cyan);font-size:.88rem;font-weight:700}
 
+/* Rangoli — a drawing toy, so the canvas leads and the controls stay quiet */
+.rng-page{max-width:640px;margin:0 auto}
+.rng-head{text-align:center;margin-bottom:20px}
+.rng-head h1{font-size:clamp(2rem,7vw,3rem);margin:12px 0 0;line-height:1.05}
+.rng-lede{color:var(--muted);font-size:.92rem;line-height:1.65;margin:12px auto 0;max-width:46ch;text-wrap:pretty}
+.rng-stage{position:relative;display:flex;justify-content:center}
+.rng-canvas{display:block;border-radius:50%;background:radial-gradient(circle at 50% 50%,#0d1020,#06070f 72%);border:1px solid rgba(19,223,244,.22);box-shadow:0 0 60px rgba(19,223,244,.09);touch-action:none;cursor:crosshair}
+.rng-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);margin:0;color:rgba(255,255,255,.28);font-size:.85rem;letter-spacing:.18em;text-transform:uppercase;pointer-events:none;animation:rngBreathe 3.2s ease-in-out infinite}
+@keyframes rngBreathe{0%,100%{opacity:.35}50%{opacity:.75}}
+
+.rng-controls{margin-top:22px;display:flex;flex-direction:column;gap:12px}
+.rng-row{display:flex;align-items:center;gap:9px}
+.rng-row--wrap{flex-wrap:wrap}
+.rng-label{color:var(--muted);font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-right:2px}
+.rng-swatch{width:34px;height:34px;border-radius:50%;border:2px solid transparent;box-shadow:0 0 0 1px rgba(255,255,255,.12) inset;transition:transform .16s,border-color .16s}
+.rng-swatch:hover{transform:scale(1.08)}
+.rng-swatch--on{border-color:white;transform:scale(1.12)}
+.rng-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.04);color:#dce4ff;font-size:.8rem;font-weight:600;font-variant-numeric:tabular-nums;transition:border-color .2s,background .2s,color .2s}
+.rng-chip:not(:disabled):hover{border-color:rgba(19,223,244,.45);background:rgba(19,223,244,.07)}
+.rng-chip--on{border-color:rgba(19,223,244,.6);background:rgba(19,223,244,.12);color:white}
+.rng-chip--warn{border-color:rgba(255,107,138,.6);background:rgba(255,107,138,.12);color:#ffb3c2}
+.rng-chip:disabled{opacity:.35;cursor:not-allowed}
+.rng-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.rng-actions .mts-primary:disabled,.rng-actions .mts-secondary:disabled{opacity:.4;cursor:not-allowed}
+.rng-actions .mts-primary:disabled:hover{transform:none;box-shadow:none}
+.rng-note{margin:0;color:var(--muted);font-size:.82rem;line-height:1.6}
+
 /* Playground game shelf — one card per browser game */
 .pg-games{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:16px;margin-bottom:20px}
 .pg-game{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:24px 22px;border-radius:20px;border:1px solid rgba(19,223,244,.26);background:linear-gradient(140deg,rgba(19,223,244,.09),rgba(138,49,255,.06))}

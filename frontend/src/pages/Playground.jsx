@@ -28,6 +28,14 @@ const BROWSER_GAMES = [
     hook: "Can you read a day that hasn't happened?",
     description: "Rain in the forecast. A wedding two lanes over. You're closing up — stock the three things that will actually sell tomorrow.",
   },
+  {
+    id: "rangoli",
+    path: "/playground/rangoli",
+    icon: "🌸",
+    title: "Rangoli",
+    hook: "No rules, no timer, no score.",
+    description: "Drag one finger and every line repeats around the circle. Whatever you draw comes out symmetrical — then save it as a picture.",
+  },
 ];
 
 const MUSIC_MAX = 10;
@@ -334,7 +342,7 @@ export default function Playground() {
         ) : (
           <div className="playground-coming-soon" data-testid="playground-games-coming-soon">
             <span className="playground-coming-badge">More Coming Soon</span>
-            <p>Two games are live above. More games, quizzes and creative tools are being built — check back.</p>
+            <p>Three are live above. More games, quizzes and creative tools are being built — check back.</p>
           </div>
         )}
       </div>

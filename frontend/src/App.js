@@ -19,6 +19,7 @@ import Playground from "./pages/Playground";
 // page needs to download. Split out so they cost nothing until played.
 const MindTheShop = lazy(() => import("./pages/MindTheShop"));
 const TomorrowsOrder = lazy(() => import("./pages/TomorrowsOrder"));
+const Rangoli = lazy(() => import("./pages/Rangoli"));
 import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
 import FAQ from "./pages/FAQ";
@@ -45,6 +46,7 @@ function AppRoutes() {
       <Route path="/playground" element={<Playground />} />
       <Route path="/playground/mind-the-shop" element={<MindTheShop />} />
       <Route path="/playground/tomorrows-order" element={<TomorrowsOrder />} />
+      <Route path="/playground/rangoli" element={<Rangoli />} />
       <Route path="/learning-growth" element={<Shop />} />
       <Route path="/shop" element={<Shop />} />
       <Route path="/products/:slug" element={<ProductDetail />} />
