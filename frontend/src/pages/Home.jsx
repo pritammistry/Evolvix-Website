@@ -14,7 +14,6 @@ import { CheckoutPanel } from "../components/CheckoutPanel";
 import { getDemoIcon, statusBadgeClass, visibleDemos } from "../lib/demoDisplay";
 import { consumePendingBuyProductId, consumePendingPromoCode } from "../lib/authRedirect";
 import { HeroParticle } from "../components/HeroParticle";
-import { TestimonialsCarousel } from "../components/TestimonialsCarousel";
 import { FestivalCodeStrip } from "../components/FestivalBanner";
 
 export default function Home() {
@@ -33,7 +32,6 @@ export default function Home() {
   const ecosystem = content.ecosystem || [];
   const whyChoose = content.why_choose || [];
   const trust = content.trust_strip || [];
-  const testimonials = (content.testimonials || []).filter((item) => item.visible !== false);
   const customSections = (content.custom_sections || []).filter((section) => section.visible !== false);
   // Same flow as the Store: open the confirmation panel so a promo code can be
   // applied here too. Login is only required at the Pay step.
@@ -157,7 +155,6 @@ export default function Home() {
         <div className="mood-row" data-testid="home-why-row">{whyChoose.map((item) => <span key={item} data-testid={`home-why-${item.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><BriefcaseBusiness size={15} /> {item}</span>)}</div>
         <Link to="/contact?type=Business+inquiry" className="primary-btn" data-testid="home-start-project-cta">Start a Project <ArrowRight size={18} /></Link>
       </section>
-      {testimonials.length > 0 && <section className="section" data-testid="home-testimonials-section"><SectionHeader eyebrow="Customer proof" title="Trust signals from people building, learning, and launching with Evolvix." /><TestimonialsCarousel testimonials={testimonials} /></section>}
       <section className="section contact-cta-band" data-testid="home-contact-cta-section"><h2>Ready to create, innovate, and elevate?</h2><p>Tell Evolvix what you want to build, learn, automate, design, or launch.</p><Link to="/contact" className="primary-btn" data-testid="home-final-contact-cta">Contact Us <ArrowRight size={18} /></Link></section>
       {customSections.map((section, index) => <section className="section custom-public-section" key={`${section.title}-${index}`} data-testid={`custom-section-${index}`}><SectionHeader eyebrow={section.eyebrow || "Custom"} title={section.title} text={section.description} /><div className="custom-card-grid" data-testid={`custom-section-cards-${index}`}>{(section.cards || []).map((card, cardIndex) => <article className="pillar-card" key={`${card.title}-${cardIndex}`} data-testid={`custom-section-${index}-card-${cardIndex}`}><Sparkles size={24} /><h3>{card.title}</h3><p>{card.text}</p></article>)}</div>{section.cta_label && <Link to={section.cta_url || "/contact"} className="primary-btn" data-testid={`custom-section-${index}-cta`}>{section.cta_label} <ArrowRight size={18} /></Link>}</section>)}
       <section className="section trust-newsletter" data-testid="home-newsletter-section">
