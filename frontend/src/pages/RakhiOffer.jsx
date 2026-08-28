@@ -371,7 +371,7 @@ export default function RakhiOffer() {
                 </ul>
 
                 <div className="rkh-actions">
-                  <Link to="/shop" className="rkh-primary" data-testid="rakhi-shop">
+                  <Link to="/" className="rkh-primary" data-testid="rakhi-shop">
                     Browse everything <ArrowRight size={17} />
                   </Link>
                   <button className="rkh-secondary" onClick={share} data-testid="rakhi-share">

@@ -15,6 +15,7 @@ import { getDemoIcon, statusBadgeClass, visibleDemos } from "../lib/demoDisplay"
 import { consumePendingBuyProductId, consumePendingPromoCode } from "../lib/authRedirect";
 import { HeroParticle } from "../components/HeroParticle";
 import { TestimonialsCarousel } from "../components/TestimonialsCarousel";
+import { FestivalCodeStrip } from "../components/FestivalBanner";
 
 export default function Home() {
   useSEO({ title: "AI Consulting, Digital Products & Creative Services in India", description: "Evolvix Tech Media helps students, professionals, and businesses learn AI, build digital products, and grow with creative and technology services.", path: "/" });
@@ -64,6 +65,7 @@ export default function Home() {
   };
   return (
     <>
+      <FestivalCodeStrip />
       <section className="hero-section" data-testid="home-hero-section">
         <div className="hero-copy">
           <div className="hero-logo-block">

@@ -53,7 +53,7 @@ export function FestivalBanner() {
   return (
     <div className={`fest-banner${claimed ? " fest-banner--claimed" : ""}${left?.urgent ? " fest-banner--urgent" : ""}`} data-testid="festival-banner">
       <Link
-        to={claimed ? "/shop" : "/rakhi"}
+        to={claimed ? "/" : "/rakhi"}
         className="fest-banner-body"
         onClick={() => trackEvent({ event_type: "click", label: claimed ? "festival-banner-use" : "festival-banner-play" })}
         data-testid="festival-banner-link"
@@ -67,7 +67,7 @@ export function FestivalBanner() {
                 : `${claimed.percent}% off — ${claimed.uses_left} ${claimed.uses_left === 1 ? "use" : "uses"} left`}
             </strong>
             <span className="fest-banner-sub">
-              Code {claimed.code} · works on everything in the store
+              Code {claimed.code} · works on everything we sell
             </span>
           </span>
         ) : (
@@ -92,15 +92,18 @@ export function FestivalBanner() {
   );
 }
 
-// Shown at the top of the store to whoever is holding a code. The store is the
-// only page that lists products and services together, which is the whole point
-// being made here: the code is not tied to one shelf.
+// The code and its terms, for whoever is holding one. Sits on the home page —
+// where the banner and the prize screen both send people — and again at the top
+// of the store. Off the store it carries its own way through to the products and
+// the services, since the point being made is that the code covers both.
 export function FestivalCodeStrip() {
   const offer = useFestivalOffer();
   const { user } = useAuth();
+  const location = useLocation();
   const [copied, setCopied] = useState(false);
   const claimed = offer?.claimed;
   if (!offer?.open || !claimed) return null;
+  const inStore = location.pathname.startsWith("/shop");
 
   const left = claimed.uses_left ?? claimed.max_uses;
   const copy = async () => {
@@ -144,6 +147,16 @@ export function FestivalCodeStrip() {
           products and services.
         </li>
       </ul>
+      {!inStore && (
+        <div className="fest-strip-actions">
+          <Link to="/shop" className="fest-strip-btn" data-testid="festival-strip-shop">
+            Browse the store <ArrowRight size={15} />
+          </Link>
+          <Link to="/services" className="fest-strip-ghost" data-testid="festival-strip-services">
+            See the services
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
@@ -158,7 +171,7 @@ export function FestivalPopupOffer({ onNavigate }) {
 
   return (
     <Link
-      to={claimed ? "/shop" : "/rakhi"}
+      to={claimed ? "/" : "/rakhi"}
       className="fest-popup-offer"
       onClick={() => {
         trackEvent({ event_type: "click", label: claimed ? "welcome-popup-festival-use" : "welcome-popup-festival-play" });
@@ -175,7 +188,7 @@ export function FestivalPopupOffer({ onNavigate }) {
         </strong>
         <span>
           {claimed
-            ? `Code ${claimed.code} — spend it in the store`
+            ? `Code ${claimed.code} — works on everything we sell`
             : "Tie a rakhi and unwrap your discount. Nobody leaves empty-handed."}
           {left?.label ? ` · ${left.label}` : ""}
         </span>
