@@ -665,8 +665,10 @@ select.welcome-input option{background:#0a0c1a;color:white}
 h1,h2,h3,.section-header h2,.detail-copy h1{overflow-wrap:break-word;text-wrap:balance}
 p,li,td,th{overflow-wrap:break-word}
 
-/* Nothing on the site should be able to scroll the page sideways. */
-html,body{overflow-x:hidden}
+/* No overflow clamp added here: html and body already carry overflow-x:hidden
+   near the top of this file. Repeating it bought nothing, and the audit found
+   nothing overflowing at 360/390/768/1440 anyway — the real fixes are on the
+   elements themselves. */
 img,svg,video,canvas{max-width:100%}
 
 /* The "why choose us" chips scrolled sideways inside a 325px box holding
@@ -707,4 +709,17 @@ img,svg,video,canvas{max-width:100%}
   .chat-launcher-icon{width:38px;height:38px}
   /* Room to scroll the last CTA clear of the button. */
   .site-footer{padding-bottom:64px}
+}
+
+
+/* The contact band is a section AND a card, so the mobile `.section` rule —
+   padding:22px 0 — stripped its horizontal padding and left the heading flush
+   against a 30px rounded edge. It also carried its spacing twice: a 16px grid
+   gap plus an 18px margin under the heading, which is where the dead space
+   under the title came from. 259px tall becomes 214px. */
+.contact-cta-band h2{margin-bottom:0}
+@media(max-width:680px){
+  .contact-cta-band{padding:24px 20px 26px;gap:12px;border-radius:22px}
+  .contact-cta-band h2{font-size:1.3rem;line-height:1.2}
+  .contact-cta-band p{font-size:.95rem;line-height:1.55}
 }
