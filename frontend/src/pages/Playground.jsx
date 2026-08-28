@@ -13,6 +13,14 @@ import { toast } from "sonner";
 // admin manages. Adding one here is the only step needed to shelve it.
 const BROWSER_GAMES = [
   {
+    id: "rakhi",
+    path: "/rakhi",
+    icon: "🎀",
+    title: "Tie the Rakhi",
+    hook: "Everyone wins 15–40% off.",
+    description: "Land the knot on the thread three times and unwrap a discount on everything we make. One code per person, and it's yours for a week.",
+  },
+  {
     id: "mind-the-shop",
     path: "/playground/mind-the-shop",
     icon: "🏪",

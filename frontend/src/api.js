@@ -72,3 +72,7 @@ export const reorderPlayground = (ids) => axios.post(`${API}/admin/playground/re
 export const forgotPassword = (payload) => axios.post(`${API}/auth/forgot-password`, payload);
 export const resetPassword = (payload) => axios.post(`${API}/auth/reset-password`, payload);
 export const fetchVisitorOrders = () => axios.get(`${API}/visitor/orders`);
+
+// Raksha Bandhan campaign: the browser asks for a discount, the server decides it.
+export const fetchFestivalOffer = () => axios.get(`${API}/promo/festival`);
+export const claimFestivalOffer = () => axios.post(`${API}/promo/festival-claim`);

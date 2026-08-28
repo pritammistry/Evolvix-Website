@@ -2115,6 +2115,58 @@ def promo_status(promo: Dict[str, Any]) -> str:
     return "live"
 
 
+# ── Raksha Bandhan campaign ────────────────────────────────────────────────
+# Finishing the game earns one personal code. The percentage is rolled HERE and
+# nowhere else: the browser never sends a discount, it only asks for one, so
+# there is nothing on the client worth tampering with.
+RAKHI_CAMPAIGN = {
+    "id": "raksha-bandhan-2026",
+    "label": "Raksha Bandhan",
+    "prefix": "RAKHI",
+    # Equal odds across six tiers, as chosen for the campaign.
+    "tiers": [15, 20, 25, 30, 35, 40],
+    # Last moment someone can finish the game and claim a code.
+    "claim_until": "2026-09-04T23:59:59+05:30",
+    # How long a code lives once claimed.
+    "code_valid_days": 7,
+}
+
+# Deliberately excludes I, O, 0 and 1: these codes get read off a phone screen
+# and typed by hand, and those four are the pairs people get wrong.
+CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def festival_campaign_open() -> bool:
+    deadline = parse_campaign_datetime(RAKHI_CAMPAIGN["claim_until"])
+    if deadline is None:
+        # An unparseable deadline fails closed, for the same reason promo_status
+        # does: a typo must never leave a discount running for ever.
+        return False
+    return datetime.now(timezone.utc) < deadline
+
+
+def personal_code_tag(user: Dict[str, Any]) -> str:
+    """Three stable characters derived from the account.
+
+    Two people never share a tag by accident, and the tag does not leak the
+    email — it is a hash, not an encoding.
+    """
+    seed = (user.get("email") or user.get("id") or "").strip().lower()
+    digest = hashlib.sha256(f"{RAKHI_CAMPAIGN['id']}:{seed}".encode()).digest()
+    return "".join(CODE_ALPHABET[b % len(CODE_ALPHABET)] for b in digest[:3])
+
+
+async def mint_festival_code(user: Dict[str, Any]) -> str:
+    """A code unique to this person, retried until it is unique in the DB."""
+    tag = personal_code_tag(user)
+    for _ in range(12):
+        rand = "".join(secrets.choice(CODE_ALPHABET) for _ in range(4))
+        code = f"{RAKHI_CAMPAIGN['prefix']}-{tag}{rand}"
+        if not await db.promo_codes.find_one({"code": code}):
+            return code
+    raise HTTPException(status_code=500, detail="Could not generate a code. Please try again.")
+
+
 def compute_discount(promo: Dict[str, Any], price: float) -> float:
     """Discount in rupees, never negative and never more than the price."""
     value = float(promo.get("value") or 0)
@@ -2125,8 +2177,17 @@ def compute_discount(promo: Dict[str, Any], price: float) -> float:
     return round(min(max(discount, 0.0), price), 2)
 
 
-async def resolve_promo_for_product(code: str, product: Dict[str, Any]) -> Dict[str, Any]:
-    """Returns {promo, discount, final_amount} or raises HTTPException(400)."""
+async def resolve_promo_for_product(
+    code: str,
+    product: Dict[str, Any],
+    user: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Returns {promo, discount, final_amount} or raises HTTPException(400).
+
+    `user` is only needed for codes carrying `bound_user_id` — the personal ones
+    handed out by the festival game. Codes created in the admin panel have no
+    binding and behave exactly as before.
+    """
     normalized = normalize_promo_code(code)
     if not normalized:
         raise HTTPException(status_code=400, detail="Enter a promo code.")
@@ -2143,6 +2204,15 @@ async def resolve_promo_for_product(code: str, product: Dict[str, Any]) -> Dict[
     }
     if status != "live":
         raise HTTPException(status_code=400, detail=reasons.get(status, "That promo code is not valid."))
+
+    # A personal code is worthless to anyone but the account that earned it, so
+    # forwarding one to a WhatsApp group gains the recipient nothing.
+    bound_user_id = promo.get("bound_user_id")
+    if bound_user_id:
+        if not user:
+            raise HTTPException(status_code=400, detail="Log in to use this code — it belongs to one account.")
+        if user.get("id") != bound_user_id:
+            raise HTTPException(status_code=400, detail="This code belongs to a different account.")
 
     applies_to = promo.get("applies_to") or []
     if applies_to and product.get("id") not in applies_to and product.get("slug") not in applies_to:
@@ -2191,9 +2261,12 @@ async def record_promo_redemption(transaction: Dict[str, Any]) -> None:
 
 
 @api_router.post("/promo/validate")
-async def validate_promo_code(payload: PromoValidateRequest):
+async def validate_promo_code(payload: PromoValidateRequest, request: Request):
     product = await load_catalog_product(payload.product_id)
-    resolved = await resolve_promo_for_product(payload.code, product)
+    # Optional: the preview is open to logged-out browsers, and only a bound
+    # code needs to know who is asking.
+    user = await get_current_user(request)
+    resolved = await resolve_promo_for_product(payload.code, product, user)
     promo = resolved["promo"]
     label = f"{int(promo['value'])}% off" if promo.get("type") != "flat" else f"₹{int(promo['value'])} off"
     return {
@@ -2204,6 +2277,99 @@ async def validate_promo_code(payload: PromoValidateRequest):
         "discount": resolved["discount"],
         "final_amount": resolved["final_amount"],
     }
+
+
+def festival_claim_payload(promo: Dict[str, Any], fresh: bool) -> Dict[str, Any]:
+    return {
+        "code": promo["code"],
+        "percent": int(promo["value"]),
+        "expires_at": promo.get("ends_at"),
+        "fresh": fresh,
+        "campaign": RAKHI_CAMPAIGN["label"],
+    }
+
+
+@api_router.get("/promo/festival")
+async def festival_campaign_state(request: Request):
+    """Whether the campaign is open, and the caller's code if they have one."""
+    user = await get_current_user(request)
+    claimed = None
+    if user:
+        existing = await db.promo_codes.find_one(
+            {"campaign_id": RAKHI_CAMPAIGN["id"], "bound_user_id": user["id"]},
+            {"_id": 0},
+            sort=[("created_at", 1)],
+        )
+        if existing:
+            claimed = festival_claim_payload(existing, fresh=False)
+    return {
+        "open": festival_campaign_open(),
+        "label": RAKHI_CAMPAIGN["label"],
+        "min_percent": min(RAKHI_CAMPAIGN["tiers"]),
+        "max_percent": max(RAKHI_CAMPAIGN["tiers"]),
+        "valid_days": RAKHI_CAMPAIGN["code_valid_days"],
+        "logged_in": bool(user),
+        "claimed": claimed,
+    }
+
+
+@api_router.post("/promo/festival-claim")
+async def claim_festival_promo(request: Request):
+    """Roll one personal discount for this account.
+
+    Idempotent on purpose: calling it again returns the code already issued
+    rather than rolling a better one, so nobody can replay the game until they
+    like the number.
+    """
+    user = await require_user(request)
+    if not festival_campaign_open():
+        raise HTTPException(status_code=400, detail="This offer has closed. Watch out for the next one.")
+
+    existing = await db.promo_codes.find_one(
+        {"campaign_id": RAKHI_CAMPAIGN["id"], "bound_user_id": user["id"]},
+        {"_id": 0},
+        sort=[("created_at", 1)],
+    )
+    if existing:
+        return festival_claim_payload(existing, fresh=False)
+
+    now = datetime.now(timezone.utc)
+    promo = {
+        "id": str(uuid.uuid4()),
+        "code": await mint_festival_code(user),
+        "type": "percent",
+        # secrets, not random: the roll should not be predictable from any
+        # other roll, even though the stakes here are small.
+        "value": float(secrets.choice(RAKHI_CAMPAIGN["tiers"])),
+        "starts_at": now.isoformat(),
+        "ends_at": (now + timedelta(days=RAKHI_CAMPAIGN["code_valid_days"])).isoformat(),
+        "active": True,
+        "max_redemptions": 1,
+        "min_order_amount": None,
+        "applies_to": [],  # everything in the store
+        "redemption_count": 0,
+        "campaign_id": RAKHI_CAMPAIGN["id"],
+        "bound_user_id": user["id"],
+        "bound_email": user.get("email"),
+        "created_at": now_iso(),
+    }
+
+    # A unique index would be better, but this collection is shared with
+    # hand-made admin codes that have no campaign_id. Racing two claims from one
+    # account is possible in theory; re-reading after the insert costs nothing
+    # and means the loser of a race still gets a single consistent answer.
+    await db.promo_codes.insert_one(dict(promo))
+    winner = await db.promo_codes.find_one(
+        {"campaign_id": RAKHI_CAMPAIGN["id"], "bound_user_id": user["id"]},
+        {"_id": 0},
+        sort=[("created_at", 1)],
+    )
+    if winner and winner["code"] != promo["code"]:
+        await db.promo_codes.delete_one({"id": promo["id"]})
+        return festival_claim_payload(winner, fresh=False)
+
+    logger.info("Festival code issued: %s (%s%%) for %s", promo["code"], int(promo["value"]), user.get("email"))
+    return festival_claim_payload(promo, fresh=True)
 
 
 @api_router.get("/admin/promo-codes")
@@ -2297,7 +2463,7 @@ async def create_checkout_session(payload: CheckoutCreate, request: Request):
     # Re-validated here regardless of what the browser was shown, so the amount
     # Razorpay is asked for is always one the server computed.
     if payload.promo_code:
-        resolved = await resolve_promo_for_product(payload.promo_code, product)
+        resolved = await resolve_promo_for_product(payload.promo_code, product, user)
         promo_code = resolved["promo"]["code"]
         discount_amount = resolved["discount"]
         charged_amount = resolved["final_amount"]
