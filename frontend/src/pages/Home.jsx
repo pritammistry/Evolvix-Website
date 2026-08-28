@@ -89,19 +89,29 @@ export default function Home() {
       </section>
       <section className="section split-section" data-testid="home-intro-section">
         <SectionHeader eyebrow="Tier-2 Cities & Beyond" title="AI-powered solutions for students, professionals, creators, and local businesses." text="For individuals, local businesses, and small-to-medium-sized businesses — Evolvix makes AI strategy, creative services, tech solutions, and digital products practical and within reach." />
+        {/* Each audience goes to the page most likely to convert it, rather than
+            all five repeating the same destination. These lift on hover, so they
+            have to be real links — see the note in App.css. */}
         <div className="reach-panel" data-testid="home-local-value-panel">
           {[
-            { Icon: Sparkles, label: "Students", sub: "Learning & skill-building" },
-            { Icon: BriefcaseBusiness, label: "Professionals", sub: "Career growth" },
-            { Icon: Palette, label: "Creators", sub: "Content & media" },
-            { Icon: Rocket, label: "Small Businesses", sub: "Local to regional" },
-            { Icon: BrainCircuit, label: "Enterprises", sub: "Scale & transform" },
-          ].map(({ Icon, label, sub }, i) => (
-            <div key={label} className="reach-node" style={{ animationDelay: `${i * 0.18}s` }} data-testid={`reach-node-${label.toLowerCase().replace(/\s+/g, "-")}`}>
-              <Icon size={22} />
-              <span>{label}</span>
+            { Icon: Sparkles, label: "Students", sub: "Learning & skill-building", to: "/shop?category=Learning and Growth" },
+            { Icon: BriefcaseBusiness, label: "Professionals", sub: "Career growth", to: "/services" },
+            { Icon: Palette, label: "Creators", sub: "Content & media", to: "/playground" },
+            { Icon: Rocket, label: "Small Businesses", sub: "Local to regional", to: "/demo" },
+            { Icon: BrainCircuit, label: "Enterprises", sub: "Scale & transform", to: "/contact" },
+          ].map(({ Icon, label, sub, to }, i) => (
+            <Link
+              key={label}
+              to={to}
+              className="reach-node"
+              style={{ animationDelay: `${i * 0.18}s` }}
+              data-testid={`reach-node-${label.toLowerCase().replace(/\s+/g, "-")}`}
+            >
+              <span className="reach-node-icon"><Icon size={22} /></span>
+              <span className="reach-node-label">{label}</span>
               <small>{sub}</small>
-            </div>
+              <span className="reach-node-go" aria-hidden="true"><ArrowRight size={15} /></span>
+            </Link>
           ))}
         </div>
       </section>
@@ -113,7 +123,7 @@ export default function Home() {
       </section>
       <section className="section" data-testid="home-ecosystem-preview-section">
         <SectionHeader eyebrow="Product ecosystem" title="A scalable AI-first architecture for learning, building, creativity, business, access, music, and assets." />
-        <div className="ecosystem-grid" data-testid="home-ecosystem-grid">{ecosystem.slice(0, 4).map((item) => <article className="ecosystem-card" key={item.name} data-testid={`home-ecosystem-${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><span>{item.status}</span><h3>{item.name}</h3><p>{item.description}</p></article>)}</div>
+        <div className="ecosystem-grid" data-testid="home-ecosystem-grid">{ecosystem.slice(0, 4).map((item) => <article className="ecosystem-card" key={item.name} data-testid={`home-ecosystem-${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}><span>{item.status}</span><h3>{item.name}</h3><p>{item.description}</p><Link to={item.name === "Evolvix LearnAI" ? "/shop?category=LearnAI" : "/ecosystem"} className="icon-link" data-testid={`home-ecosystem-link-${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}>Explore <ArrowRight size={16} /></Link></article>)}</div>
       </section>
       {(loading || previewDemos.length > 0) && (
         <section className="section" data-testid="home-demos-preview-section">
