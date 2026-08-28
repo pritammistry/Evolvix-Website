@@ -735,3 +735,16 @@ img,svg,video,canvas{max-width:100%}
   .trust-rail,.mood-band,.custom-public-section{margin-block:18px}
   .contact-cta-band{margin-block:22px 26px}
 }
+
+/* The newsletter form is built as one pill: input and button side by side
+   inside a 999px-radius container with 8px of padding. On mobile it is
+   switched to a column, but the container kept that 999px radius — so it
+   became a tall lozenge with the button floating inside it.
+   Stacked, it should be two pills, not one wrapping the other. */
+@media(max-width:680px){
+  .newsletter-form{border:0;background:none;padding:0;border-radius:0;gap:12px}
+  .newsletter-form input{border:1px solid var(--line);background:rgba(0,0,0,.22);border-radius:999px;padding:0 20px;min-height:48px}
+  .newsletter-form input:focus{border-color:rgba(19,223,244,.45);outline:none}
+  /* Matching heights so the two stacked pills read as a pair. */
+  .newsletter-form button{min-height:48px}
+}
