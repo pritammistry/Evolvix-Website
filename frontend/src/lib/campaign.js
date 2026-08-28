@@ -17,3 +17,29 @@ export function daysRemaining(endsAt) {
   if (Number.isNaN(ms) || ms <= 0) return 0;
   return Math.ceil(ms / 86400000);
 }
+
+// Urgency for a deadline, or null when there is none worth showing.
+//
+// Returns null while the deadline is comfortably far off, so the banner stays
+// quiet until pressure is real — a countdown that runs for a fortnight stops
+// being a countdown. `urgent` is what earns the highlight.
+export function timeLeft(endsAt) {
+  const ms = Date.parse(endsAt) - Date.now();
+  if (Number.isNaN(ms) || ms <= 0) return null;
+  const hours = ms / 3600000;
+  if (hours < 1) return { label: "Minutes left", urgent: true };
+  if (hours < 24) {
+    const h = Math.floor(hours);
+    return { label: `${h} ${h === 1 ? "hour" : "hours"} left`, urgent: true };
+  }
+  const days = Math.ceil(hours / 24);
+  if (days <= 3) return { label: `${days} days left`, urgent: true };
+  return { label: null, urgent: false };
+}
+
+// "4 September" — the deadline as a date, for when it is still far away.
+export function deadlineDate(endsAt) {
+  const d = new Date(endsAt);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "long" });
+}

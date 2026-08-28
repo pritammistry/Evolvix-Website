@@ -5,6 +5,7 @@ import { useSEO } from "../hooks/useSEO";
 import { useAuth } from "../hooks/useAuth";
 import { trackEvent } from "../components/AnalyticsTracker";
 import { claimFestivalOffer, fetchFestivalOffer } from "../api";
+import { deadlineDate } from "../lib/campaign";
 
 // Tie the Rakhi.
 //
@@ -40,13 +41,6 @@ function arcPath(mid, half, radius) {
   const [x1, y1] = polar(mid - half, radius);
   const [x2, y2] = polar(mid + half, radius);
   return `M ${x1} ${y1} A ${radius} ${radius} 0 ${half * 2 > 180 ? 1 : 0} 1 ${x2} ${y2}`;
-}
-
-function formatExpiry(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-IN", { day: "numeric", month: "long" });
 }
 
 export default function RakhiOffer() {
@@ -266,15 +260,16 @@ export default function RakhiOffer() {
               <div className="rkh-card" data-testid="rakhi-intro">
                 <h1>Tie the rakhi.<br /><span className="rkh-grad">Unwrap your discount.</span></h1>
                 <p className="rkh-lede">
-                  Land the knot on the thread three times and we'll open a gift for you —
-                  <strong> anywhere from 15% to 40% off</strong> everything we make.
-                  Every single person who ties it wins something.
+                  Land the knot on the thread three times. Then we open a gift —
+                  <strong> somewhere between 15% and 40% off</strong> everything we
+                  make. Nobody walks away empty-handed.
                 </p>
                 <button className="rkh-primary" onClick={start} data-testid="rakhi-start">
                   <Gift size={18} /> Start tying
                 </button>
                 <p className="rkh-fineprint">
-                  Takes about thirty seconds. One code per person, good for {campaign?.valid_days || 7} days.
+                  Thirty seconds to play. One code per person, yours for {campaign?.valid_days || 7} days
+                  {campaign?.closes_at ? ` · offer closes ${deadlineDate(campaign.closes_at)}` : ""}.
                 </p>
               </div>
             )}
@@ -317,8 +312,9 @@ export default function RakhiOffer() {
                 <span className="rkh-bloom" aria-hidden="true">🎀</span>
                 <h1>Tied it!</h1>
                 <p className="rkh-lede">
-                  Your gift is wrapped and waiting. Sign in and we'll open it —
-                  it's somewhere between <strong>15% and 40% off</strong>.
+                  Your gift is wrapped. Sign in and we'll open it — it is worth
+                  somewhere between <strong>15% and 40% off</strong>, and it is
+                  yours either way.
                 </p>
                 {user ? (
                   <button className="rkh-primary" onClick={claim} disabled={claiming} data-testid="rakhi-claim">
@@ -345,14 +341,14 @@ export default function RakhiOffer() {
                 <span className="rkh-bloom" aria-hidden="true">🎁</span>
                 <p className="rkh-prize-label">You unwrapped</p>
                 <p className="rkh-prize" data-testid="rakhi-percent">{reveal}<span>% off</span></p>
-                <p className="rkh-lede">On everything — every product and every service we offer.</p>
+                <p className="rkh-lede">On everything — every product and every service we make.</p>
 
                 <button className="rkh-code" onClick={copyCode} data-testid="rakhi-code">
                   <span>{offer.code}</span>
                   {copied ? <Check size={17} /> : <Copy size={16} />}
                 </button>
                 <p className="rkh-fineprint" data-testid="rakhi-expiry">
-                  {copied ? "Copied. " : ""}Yours alone, and it works until {formatExpiry(offer.expires_at)}.
+                  {copied ? "Copied. " : ""}Yours alone, and it works until {deadlineDate(offer.expires_at)}.
                 </p>
 
                 <div className="rkh-actions">

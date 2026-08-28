@@ -2308,6 +2308,10 @@ async def festival_campaign_state(request: Request):
         "min_percent": min(RAKHI_CAMPAIGN["tiers"]),
         "max_percent": max(RAKHI_CAMPAIGN["tiers"]),
         "valid_days": RAKHI_CAMPAIGN["code_valid_days"],
+        # The deadline is sent so the banner can count down to it. Only the
+        # server decides whether the campaign is actually open — the date is
+        # for display, `open` is the authority.
+        "closes_at": RAKHI_CAMPAIGN["claim_until"],
         "logged_in": bool(user),
         "claimed": claimed,
     }

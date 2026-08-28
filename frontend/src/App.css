@@ -413,6 +413,8 @@ select.welcome-input option{background:#0a0c1a;color:white}
 .fest-banner-text{display:flex;flex-direction:column;line-height:1.3}
 .fest-banner-text strong{font-size:.92rem;font-weight:800}
 .fest-banner-sub{font-size:.79rem;opacity:.78}
+.fest-banner-clock{flex-shrink:0;padding:4px 11px;border-radius:999px;background:rgba(42,5,18,.2);border:1px solid rgba(42,5,18,.3);font-size:.74rem;font-weight:800;letter-spacing:.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fest-banner--urgent .fest-banner-clock{background:rgba(42,5,18,.88);color:#ffd0dc;border-color:transparent}
 .fest-banner-cta{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;padding:7px 16px;border-radius:999px;background:rgba(42,5,18,.86);color:#ffe1b0;font-size:.82rem;font-weight:800;transition:transform .2s}
 .fest-banner-body:hover .fest-banner-cta{transform:translateX(3px)}
 .fest-banner-close{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:30px;height:30px;border:none;border-radius:50%;background:transparent;color:#2a0512;opacity:.6;transition:opacity .2s,background .2s}
@@ -432,6 +434,9 @@ select.welcome-input option{background:#0a0c1a;color:white}
   .fest-banner-text strong{font-size:.84rem}
   .fest-banner-sub{display:none}
   .fest-banner-cta{padding:5px 13px;font-size:.77rem}
+  /* On a phone the countdown only earns its space once it is genuinely close. */
+  .fest-banner-clock{display:none}
+  .fest-banner--urgent .fest-banner-clock{display:inline-block;padding:3px 9px;font-size:.7rem}
 }
 
 /* Raksha Bandhan — festival colours (marigold, thread red, gold) rather than

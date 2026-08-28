@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ArrowRight, Gift, X } from "lucide-react";
 import { useFestivalOffer } from "../hooks/useFestivalOffer";
+import { timeLeft, deadlineDate } from "../lib/campaign";
 import { trackEvent } from "./AnalyticsTracker";
 
 // A strip across the top of the site for as long as the campaign runs. It says
@@ -11,12 +12,31 @@ import { trackEvent } from "./AnalyticsTracker";
 
 const DISMISS_KEY = "evolvix_rakhi_banner_closed";
 
+// Re-reads the deadline once a minute. Anything faster would be a stopwatch on
+// a page nobody is watching; anything slower and "1 hour left" could sit there
+// after it stopped being true.
+function useCountdown(endsAt) {
+  // The tick exists only to force a re-render; timeLeft reads the clock itself.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!endsAt) return undefined;
+    const id = setInterval(() => setTick((t) => t + 1), 60000);
+    return () => clearInterval(id);
+  }, [endsAt]);
+  return endsAt ? timeLeft(endsAt) : null;
+}
+
 export function FestivalBanner() {
   const offer = useFestivalOffer();
   const location = useLocation();
   const [closed, setClosed] = useState(() => {
     try { return sessionStorage.getItem(DISMISS_KEY) === "1"; } catch { return false; }
   });
+
+  const claimed = offer?.claimed;
+  // Someone holding a code cares about their own expiry, not the campaign's.
+  const deadline = claimed ? claimed.expires_at : offer?.closes_at;
+  const left = useCountdown(offer?.open ? deadline : null);
 
   const dismiss = () => {
     setClosed(true);
@@ -27,10 +47,10 @@ export function FestivalBanner() {
   // Never advertise the game on top of the game, or in the admin panel.
   if (location.pathname.startsWith("/rakhi") || location.pathname.startsWith("/admin")) return null;
 
-  const claimed = offer.claimed;
+  const softDate = deadlineDate(deadline);
 
   return (
-    <div className={`fest-banner${claimed ? " fest-banner--claimed" : ""}`} data-testid="festival-banner">
+    <div className={`fest-banner${claimed ? " fest-banner--claimed" : ""}${left?.urgent ? " fest-banner--urgent" : ""}`} data-testid="festival-banner">
       <Link
         to={claimed ? "/shop" : "/rakhi"}
         className="fest-banner-body"
@@ -40,14 +60,19 @@ export function FestivalBanner() {
         <span className="fest-banner-icon" aria-hidden="true">{claimed ? "🎁" : "🎀"}</span>
         {claimed ? (
           <span className="fest-banner-text">
-            <strong>{claimed.percent}% off is waiting for you</strong>
-            <span className="fest-banner-sub">Code {claimed.code} — use it before it expires</span>
+            <strong>Your {claimed.percent}% off is still unused</strong>
+            <span className="fest-banner-sub">Code {claimed.code} · works on everything in the store</span>
           </span>
         ) : (
           <span className="fest-banner-text">
             <strong>Raksha Bandhan — tie a rakhi, win {offer.min_percent}–{offer.max_percent}% off</strong>
-            <span className="fest-banner-sub">Everyone who plays wins something. Takes thirty seconds.</span>
+            <span className="fest-banner-sub">
+              Thirty seconds, and nobody walks away empty-handed{softDate ? ` · ends ${softDate}` : ""}
+            </span>
           </span>
+        )}
+        {left?.label && (
+          <span className="fest-banner-clock" data-testid="festival-banner-countdown">{left.label}</span>
         )}
         <span className="fest-banner-cta">
           {claimed ? "Spend it" : "Play"} <ArrowRight size={15} />
@@ -64,8 +89,9 @@ export function FestivalBanner() {
 // festival runs, and it disappears by itself when the campaign closes.
 export function FestivalPopupOffer({ onNavigate }) {
   const offer = useFestivalOffer();
+  const claimed = offer?.claimed;
+  const left = useCountdown(offer?.open ? (claimed ? claimed.expires_at : offer?.closes_at) : null);
   if (!offer?.open) return null;
-  const claimed = offer.claimed;
 
   return (
     <Link
@@ -81,13 +107,14 @@ export function FestivalPopupOffer({ onNavigate }) {
       <span className="fest-popup-copy">
         <strong>
           {claimed
-            ? `Your ${claimed.percent}% Raksha Bandhan code is ready`
+            ? `Your ${claimed.percent}% Raksha Bandhan code is unused`
             : `Raksha Bandhan: win ${offer.min_percent}–${offer.max_percent}% off everything`}
         </strong>
         <span>
           {claimed
             ? `Code ${claimed.code} — spend it in the store`
-            : "Tie a rakhi and unwrap your discount. Everyone wins something."}
+            : "Tie a rakhi and unwrap your discount. Nobody leaves empty-handed."}
+          {left?.label ? ` · ${left.label}` : ""}
         </span>
       </span>
       <Gift size={18} className="fest-popup-arrow" />
