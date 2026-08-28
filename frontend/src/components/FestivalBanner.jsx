@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowRight, Gift, X } from "lucide-react";
+import { ArrowRight, Check, Copy, Gift, X } from "lucide-react";
 import { useFestivalOffer } from "../hooks/useFestivalOffer";
+import { useAuth } from "../hooks/useAuth";
 import { timeLeft, deadlineDate } from "../lib/campaign";
 import { trackEvent } from "./AnalyticsTracker";
 
@@ -87,6 +88,62 @@ export function FestivalBanner() {
       <button className="fest-banner-close" onClick={dismiss} aria-label="Dismiss offer banner" data-testid="festival-banner-close">
         <X size={16} />
       </button>
+    </div>
+  );
+}
+
+// Shown at the top of the store to whoever is holding a code. The store is the
+// only page that lists products and services together, which is the whole point
+// being made here: the code is not tied to one shelf.
+export function FestivalCodeStrip() {
+  const offer = useFestivalOffer();
+  const { user } = useAuth();
+  const [copied, setCopied] = useState(false);
+  const claimed = offer?.claimed;
+  if (!offer?.open || !claimed) return null;
+
+  const left = claimed.uses_left ?? claimed.max_uses;
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(claimed.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2400);
+    } catch { /* they can read it off the screen */ }
+  };
+
+  return (
+    <div className="fest-strip" data-testid="festival-code-strip">
+      <div className="fest-strip-head">
+        <span className="fest-strip-icon" aria-hidden="true">🎁</span>
+        <div className="fest-strip-lead">
+          <strong>Your Raksha Bandhan code — {claimed.percent}% off</strong>
+          <span>
+            {left > 0
+              ? `${left} of ${claimed.max_uses} ${left === 1 ? "use" : "uses"} left · valid until ${deadlineDate(claimed.expires_at)}`
+              : `All ${claimed.max_uses} uses spent`}
+          </span>
+        </div>
+        <button className="fest-strip-code" onClick={copy} data-testid="festival-strip-code">
+          {claimed.code} {copied ? <Check size={15} /> : <Copy size={14} />}
+        </button>
+      </div>
+      <ul className="fest-strip-terms" data-testid="festival-strip-terms">
+        <li>
+          <strong>Everything we sell, not one category.</strong> Every product in
+          the store, and every service we offer — websites, apps, branding,
+          AI consulting and creative work.
+        </li>
+        <li>
+          <strong>It belongs to your account.</strong> Stay signed in as{" "}
+          {user?.email || "this account"} and the discount is applied at checkout.
+          Services are quoted rather than bought here, so{" "}
+          <Link to="/contact" className="fest-strip-link">tell us the code when you book one</Link>.
+        </li>
+        <li>
+          <strong>Up to {claimed.max_uses} redemptions</strong>, in any mix of
+          products and services.
+        </li>
+      </ul>
     </div>
   );
 }

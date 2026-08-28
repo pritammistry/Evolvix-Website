@@ -420,6 +420,32 @@ select.welcome-input option{background:#0a0c1a;color:white}
 .fest-banner-close{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:30px;height:30px;border:none;border-radius:50%;background:transparent;color:#2a0512;opacity:.6;transition:opacity .2s,background .2s}
 .fest-banner-close:hover{opacity:1;background:rgba(42,5,18,.14)}
 
+/* The holder's code and its terms, at the top of the store */
+.fest-strip{margin:0 0 22px;padding:18px 20px;border-radius:20px;border:1px solid rgba(255,193,77,.34);background:linear-gradient(140deg,rgba(255,90,122,.13),rgba(255,193,77,.07) 55%,rgba(12,14,26,.6))}
+.fest-strip-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.fest-strip-icon{font-size:2rem;line-height:1;flex-shrink:0}
+.fest-strip-lead{flex:1;min-width:200px;display:flex;flex-direction:column;gap:3px}
+.fest-strip-lead strong{color:white;font-size:1.02rem}
+.fest-strip-lead span{color:var(--muted);font-size:.83rem}
+.fest-strip-code{display:inline-flex;align-items:center;gap:10px;padding:11px 18px;border:1px dashed rgba(255,193,77,.6);border-radius:12px;background:rgba(255,193,77,.1);color:white;font-family:"Space Grotesk",monospace;font-size:1rem;font-weight:800;letter-spacing:.12em;transition:background .2s,border-color .2s}
+.fest-strip-code:hover{background:rgba(255,193,77,.18);border-color:#ffc14d}
+.fest-strip-terms{list-style:none;margin:16px 0 0;padding:14px 0 0;border-top:1px solid rgba(255,193,77,.2);display:flex;flex-direction:column;gap:9px}
+.fest-strip-terms li{position:relative;padding-left:20px;color:var(--muted);font-size:.85rem;line-height:1.6;text-wrap:pretty}
+.fest-strip-terms li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:50%;background:#ffc14d}
+.fest-strip-terms strong{color:white}
+.fest-strip-link{color:#ffc14d;font-weight:700;text-decoration:underline;text-underline-offset:2px}
+
+/* The same three points, on the prize screen */
+.rkh-terms{list-style:none;margin:20px 0 0;padding:18px 0 0;border-top:1px solid rgba(255,193,77,.22);display:flex;flex-direction:column;gap:11px;text-align:left}
+.rkh-terms li{position:relative;padding-left:20px;color:var(--muted);font-size:.86rem;line-height:1.6;text-wrap:pretty}
+.rkh-terms li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:50%;background:var(--rkh-gold)}
+.rkh-terms strong{color:white}
+
+@media(max-width:560px){
+  .fest-strip{padding:16px}
+  .fest-strip-code{width:100%;justify-content:center;font-size:.92rem}
+}
+
 /* The same offer, sitting inside the welcome popup */
 .fest-popup-offer{display:flex;align-items:center;gap:13px;margin:18px 0 0;padding:14px 16px;border-radius:16px;border:1px solid rgba(255,193,77,.4);background:linear-gradient(120deg,rgba(255,90,122,.16),rgba(255,193,77,.09));color:white;transition:border-color .2s,transform .2s}
 .fest-popup-offer:hover{border-color:var(--rkh-gold,#ffc14d);transform:translateY(-2px)}

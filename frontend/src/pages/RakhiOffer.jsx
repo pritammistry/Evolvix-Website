@@ -348,14 +348,31 @@ export default function RakhiOffer() {
                   {copied ? <Check size={17} /> : <Copy size={16} />}
                 </button>
                 <p className="rkh-fineprint" data-testid="rakhi-expiry">
-                  {copied ? "Copied. " : ""}Yours alone. Good for{" "}
-                  <strong>{offer.uses_left ?? offer.max_uses} more {(offer.uses_left ?? offer.max_uses) === 1 ? "purchase" : "purchases"}</strong>
-                  {" "}until {deadlineDate(offer.expires_at)}.
+                  {copied ? "Copied. " : ""}Valid until {deadlineDate(offer.expires_at)}.
                 </p>
+
+                {/* Stated plainly, because all three of these get asked. */}
+                <ul className="rkh-terms" data-testid="rakhi-terms">
+                  <li>
+                    <strong>Works on anything we sell.</strong> Every product in the
+                    store and every service we offer — websites, apps, branding,
+                    AI consulting and creative work. Not one category.
+                  </li>
+                  <li>
+                    <strong>It is tied to your account.</strong> Sign in with this
+                    same login and the discount is applied at checkout. Services are
+                    quoted rather than bought online, so tell us the code when you
+                    book one.
+                  </li>
+                  <li>
+                    <strong>{offer.uses_left ?? offer.max_uses} of {offer.max_uses} uses left.</strong> Spend it
+                    across any mix of products and services.
+                  </li>
+                </ul>
 
                 <div className="rkh-actions">
                   <Link to="/shop" className="rkh-primary" data-testid="rakhi-shop">
-                    Use it now <ArrowRight size={17} />
+                    Browse everything <ArrowRight size={17} />
                   </Link>
                   <button className="rkh-secondary" onClick={share} data-testid="rakhi-share">
                     <Share2 size={15} /> {shareCopied ? "Copied!" : "Challenge a friend"}
