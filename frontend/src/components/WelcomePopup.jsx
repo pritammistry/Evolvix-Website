@@ -6,6 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 import { trackFormSubmit } from "./AnalyticsTracker";
 import { markLeadCaptured, hasLeadBeenCaptured } from "../lib/leadCapture";
 import { activeCampaign, daysRemaining } from "../lib/campaign";
+import { FestivalPopupOffer } from "./FestivalBanner";
 
 // sessionStorage, not localStorage: the popup returns once per browser session,
 // so a visitor who comes back in a new tab or a new browsing session sees it
@@ -222,6 +223,10 @@ export function WelcomePopup() {
               {campaign.code && <> · use code <strong>{campaign.code}</strong></>}
             </p>
           )}
+
+          {/* Driven by the live campaign on the server rather than the content
+              editor, so it needs no copy change to appear and none to go away. */}
+          <FestivalPopupOffer onNavigate={close} />
 
           <p className="welcome-trust" style={{ "--i": 8 }} data-testid="welcome-popup-trust">
             <ShieldCheck size={14} /> GST Registered · Udyam MSME · Kolkata based

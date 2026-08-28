@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Facebook, Menu, Phone, X, Mail, User } from "lucide-react";
 import { ChatWidget } from "./ChatWidget";
 import { WelcomePopup } from "./WelcomePopup";
+import { FestivalBanner } from "./FestivalBanner";
 import { toast } from "sonner";
 import { BrandLogo } from "./BrandLogo";
 import { useSiteContent } from "../hooks/useSiteContent";
@@ -23,6 +24,7 @@ export function Layout({ children }) {
   };
   return (
     <div className="site-shell" data-testid="site-shell">
+      <FestivalBanner />
       <header className="topbar" data-testid="site-header">
         <BrandLogo compact />
         <nav className="desktop-nav" aria-label="Primary navigation" data-testid="desktop-navigation">

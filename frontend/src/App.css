@@ -405,6 +405,35 @@ select.welcome-input option{background:#0a0c1a;color:white}
 .mts-pitch strong{color:white}
 .mts-pitch-link{display:inline-flex;align-items:center;gap:7px;color:var(--cyan);font-size:.88rem;font-weight:700}
 
+/* Festival strip. Sits above the sticky header in normal flow, so it scrolls
+   away on the way down and the navigation still pins to the top. */
+.fest-banner{position:relative;display:flex;align-items:center;z-index:21;background:linear-gradient(100deg,#b3245c,#ff5a7a 45%,#ffc14d);color:#2a0512}
+.fest-banner-body{flex:1;display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 44px 10px 20px;color:inherit;text-align:left}
+.fest-banner-icon{font-size:1.4rem;line-height:1;flex-shrink:0}
+.fest-banner-text{display:flex;flex-direction:column;line-height:1.3}
+.fest-banner-text strong{font-size:.92rem;font-weight:800}
+.fest-banner-sub{font-size:.79rem;opacity:.78}
+.fest-banner-cta{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;padding:7px 16px;border-radius:999px;background:rgba(42,5,18,.86);color:#ffe1b0;font-size:.82rem;font-weight:800;transition:transform .2s}
+.fest-banner-body:hover .fest-banner-cta{transform:translateX(3px)}
+.fest-banner-close{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:30px;height:30px;border:none;border-radius:50%;background:transparent;color:#2a0512;opacity:.6;transition:opacity .2s,background .2s}
+.fest-banner-close:hover{opacity:1;background:rgba(42,5,18,.14)}
+
+/* The same offer, sitting inside the welcome popup */
+.fest-popup-offer{display:flex;align-items:center;gap:13px;margin:18px 0 0;padding:14px 16px;border-radius:16px;border:1px solid rgba(255,193,77,.4);background:linear-gradient(120deg,rgba(255,90,122,.16),rgba(255,193,77,.09));color:white;transition:border-color .2s,transform .2s}
+.fest-popup-offer:hover{border-color:var(--rkh-gold,#ffc14d);transform:translateY(-2px)}
+.fest-popup-icon{font-size:1.7rem;line-height:1;flex-shrink:0}
+.fest-popup-copy{display:flex;flex-direction:column;gap:3px;line-height:1.4}
+.fest-popup-copy strong{font-size:.9rem;font-weight:800}
+.fest-popup-copy span{color:rgba(255,255,255,.68);font-size:.79rem}
+.fest-popup-arrow{flex-shrink:0;color:#ffc14d}
+
+@media(max-width:640px){
+  .fest-banner-body{flex-wrap:wrap;justify-content:flex-start;gap:9px;padding:9px 40px 9px 14px}
+  .fest-banner-text strong{font-size:.84rem}
+  .fest-banner-sub{display:none}
+  .fest-banner-cta{padding:5px 13px;font-size:.77rem}
+}
+
 /* Raksha Bandhan — festival colours (marigold, thread red, gold) rather than
    the site's usual cyan, so the campaign reads as an occasion, not a page */
 .rkh-page{--rkh-gold:#ffc14d;--rkh-red:#ff5a7a;--rkh-deep:#b3245c;max-width:640px;margin:0 auto}
