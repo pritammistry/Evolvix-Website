@@ -60,8 +60,14 @@ export function FestivalBanner() {
         <span className="fest-banner-icon" aria-hidden="true">{claimed ? "🎁" : "🎀"}</span>
         {claimed ? (
           <span className="fest-banner-text">
-            <strong>Your {claimed.percent}% off is still unused</strong>
-            <span className="fest-banner-sub">Code {claimed.code} · works on everything in the store</span>
+            <strong>
+              {claimed.uses_left === claimed.max_uses
+                ? `Your ${claimed.percent}% off is still unused`
+                : `${claimed.percent}% off — ${claimed.uses_left} ${claimed.uses_left === 1 ? "use" : "uses"} left`}
+            </strong>
+            <span className="fest-banner-sub">
+              Code {claimed.code} · works on everything in the store
+            </span>
           </span>
         ) : (
           <span className="fest-banner-text">

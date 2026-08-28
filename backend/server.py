@@ -2129,6 +2129,11 @@ RAKHI_CAMPAIGN = {
     "claim_until": "2026-09-04T23:59:59+05:30",
     # How long a code lives once claimed.
     "code_valid_days": 7,
+    # One code per account, spendable this many times. The two limits are
+    # separate on purpose: claiming is capped at one so nobody can replay the
+    # game for a better percentage, while the code itself is good for three
+    # separate purchases.
+    "max_uses": 3,
 }
 
 # Deliberately excludes I, O, 0 and 1: these codes get read off a phone screen
@@ -2195,24 +2200,26 @@ async def resolve_promo_for_product(
     if not promo:
         raise HTTPException(status_code=400, detail="That promo code is not valid.")
 
-    status = promo_status(promo)
-    reasons = {
-        "disabled": "That promo code is no longer active.",
-        "scheduled": "That promo code is not active yet.",
-        "expired": "That promo code has expired.",
-        "exhausted": "That promo code has reached its usage limit.",
-    }
-    if status != "live":
-        raise HTTPException(status_code=400, detail=reasons.get(status, "That promo code is not valid."))
-
-    # A personal code is worthless to anyone but the account that earned it, so
-    # forwarding one to a WhatsApp group gains the recipient nothing.
+    # Ownership is settled before anything else, so a stranger who tries a
+    # forwarded code is told only that it is not theirs. Checking status first
+    # would answer a question they have no business asking — how much of
+    # somebody else's code has been spent, and when it runs out.
     bound_user_id = promo.get("bound_user_id")
     if bound_user_id:
         if not user:
             raise HTTPException(status_code=400, detail="Log in to use this code — it belongs to one account.")
         if user.get("id") != bound_user_id:
             raise HTTPException(status_code=400, detail="This code belongs to a different account.")
+
+    status = promo_status(promo)
+    reasons = {
+        "disabled": "That promo code is no longer active.",
+        "scheduled": "That promo code is not active yet.",
+        "expired": "That promo code has expired.",
+        "exhausted": "That code has been used the maximum number of times.",
+    }
+    if status != "live":
+        raise HTTPException(status_code=400, detail=reasons.get(status, "That promo code is not valid."))
 
     applies_to = promo.get("applies_to") or []
     if applies_to and product.get("id") not in applies_to and product.get("slug") not in applies_to:
@@ -2280,12 +2287,16 @@ async def validate_promo_code(payload: PromoValidateRequest, request: Request):
 
 
 def festival_claim_payload(promo: Dict[str, Any], fresh: bool) -> Dict[str, Any]:
+    cap = int(promo.get("max_redemptions") or RAKHI_CAMPAIGN["max_uses"])
+    used = int(promo.get("redemption_count", 0))
     return {
         "code": promo["code"],
         "percent": int(promo["value"]),
         "expires_at": promo.get("ends_at"),
         "fresh": fresh,
         "campaign": RAKHI_CAMPAIGN["label"],
+        "max_uses": cap,
+        "uses_left": max(0, cap - used),
     }
 
 
@@ -2348,9 +2359,9 @@ async def claim_festival_promo(request: Request):
         "starts_at": now.isoformat(),
         "ends_at": (now + timedelta(days=RAKHI_CAMPAIGN["code_valid_days"])).isoformat(),
         "active": True,
-        "max_redemptions": 1,
+        "max_redemptions": RAKHI_CAMPAIGN["max_uses"],
         "min_order_amount": None,
-        "applies_to": [],  # everything in the store
+        "applies_to": [],  # every product in the store, no minimum
         "redemption_count": 0,
         "campaign_id": RAKHI_CAMPAIGN["id"],
         "bound_user_id": user["id"],
@@ -2691,6 +2702,29 @@ async def chat_stream(payload: ChatRequest):
 
 
 app.include_router(api_router)
+
+
+@app.on_event("startup")
+async def raise_festival_use_limits():
+    """Bring already-issued festival codes up to the current use limit.
+
+    The campaign shipped with a limit of one use and was raised to three while
+    it was already live, so codes handed out in between would otherwise be worth
+    less than the ones issued after. Only ever raises, never lowers, and is
+    scoped to this campaign — a code deliberately given a bigger allowance by
+    hand is left alone. Safe to run on every boot.
+    """
+    cap = RAKHI_CAMPAIGN["max_uses"]
+    try:
+        result = await db.promo_codes.update_many(
+            {"campaign_id": RAKHI_CAMPAIGN["id"], "max_redemptions": {"$lt": cap}},
+            {"$set": {"max_redemptions": cap}},
+        )
+        if result.modified_count:
+            logger.info("Raised %s festival codes to %s uses", result.modified_count, cap)
+    except Exception:
+        # A migration must never stop the API from starting.
+        logger.exception("Could not raise festival code use limits")
 
 
 @app.on_event("shutdown")

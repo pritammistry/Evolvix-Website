@@ -268,7 +268,7 @@ export default function RakhiOffer() {
                   <Gift size={18} /> Start tying
                 </button>
                 <p className="rkh-fineprint">
-                  Thirty seconds to play. One code per person, yours for {campaign?.valid_days || 7} days
+                  Thirty seconds to play. One code per person, good for up to three purchases over {campaign?.valid_days || 7} days
                   {campaign?.closes_at ? ` · offer closes ${deadlineDate(campaign.closes_at)}` : ""}.
                 </p>
               </div>
@@ -348,7 +348,9 @@ export default function RakhiOffer() {
                   {copied ? <Check size={17} /> : <Copy size={16} />}
                 </button>
                 <p className="rkh-fineprint" data-testid="rakhi-expiry">
-                  {copied ? "Copied. " : ""}Yours alone, and it works until {deadlineDate(offer.expires_at)}.
+                  {copied ? "Copied. " : ""}Yours alone. Good for{" "}
+                  <strong>{offer.uses_left ?? offer.max_uses} more {(offer.uses_left ?? offer.max_uses) === 1 ? "purchase" : "purchases"}</strong>
+                  {" "}until {deadlineDate(offer.expires_at)}.
                 </p>
 
                 <div className="rkh-actions">
