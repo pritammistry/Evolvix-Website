@@ -15,6 +15,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
 
 // Validation follows the admin's form settings, so changing the minimum length
 // or turning the phone field off cannot leave a rule behind that blocks submit.
+const OTHER = "Other";
+
 function validate(form, cfg) {
   const min = Number(cfg.message_min_length) || 0;
   const errors = {};
@@ -26,6 +28,13 @@ function validate(form, cfg) {
   }
   if (!form.email.trim()) errors.email = "Email address is required.";
   else if (!EMAIL_RE.test(form.email)) errors.email = "Enter a valid email address.";
+  if (!form.business_name.trim()) errors.business_name = "Business name is required.";
+  if (!form.business_type) errors.business_type = "Please choose a business type.";
+  // "Other" on its own tells us nothing, so it has to be spelled out.
+  if (form.business_type === OTHER && !form.business_type_other.trim())
+    errors.business_type_other = "Tell us what kind of business it is.";
+  if (form.business_industry === OTHER && !form.business_industry_other.trim())
+    errors.business_industry_other = "Tell us which industry.";
   if (min > 0 && form.message.trim().length < min)
     errors.message = `Message must be at least ${min} characters (${form.message.trim().length}/${min}).`;
   return errors;
@@ -38,6 +47,8 @@ export default function Contact() {
   const page = content.contact_page || {};
   const formCfg = page.form || {};
   const inquiryTypes = page.inquiry_types?.length ? page.inquiry_types : ["Business inquiry"];
+  const businessTypes = page.business_types?.length ? page.business_types : [OTHER];
+  const businessIndustries = page.business_industries?.length ? page.business_industries : [OTHER];
   // Empty while loading: the fallback content lists every default button, so
   // rendering it would show buttons you have hidden and then snatch them away
   // once the real content lands.
@@ -46,7 +57,7 @@ export default function Contact() {
   const [searchParams] = useSearchParams();
   const prefillType = inquiryTypes.includes(searchParams.get("type")) ? searchParams.get("type") : inquiryTypes[0];
   const prefillService = searchParams.get("service") || "";
-  const [form, setForm] = useState({ name: "", phone: "+91 ", email: "", inquiry_type: prefillType, message: prefillService ? `Hi, I’m interested in ${prefillService}.` : "" });
+  const [form, setForm] = useState({ name: "", phone: "+91 ", email: "", business_name: "", business_type: "", business_type_other: "", business_industry: "", business_industry_other: "", inquiry_type: prefillType, message: prefillService ? `Hi, I’m interested in ${prefillService}.` : "" });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
@@ -63,16 +74,28 @@ export default function Contact() {
 
   const submit = async (event) => {
     event.preventDefault();
-    const allTouched = { name: true, phone: true, email: true, message: true };
+    const allTouched = { name: true, phone: true, email: true, message: true, business_name: true, business_type: true, business_type_other: true, business_industry_other: true };
     setTouched(allTouched);
     const errs = validate(form, formCfg);
     setErrors(errs);
     if (Object.keys(errs).length > 0) { toast.error("Please fix the errors before sending."); return; }
     try {
-      await submitContact(form);
-      trackFormSubmit("contact-form", window.location.pathname, { inquiry_type: form.inquiry_type });
+      // "Other" is sent as what they actually typed, so the lead is readable
+      // without cross-referencing a second column.
+      const resolve = (choice, typed) => (choice === OTHER ? `Other — ${typed.trim()}` : choice);
+      await submitContact({
+        name: form.name,
+        phone: form.phone,
+        email: form.email,
+        inquiry_type: form.inquiry_type,
+        message: form.message,
+        business_name: form.business_name.trim(),
+        business_type: resolve(form.business_type, form.business_type_other),
+        business_industry: form.business_industry ? resolve(form.business_industry, form.business_industry_other) : "",
+      });
+      trackFormSubmit("contact-form", window.location.pathname, { inquiry_type: form.inquiry_type, business_type: form.business_type });
       toast.success("Your message has been received.");
-      setForm({ name: "", phone: "+91 ", email: "", inquiry_type: inquiryTypes[0], message: "" });
+      setForm({ name: "", phone: "+91 ", email: "", business_name: "", business_type: "", business_type_other: "", business_industry: "", business_industry_other: "", inquiry_type: inquiryTypes[0], message: "" });
       setTouched({});
       setErrors({});
     } catch { toast.error("Something went wrong. Please try again."); }
@@ -94,6 +117,21 @@ export default function Contact() {
           {field("name", <input value={form.name} onChange={(e) => setField("name", e.target.value)} onBlur={() => blur("name")} placeholder={formCfg.name_placeholder || "Your full name *"} data-testid="contact-name-input" required />)}
           {formCfg.show_phone !== false && field("phone", <input value={form.phone} onChange={(e) => setField("phone", e.target.value)} onBlur={() => blur("phone")} placeholder={formCfg.phone_placeholder || "+91 98765 43210 *"} data-testid="contact-phone-input" type="tel" required={formCfg.phone_required !== false} />)}
           {field("email", <input value={form.email} onChange={(e) => setField("email", e.target.value)} onBlur={() => blur("email")} placeholder={formCfg.email_placeholder || "Email address *"} data-testid="contact-email-input" type="email" required />)}
+          {field("business_name", <input value={form.business_name} onChange={(e) => setField("business_name", e.target.value)} onBlur={() => blur("business_name")} placeholder="Business name *" data-testid="contact-business-name-input" required />)}
+          {field("business_type", (
+            <select value={form.business_type} onChange={(e) => setField("business_type", e.target.value)} onBlur={() => blur("business_type")} data-testid="contact-business-type-select" required>
+              <option value="" disabled>Business type *</option>
+              {businessTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+            </select>
+          ))}
+          {form.business_type === OTHER && field("business_type_other", <input value={form.business_type_other} onChange={(e) => setField("business_type_other", e.target.value)} onBlur={() => blur("business_type_other")} placeholder="What kind of business? *" data-testid="contact-business-type-other-input" required />)}
+          {field("business_industry", (
+            <select value={form.business_industry} onChange={(e) => setField("business_industry", e.target.value)} data-testid="contact-business-industry-select">
+              <option value="">Industry (optional)</option>
+              {businessIndustries.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          ))}
+          {form.business_industry === OTHER && field("business_industry_other", <input value={form.business_industry_other} onChange={(e) => setField("business_industry_other", e.target.value)} onBlur={() => blur("business_industry_other")} placeholder="Which industry? *" data-testid="contact-business-industry-other-input" required />)}
           <select value={form.inquiry_type} onChange={(e) => setField("inquiry_type", e.target.value)} data-testid="contact-inquiry-select" required>
             {inquiryTypes.map((type) => <option key={type} value={type}>{type}</option>)}
           </select>

@@ -479,6 +479,55 @@ DEFAULT_SITE_CONTENT: Dict[str, Any] = {
             "Branding / Portfolio / Resume",
             "Collaboration inquiry",
         ],
+        # Mandatory on the contact form. Describes what KIND of business the
+        # enquiry is coming from — the structure, not the sector.
+        "business_types": [
+            "Retail Store",
+            "Wholesaler / Distributor",
+            "Manufacturer",
+            "Service Provider",
+            "E-commerce / Online Seller",
+            "Freelancer / Sole Proprietor",
+            "Startup",
+            "Agency / Consultancy",
+            "Enterprise / Large Organisation",
+            "Educational Institute",
+            "NGO / Trust",
+            "Government / Public Sector",
+            "Other",
+        ],
+        # Optional. The sector the business trades in. Kept alphabetical so a
+        # long list stays scannable, with the local trades that actually walk in
+        # named explicitly rather than buried under a generic heading.
+        "business_industries": [
+            "Apparel & Fashion",
+            "Automobile & Auto Parts",
+            "Beauty, Salon & Wellness",
+            "Construction & Real Estate",
+            "Education & Coaching",
+            "Electronics & Appliances",
+            "Entertainment & Events",
+            "Financial Services & Insurance",
+            "Food, Restaurant & Catering",
+            "Furniture & Home Decor",
+            "Grocery & Kirana",
+            "Handicrafts & Handloom",
+            "Healthcare & Clinics",
+            "Hotel & Hospitality",
+            "IT & Software",
+            "Jewellery",
+            "Logistics & Transport",
+            "Manufacturing & Industrial",
+            "Media & Publishing",
+            "Opticals & Eyewear",
+            "Pharmacy & Medical Store",
+            "Printing & Packaging",
+            "Rice Mill & Agro Processing",
+            "Sports & Fitness",
+            "Textiles",
+            "Travel & Tourism",
+            "Other",
+        ],
         "form": {
             "name_placeholder": "Your full name *",
             "phone_placeholder": "+91 98765 43210 *",
@@ -724,6 +773,13 @@ class ContactMessageCreate(BaseModel):
     email: EmailStr
     inquiry_type: str = Field(..., max_length=80)
     message: str = Field(..., min_length=10, max_length=2500)
+    # Optional here on purpose. The contact form requires the first two, but the
+    # welcome popup and the chat lead card also post to this endpoint and do not
+    # ask for them — making these mandatory server-side would silently break
+    # both of those lead sources.
+    business_name: Optional[str] = Field(None, max_length=160)
+    business_type: Optional[str] = Field(None, max_length=120)
+    business_industry: Optional[str] = Field(None, max_length=120)
 
 
 class NewsletterCreate(BaseModel):
@@ -1581,6 +1637,22 @@ async def create_contact_message(payload: ContactMessageCreate):
     doc = payload.model_dump()
     doc.update({"id": str(uuid.uuid4()), "created_at": now_iso(), "status": "new"})
     await db.contact_messages.insert_one(doc)
+
+    # Only rendered when present, so an enquiry from the welcome popup does not
+    # arrive with three empty rows in it.
+    def _row(label: str, value: Any) -> str:
+        if not value:
+            return ""
+        return (
+            f'<tr><td style="padding:10px 14px;background:#f5f5f5;font-weight:700">{label}</td>'
+            f'<td style="padding:10px 14px;border-bottom:1px solid #eee">{value}</td></tr>'
+        )
+
+    business_rows = "".join([
+        _row("Business", doc.get("business_name")),
+        _row("Business type", doc.get("business_type")),
+        _row("Industry", doc.get("business_industry")),
+    ])
     send_notification_email(
         to=OWNER_EMAILS,
         subject=f"New enquiry [{doc.get('inquiry_type', 'Contact')}] from {doc.get('name', 'Unknown')}",
@@ -1593,6 +1665,7 @@ async def create_contact_message(payload: ContactMessageCreate):
     <tr><td style="padding:10px 14px;background:#f5f5f5;font-weight:700">Phone</td><td style="padding:10px 14px;border-bottom:1px solid #eee">{doc.get('phone', '—')}</td></tr>
     <tr><td style="padding:10px 14px;background:#f5f5f5;font-weight:700">Email</td><td style="padding:10px 14px;border-bottom:1px solid #eee"><a href="mailto:{doc.get('email')}">{doc.get('email', '—')}</a></td></tr>
     <tr><td style="padding:10px 14px;background:#f5f5f5;font-weight:700">Type</td><td style="padding:10px 14px;border-bottom:1px solid #eee">{doc.get('inquiry_type', '—')}</td></tr>
+    {business_rows}
     <tr><td style="padding:10px 14px;background:#f5f5f5;font-weight:700;vertical-align:top">Message</td><td style="padding:10px 14px">{doc.get('message', '—')}</td></tr>
   </table>
   <p style="margin-top:20px"><a href="https://evolvixtech.in/admin" style="background:#13dff4;color:#020204;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:700">View in Admin Dashboard</a></p>
@@ -1726,7 +1799,7 @@ async def admin_leads_contacts_export(request: Request):
     docs = []
     async for doc in db.contact_messages.find({}, {"_id": 0}).sort("created_at", -1):
         docs.append(doc)
-    fields = ["id", "name", "email", "phone", "inquiry_type", "message", "status", "created_at"]
+    fields = ["id", "name", "email", "phone", "business_name", "business_type", "business_industry", "inquiry_type", "message", "status", "created_at"]
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=fields, extrasaction="ignore")
     writer.writeheader()
