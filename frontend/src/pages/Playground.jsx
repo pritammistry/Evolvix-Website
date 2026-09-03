@@ -8,9 +8,24 @@ import { useAuth } from "../hooks/useAuth";
 import { fetchPlayground } from "../api";
 import { trackEvent } from "../components/AnalyticsTracker";
 import { toast } from "sonner";
+import { janmashtamiLive } from "../lib/janmashtami";
 
 // Games that live on the site itself, as opposed to the downloadable items the
 // admin manages. Adding one here is the only step needed to shelve it.
+// Festival games sit at the front while their day is on, and drop off the shelf
+// by themselves afterwards — see lib/janmashtami.js for the date.
+const FESTIVAL_GAMES = [
+  {
+    id: "janmashtami",
+    path: "/janmashtami",
+    icon: "🫕",
+    title: "Dahi Handi",
+    hook: "One tap, one throw.",
+    description: "The handi swings above you and you throw straight up — so let go before it arrives. Five pots, each higher and faster. No sign-up.",
+    live: janmashtamiLive,
+  },
+];
+
 const BROWSER_GAMES = [
   {
     id: "rakhi",
@@ -325,7 +340,7 @@ export default function Playground() {
           Free to play with an Evolvix account — nothing to install.
         </p>
         <div className="pg-games" data-testid="playground-games-shelf">
-          {BROWSER_GAMES.map((game) => (
+          {[...FESTIVAL_GAMES.filter((g) => g.live()), ...BROWSER_GAMES].map((game) => (
             <article className="pg-game" key={game.path} data-testid={`playground-game-${game.id}`}>
               <span className="pg-game-icon" aria-hidden="true">{game.icon}</span>
               <h3>{game.title}</h3>

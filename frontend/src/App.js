@@ -21,6 +21,7 @@ const MindTheShop = lazy(() => import("./pages/MindTheShop"));
 const TomorrowsOrder = lazy(() => import("./pages/TomorrowsOrder"));
 const Rangoli = lazy(() => import("./pages/Rangoli"));
 const RakhiOffer = lazy(() => import("./pages/RakhiOffer"));
+const DahiHandi = lazy(() => import("./pages/DahiHandi"));
 import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
 import FAQ from "./pages/FAQ";
@@ -49,6 +50,7 @@ function AppRoutes() {
       <Route path="/playground/tomorrows-order" element={<TomorrowsOrder />} />
       <Route path="/playground/rangoli" element={<Rangoli />} />
       <Route path="/rakhi" element={<RakhiOffer />} />
+      <Route path="/janmashtami" element={<DahiHandi />} />
       <Route path="/learning-growth" element={<Shop />} />
       <Route path="/shop" element={<Shop />} />
       <Route path="/products/:slug" element={<ProductDetail />} />
