@@ -812,7 +812,11 @@ img,svg,video,canvas{max-width:100%}
 .jnm-secondary:hover{border-color:rgba(255,212,121,.62);background:rgba(255,212,121,.14)}
 .jnm-fine{margin:16px 0 0;color:var(--muted);font-size:.8rem}
 
-.jnm-stage{width:100%;display:flex;flex-direction:column;align-items:center;gap:12px}
+/* touch-action covers the whole stage, not just the canvas button: during fast
+   play a tap often lands in the gap beside it, and two of those in quick
+   succession would otherwise fire the browser's double-tap zoom. Pinch zoom is
+   untouched — manipulation only drops the double-tap gesture. */
+.jnm-stage{width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;touch-action:manipulation}
 .jnm-hud{width:100%;max-width:640px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--muted);font-size:.92rem;font-variant-numeric:tabular-nums}
 .jnm-throws{color:var(--jnm-gold);font-weight:800}
 .jnm-pips{display:inline-flex;gap:6px}
