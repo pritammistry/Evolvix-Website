@@ -28,7 +28,7 @@ const LAUNCH_Y = 0.87;      // where the throw leaves from, as a fraction of hei
 const BALL_SPEED = 1.2;     // heights per second, so it feels identical at any size
 const CLAY = "#c2673a";
 const CLAY_DARK = "#8f421f";
-const REF_H = 560;          // radii are authored against this height
+const REF_H = 470;          // radii are authored against this height; lower = larger art
 
 function rand(a, b) { return a + Math.random() * (b - a); }
 
@@ -74,8 +74,12 @@ export default function DahiHandi() {
     const canvas = canvasRef.current;
     const wrap = wrapRef.current;
     if (!canvas || !wrap) return;
-    const w = Math.max(260, Math.min(wrap.clientWidth, 520));
-    const h = Math.round(w * 1.18);
+    const w = Math.max(260, Math.min(wrap.clientWidth, 640));
+    // Bounded by the room actually left on screen, so the board never runs past
+    // the fold and cut off the hands at the bottom. ~300px covers the offer
+    // strip, header, back link, eyebrow and the HUD row above it.
+    const maxH = Math.max(360, window.innerHeight - 330);
+    const h = Math.round(Math.min(w * 1.3, maxH));
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.style.width = `${w}px`;
     canvas.style.height = `${h}px`;
@@ -90,11 +94,14 @@ export default function DahiHandi() {
     }
   }, [reduced]);
 
+  // `phase` is a dependency because the canvas does not exist on the intro
+  // screen. Without it fit() ran once, found no element, returned early, and
+  // the canvas kept its intrinsic 300x150 default for the whole game.
   useEffect(() => {
     fit();
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
-  }, [fit]);
+  }, [fit, phase]);
 
   useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
 
@@ -116,23 +123,6 @@ export default function DahiHandi() {
     trackEvent({ event_type: "game_start", label: "dahi-handi" });
   };
 
-  const burst = (x, y, r) => {
-    const s = stateRef.current;
-    const n = reduced ? 10 : 1;
-    for (let i = 0; i < 14 * n / (reduced ? 10 : 1) * (reduced ? 0.5 : 1); i += 1) {
-      const a = rand(0, Math.PI * 2);
-      s.parts.push({ kind: "shard", x, y, vx: Math.cos(a) * rand(40, 210), vy: Math.sin(a) * rand(40, 190) - 60, rot: rand(0, 6), vr: rand(-7, 7), size: rand(r * 0.16, r * 0.4), life: 1 });
-    }
-    for (let i = 0; i < (reduced ? 8 : 24); i += 1) {
-      s.parts.push({ kind: "curd", x: x + rand(-r * .5, r * .5), y: y + rand(-r * .3, r * .5), vx: rand(-110, 110), vy: rand(-40, 130), size: rand(2.5, 7.5), life: 1 });
-    }
-    for (let i = 0; i < (reduced ? 5 : 16); i += 1) {
-      s.parts.push({ kind: "petal", x: x + rand(-r, r), y: y + rand(-r, r), vx: rand(-70, 70), vy: rand(-150, -30), rot: rand(0, 6), vr: rand(-4, 4), size: rand(3.5, 7), life: 1, hue: rand(18, 48) });
-    }
-    s.shake = reduced ? 0 : 1;
-    s.cheer = 1;
-  };
-
   const throwBall = () => {
     const s = stateRef.current;
     if (s.phase !== "ready") return;
@@ -151,6 +141,24 @@ export default function DahiHandi() {
     if (phase !== "playing") return undefined;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
+
+    // Defined in here because the loop is its only caller, which keeps it out
+    // of the effect's dependency list rather than papering over it.
+    const burst = (x, y, r) => {
+      const s = stateRef.current;
+      for (let i = 0; i < (reduced ? 6 : 16); i += 1) {
+        const a = rand(0, Math.PI * 2);
+        s.parts.push({ kind: "shard", x, y, vx: Math.cos(a) * rand(40, 210), vy: Math.sin(a) * rand(40, 190) - 60, rot: rand(0, 6), vr: rand(-7, 7), size: rand(r * 0.16, r * 0.4), life: 1 });
+      }
+      for (let i = 0; i < (reduced ? 8 : 24); i += 1) {
+        s.parts.push({ kind: "curd", x: x + rand(-r * .5, r * .5), y: y + rand(-r * .3, r * .5), vx: rand(-110, 110), vy: rand(-40, 130), size: rand(2.5, 7.5), life: 1 });
+      }
+      for (let i = 0; i < (reduced ? 5 : 16); i += 1) {
+        s.parts.push({ kind: "petal", x: x + rand(-r, r), y: y + rand(-r, r), vx: rand(-70, 70), vy: rand(-150, -30), rot: rand(0, 6), vr: rand(-4, 4), size: rand(3.5, 7), life: 1, hue: rand(18, 48) });
+      }
+      s.shake = reduced ? 0 : 1;
+      s.cheer = 1;
+    };
 
     const tick = (now) => {
       const dt = lastRef.current ? Math.min((now - lastRef.current) / 1000, 0.05) : 0;

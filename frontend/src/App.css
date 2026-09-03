@@ -793,30 +793,30 @@ img,svg,video,canvas{max-width:100%}
 /* ─── Janmashtami: Dahi Handi ─────────────────────────────────────────────────
    Festival palette of its own — indigo night, marigold, clay — so it does not
    read as the same page as the Rakhi game or the rest of the site. */
-.jnm-page{--jnm-gold:#ffd479;--jnm-clay:#c2673a;--jnm-deep:#241146;max-width:600px;margin:0 auto;display:flex;flex-direction:column;align-items:center}
+.jnm-page{--jnm-gold:#ffd479;--jnm-clay:#c2673a;--jnm-deep:#241146;max-width:720px;margin:0 auto;display:flex;flex-direction:column;align-items:center}
 .jnm-eyebrow{display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;padding:7px 16px;border-radius:999px;border:1px solid rgba(255,212,121,.4);background:rgba(255,212,121,.1);color:var(--jnm-gold);font-size:.72rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
 .jnm-card{width:100%;text-align:center;padding:clamp(24px,5vw,38px);border-radius:26px;border:1px solid rgba(255,212,121,.26);background:linear-gradient(160deg,rgba(36,17,70,.92),rgba(74,26,58,.7) 60%,rgba(12,8,24,.92));box-shadow:0 26px 70px rgba(24,8,44,.5)}
-.jnm-card h1{font-size:clamp(1.9rem,6.4vw,2.9rem);line-height:1.08;margin:0 0 14px}
+.jnm-card h1{font-size:clamp(2.05rem,6.8vw,3.2rem);line-height:1.08;margin:0 0 14px}
 .jnm-card h2{font-size:clamp(1.4rem,5vw,2rem);margin:0 0 6px}
-.jnm-pot{display:block;font-size:3.2rem;line-height:1;margin-bottom:6px;animation:jnmSwing 2.6s ease-in-out infinite}
+.jnm-pot{display:block;font-size:3.8rem;line-height:1;margin-bottom:6px;animation:jnmSwing 2.6s ease-in-out infinite}
 @keyframes jnmSwing{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
-.jnm-lede{color:var(--muted);font-size:.95rem;line-height:1.65;margin:0 auto 20px;max-width:44ch;text-wrap:pretty}
+.jnm-lede{color:var(--muted);font-size:1.02rem;line-height:1.65;margin:0 auto 20px;max-width:44ch;text-wrap:pretty}
 .jnm-lede strong{color:white}
 .jnm-rules{list-style:none;padding:0;margin:0 0 24px;display:flex;flex-direction:column;gap:9px;text-align:left}
-.jnm-rules li{position:relative;padding-left:20px;color:var(--muted);font-size:.88rem;line-height:1.55}
+.jnm-rules li{position:relative;padding-left:22px;color:var(--muted);font-size:.96rem;line-height:1.55}
 .jnm-rules li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:50%;background:var(--jnm-gold)}
 .jnm-rules strong{color:white}
-.jnm-primary{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:14px 28px;border:none;border-radius:999px;background:linear-gradient(120deg,var(--jnm-gold),#ff9a3c 55%,var(--jnm-clay));color:#2b1204;font-size:.98rem;font-weight:800;transition:transform .2s,box-shadow .2s}
+.jnm-primary{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:16px 32px;border:none;border-radius:999px;background:linear-gradient(120deg,var(--jnm-gold),#ff9a3c 55%,var(--jnm-clay));color:#2b1204;font-size:1.05rem;font-weight:800;transition:transform .2s,box-shadow .2s}
 .jnm-primary:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(255,154,60,.32)}
 .jnm-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border:1px solid rgba(255,212,121,.32);border-radius:999px;background:rgba(255,212,121,.07);color:#ffe7bd;font-size:.86rem;font-weight:700;transition:border-color .2s,background .2s}
 .jnm-secondary:hover{border-color:rgba(255,212,121,.62);background:rgba(255,212,121,.14)}
 .jnm-fine{margin:16px 0 0;color:var(--muted);font-size:.8rem}
 
 .jnm-stage{width:100%;display:flex;flex-direction:column;align-items:center;gap:12px}
-.jnm-hud{width:100%;max-width:520px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--muted);font-size:.82rem;font-variant-numeric:tabular-nums}
+.jnm-hud{width:100%;max-width:640px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--muted);font-size:.92rem;font-variant-numeric:tabular-nums}
 .jnm-throws{color:var(--jnm-gold);font-weight:800}
 .jnm-pips{display:inline-flex;gap:6px}
-.jnm-pip{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.16);transition:background .3s,transform .3s}
+.jnm-pip{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.16);transition:background .3s,transform .3s}
 .jnm-pip--done{background:var(--jnm-gold);transform:scale(1.2)}
 .jnm-pip--now{background:#ff9a3c}
 
@@ -824,7 +824,7 @@ img,svg,video,canvas{max-width:100%}
 .jnm-canvas{display:block;border-radius:24px;border:1px solid rgba(255,212,121,.22)}
 .jnm-canvas-btn--hit .jnm-canvas{border-color:rgba(255,212,121,.85);box-shadow:0 0 0 3px rgba(255,212,121,.22) inset}
 .jnm-canvas-btn--miss .jnm-canvas{border-color:rgba(255,255,255,.16)}
-.jnm-tap-hint{position:absolute;left:0;right:0;bottom:12px;text-align:center;color:rgba(255,231,189,.72);font-size:.8rem;font-weight:700;letter-spacing:.06em;pointer-events:none;line-height:1.4}
+.jnm-tap-hint{position:absolute;left:0;right:0;bottom:16px;text-align:center;color:rgba(255,231,189,.8);font-size:.95rem;font-weight:700;letter-spacing:.06em;pointer-events:none;line-height:1.4}
 
 .jnm-result{margin-top:16px}
 .jnm-score{margin:6px 0 10px;font-family:"Rajdhani","Space Grotesk",sans-serif;font-size:clamp(3.2rem,13vw,5rem);font-weight:700;line-height:1;background:linear-gradient(100deg,var(--jnm-gold),#ff9a3c 55%,#ff6b8a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-variant-numeric:tabular-nums}
