@@ -76,3 +76,7 @@ export const fetchVisitorOrders = () => axios.get(`${API}/visitor/orders`);
 // Raksha Bandhan campaign: the browser asks for a discount, the server decides it.
 export const fetchFestivalOffer = () => axios.get(`${API}/promo/festival`);
 export const claimFestivalOffer = () => axios.post(`${API}/promo/festival-claim`);
+
+// Playground leaderboards. No account involved — see the note on the endpoint.
+export const fetchLeaderboard = (game, limit = 10) => axios.get(`${API}/games/${game}/leaderboard`, { params: { limit } });
+export const submitGameScore = (game, payload) => axios.post(`${API}/games/${game}/scores`, payload);

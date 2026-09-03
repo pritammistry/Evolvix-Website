@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, RotateCcw, Share2, Sparkles } from "lucide-react";
 import { useSEO } from "../hooks/useSEO";
-import { trackEvent } from "../components/AnalyticsTracker";
+import { trackEvent, trackFormSubmit } from "../components/AnalyticsTracker";
+import { fetchLeaderboard, submitGameScore, submitContact } from "../api";
+import { toast } from "sonner";
 import { useFestivalOffer } from "../hooks/useFestivalOffer";
 import { janmashtamiLive, JANMASHTAMI_ENDS_AT } from "../lib/janmashtami";
 
@@ -31,6 +33,13 @@ const CLAY_DARK = "#8f421f";
 const REF_H = 470;          // radii are authored against this height; lower = larger art
 
 function rand(a, b) { return a + Math.random() * (b - a); }
+
+function fmtTime(sec) {
+  const s = Math.max(0, sec);
+  const m = Math.floor(s / 60);
+  const r = (s % 60).toFixed(1).padStart(4, "0");
+  return m ? `${m}m ${r}s` : `${r}s`;
+}
 
 export default function DahiHandi() {
   useSEO({
@@ -65,6 +74,14 @@ export default function DahiHandi() {
   const [throws, setThrows] = useState(0);
   const [flash, setFlash] = useState("");
   const [copied, setCopied] = useState(false);
+  const [elapsed, setElapsed] = useState(0);          // seconds, ticks while playing
+  const startedAtRef = useRef(0);
+  const [board, setBoard] = useState([]);
+  const [entry, setEntry] = useState({ name: "" });
+  const [result, setResult] = useState(null);          // { rank, total, improved }
+  const [sending, setSending] = useState(false);
+  const [stage, setStage] = useState("score");         // score | enquiry | thanks
+  const [lead, setLead] = useState({ email: "", phone: "", interest: "Business inquiry" });
   const [live] = useState(() => janmashtamiLive());
 
   const reduced = typeof window !== "undefined"
@@ -118,10 +135,22 @@ export default function DahiHandi() {
   const start = () => {
     setThrows(0);
     setFlash("");
+    setElapsed(0);
+    setResult(null);
+    setStage("score");
+    startedAtRef.current = Date.now();
     startLevel(0);
     setPhase("playing");
     trackEvent({ event_type: "game_start", label: "dahi-handi" });
   };
+
+  // Read off the wall clock rather than counting ticks, so a throttled or
+  // backgrounded tab still reports the real time taken.
+  useEffect(() => {
+    if (phase !== "playing") return undefined;
+    const id = setInterval(() => setElapsed((Date.now() - startedAtRef.current) / 1000), 200);
+    return () => clearInterval(id);
+  }, [phase]);
 
   const throwBall = () => {
     const s = stateRef.current;
@@ -191,7 +220,12 @@ export default function DahiHandi() {
             const next = s.level + 1;
             setTimeout(() => {
               setFlash("");
-              if (next >= HANDIS.length) { s.phase = "done"; setPhase("done"); return; }
+              if (next >= HANDIS.length) {
+                s.phase = "done";
+                setElapsed((Date.now() - startedAtRef.current) / 1000);
+                setPhase("done");
+                return;
+              }
               startLevel(next);
             }, 1250);
           } else {
@@ -340,7 +374,52 @@ export default function DahiHandi() {
   }, [phase, reduced]);
 
   const perfect = throws === HANDIS.length;
-  const shareText = `I broke all ${HANDIS.length} handis in ${throws} throws${perfect ? " — not one wasted" : ""}. Happy Janmashtami 🪈 Try it: evolvixtech.in/janmashtami`;
+  const shareText = `I broke all ${HANDIS.length} handis in ${throws} throws and ${fmtTime(elapsed)}${perfect ? " — not one wasted" : ""}. Happy Janmashtami 🪈 Beat that: evolvixtech.in/janmashtami`;
+
+  const loadBoard = useCallback(async () => {
+    try {
+      const { data } = await fetchLeaderboard("dahi-handi", 10);
+      setBoard(data.scores || []);
+    } catch { /* a leaderboard that will not load must not block the game */ }
+  }, []);
+
+  useEffect(() => { if (phase === "done") loadBoard(); }, [phase, loadBoard]);
+
+  const submitScore = async (e) => {
+    e.preventDefault();
+    const name = entry.name.trim();
+    if (!name) { toast.error("Add a name for the board."); return; }
+    setSending(true);
+    try {
+      const { data } = await submitGameScore("dahi-handi", { name, throws, seconds: Number(elapsed.toFixed(1)) });
+      setResult(data);
+      setBoard(data.scores || []);
+      setStage("enquiry");
+      trackEvent({ event_type: "game_score_submitted", label: "dahi-handi", metadata: { throws, seconds: Math.round(elapsed), rank: data.rank } });
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || "Could not save that score. Please try again.");
+    } finally { setSending(false); }
+  };
+
+  const submitLead = async (e) => {
+    e.preventDefault();
+    if (!lead.email.trim()) { toast.error("An email address is needed to reply."); return; }
+    setSending(true);
+    try {
+      await submitContact({
+        name: entry.name.trim() || "Dahi Handi player",
+        email: lead.email.trim(),
+        phone: lead.phone.trim() || undefined,
+        inquiry_type: lead.interest,
+        message: `Janmashtami Dahi Handi player — finished 5 handis in ${throws} throws and ${fmtTime(elapsed)}. Interested in ${lead.interest}.`,
+      });
+      trackFormSubmit("janmashtami-game", window.location.pathname, { inquiry_type: lead.interest });
+      setStage("thanks");
+      toast.success("Thanks — we will be in touch.");
+    } catch {
+      toast.error("Could not send that. Please try the Contact page.");
+    } finally { setSending(false); }
+  };
 
   const share = async () => {
     trackEvent({ event_type: "game_share", label: "dahi-handi", metadata: { throws } });
@@ -410,7 +489,10 @@ export default function DahiHandi() {
                 <i key={i} className={i < level ? "jnm-pip jnm-pip--done" : i === level ? "jnm-pip jnm-pip--now" : "jnm-pip"} />
               ))}
             </span>
-            <span className="jnm-throws" data-testid="jnm-throws">{throws} {throws === 1 ? "throw" : "throws"}</span>
+            <span className="jnm-hud-right">
+              <span className="jnm-timer" data-testid="jnm-timer">{fmtTime(elapsed)}</span>
+              <span className="jnm-throws" data-testid="jnm-throws">{throws} {throws === 1 ? "throw" : "throws"}</span>
+            </span>
           </div>
 
           <button
@@ -440,6 +522,102 @@ export default function DahiHandi() {
               ? "Five handis, five throws. That is as good as it gets."
               : `Five handis broken. Perfect is ${HANDIS.length} — worth another go.`}
           </p>
+
+          <p className="jnm-time-line" data-testid="jnm-time">in {fmtTime(elapsed)}</p>
+
+          {stage === "score" && (
+            <form className="jnm-form" onSubmit={submitScore} data-testid="jnm-score-form">
+              <label className="jnm-label" htmlFor="jnm-name">Put it on the board</label>
+              <div className="jnm-form-row">
+                <input
+                  id="jnm-name"
+                  value={entry.name}
+                  onChange={(e) => setEntry({ name: e.target.value })}
+                  placeholder="Your name"
+                  maxLength={40}
+                  data-testid="jnm-name-input"
+                />
+                <button className="jnm-primary" type="submit" disabled={sending} data-testid="jnm-submit-score">
+                  {sending ? "Saving…" : "Submit score"}
+                </button>
+              </div>
+              <p className="jnm-fine">Fewest throws wins. Time settles a tie.</p>
+            </form>
+          )}
+
+          {stage === "enquiry" && (
+            <div className="jnm-rank-block" data-testid="jnm-rank">
+              <p className="jnm-rank-line">
+                {result?.rank === 1
+                  ? "You are top of the board"
+                  : `You are #${result?.rank} of ${result?.total}`}
+                {result?.improved ? " — a new personal best" : ""}
+              </p>
+              {/* The enquiry is offered, never forced: a wall here would cost
+                  more players than it would win leads. */}
+              <form className="jnm-form" onSubmit={submitLead} data-testid="jnm-lead-form">
+                <label className="jnm-label">Want us to build something like this for you?</label>
+                <input
+                  type="email"
+                  value={lead.email}
+                  onChange={(e) => setLead({ ...lead, email: e.target.value })}
+                  placeholder="Email address *"
+                  data-testid="jnm-lead-email"
+                  required
+                />
+                <input
+                  value={lead.phone}
+                  onChange={(e) => setLead({ ...lead, phone: e.target.value })}
+                  placeholder="Phone (optional)"
+                  data-testid="jnm-lead-phone"
+                />
+                <select
+                  value={lead.interest}
+                  onChange={(e) => setLead({ ...lead, interest: e.target.value })}
+                  data-testid="jnm-lead-interest"
+                >
+                  {["Business inquiry", "Website / App / Software", "Creative Digital Services", "AI Business Consulting", "Branded games & campaigns"].map((o) => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                </select>
+                <button className="jnm-primary" type="submit" disabled={sending} data-testid="jnm-submit-lead">
+                  {sending ? "Sending…" : "Send and see the work"} <ArrowRight size={16} />
+                </button>
+              </form>
+              <button className="jnm-skip" onClick={() => setStage("thanks")} data-testid="jnm-skip-lead">
+                No thanks, just show me the work
+              </button>
+            </div>
+          )}
+
+          {stage === "thanks" && (
+            <div className="jnm-next" data-testid="jnm-next">
+              <p className="jnm-lede">
+                {result?.rank === 1 ? "Top of the board." : `#${result?.rank} of ${result?.total} on the board.`} Here is what we make.
+              </p>
+              <div className="jnm-actions">
+                <Link to="/shop" className="jnm-primary" data-testid="jnm-go-shop">
+                  Products &amp; services <ArrowRight size={16} />
+                </Link>
+                <Link to="/demo" className="jnm-secondary" data-testid="jnm-go-demos">See the live demos</Link>
+              </div>
+            </div>
+          )}
+
+          {board.length > 0 && (
+            <div className="jnm-board" data-testid="jnm-board">
+              <h3>Leaderboard</h3>
+              <ol>
+                {board.map((row) => (
+                  <li key={`${row.rank}-${row.name}`} className={result && row.rank === result.rank && row.name === entry.name.trim() ? "jnm-board-me" : ""}>
+                    <span className="jnm-board-rank">{row.rank}</span>
+                    <span className="jnm-board-name">{row.name}</span>
+                    <span className="jnm-board-score">{row.throws} throws · {fmtTime(row.seconds)}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
 
           <div className="jnm-actions">
             <button className="jnm-primary" onClick={start} data-testid="jnm-replay">

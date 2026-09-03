@@ -870,6 +870,12 @@ class CheckoutCreate(BaseModel):
     promo_code: Optional[str] = None
 
 
+class GameScoreCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=40)
+    throws: int = Field(..., ge=1, le=999)
+    seconds: float = Field(..., ge=0, le=7200)
+
+
 class PromoValidateRequest(BaseModel):
     code: str
     product_id: str
@@ -2458,6 +2464,107 @@ async def claim_festival_promo(request: Request):
 
     logger.info("Festival code issued: %s (%s%%) for %s", promo["code"], int(promo["value"]), user.get("email"))
     return festival_claim_payload(promo, fresh=True)
+
+
+# ── Playground leaderboards ─────────────────────────────────────────────────
+# These games need no account, so a score cannot be proven — anyone can post to
+# the endpoint. The floors below reject what is physically impossible for the
+# game (five handis cannot fall to fewer than five throws) and the per-IP cap
+# stops one person filling the board. It is a festival leaderboard, not a
+# tournament; this is the right amount of rigour for it.
+GAME_RULES = {
+    "dahi-handi": {"label": "Dahi Handi", "min_throws": 5, "min_seconds": 8},
+}
+SCORES_PER_IP_PER_HOUR = 25
+
+
+def visitor_fingerprint(request: Request) -> str:
+    """A hashed, non-reversible stand-in for the visitor, for rate limiting."""
+    fwd = request.headers.get("x-forwarded-for", "")
+    ip = fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "unknown")
+    return hashlib.sha256(f"leaderboard:{ip}".encode()).hexdigest()[:32]
+
+
+def score_row(doc: Dict[str, Any], rank: int) -> Dict[str, Any]:
+    return {
+        "rank": rank,
+        "name": doc.get("name", ""),
+        "throws": int(doc.get("throws", 0)),
+        "seconds": round(float(doc.get("seconds", 0)), 1),
+    }
+
+
+async def ranked_scores(game: str, limit: int = 20) -> List[Dict[str, Any]]:
+    docs = await db.game_scores.find({"game": game}, {"_id": 0}).sort(
+        [("throws", 1), ("seconds", 1), ("created_at", 1)]
+    ).limit(limit).to_list(limit)
+    return [score_row(doc, i + 1) for i, doc in enumerate(docs)]
+
+
+@api_router.get("/games/{game}/leaderboard")
+async def game_leaderboard(game: str, limit: int = 20):
+    if game not in GAME_RULES:
+        raise HTTPException(status_code=404, detail="Unknown game.")
+    limit = max(1, min(limit, 50))
+    return {"game": game, "label": GAME_RULES[game]["label"], "scores": await ranked_scores(game, limit)}
+
+
+@api_router.post("/games/{game}/scores")
+async def submit_game_score(game: str, payload: GameScoreCreate, request: Request):
+    rules = GAME_RULES.get(game)
+    if not rules:
+        raise HTTPException(status_code=404, detail="Unknown game.")
+    if payload.throws < rules["min_throws"] or payload.seconds < rules["min_seconds"]:
+        raise HTTPException(status_code=400, detail="That score is not possible for this game.")
+
+    who = visitor_fingerprint(request)
+    since = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+    recent = await db.game_scores.count_documents({"who": who, "created_at": {"$gte": since}})
+    if recent >= SCORES_PER_IP_PER_HOUR:
+        raise HTTPException(status_code=429, detail="That is a lot of games. Try again in a little while.")
+
+    name = " ".join(payload.name.split())[:40]
+    key = name.lower()
+    entry = {
+        "id": str(uuid.uuid4()),
+        "game": game,
+        "name": name,
+        "name_key": key,
+        "who": who,
+        "throws": payload.throws,
+        "seconds": round(float(payload.seconds), 1),
+        "created_at": now_iso(),
+    }
+
+    # One row per player, holding their best run — otherwise ten attempts fill
+    # the top ten and the board stops meaning anything.
+    existing = await db.game_scores.find_one({"game": game, "name_key": key, "who": who}, {"_id": 0})
+    beat_previous = False
+    if existing:
+        beat_previous = (payload.throws, payload.seconds) < (existing["throws"], existing["seconds"])
+        if beat_previous:
+            await db.game_scores.update_one({"id": existing["id"]}, {"$set": {
+                "throws": entry["throws"], "seconds": entry["seconds"], "created_at": entry["created_at"],
+            }})
+    else:
+        await db.game_scores.insert_one(dict(entry))
+
+    best = await db.game_scores.find_one({"game": game, "name_key": key, "who": who}, {"_id": 0})
+    ahead = await db.game_scores.count_documents({
+        "game": game,
+        "$or": [
+            {"throws": {"$lt": best["throws"]}},
+            {"throws": best["throws"], "seconds": {"$lt": best["seconds"]}},
+        ],
+    })
+    total = await db.game_scores.count_documents({"game": game})
+    return {
+        "rank": ahead + 1,
+        "total": total,
+        "your_best": score_row(best, ahead + 1),
+        "improved": beat_previous,
+        "scores": await ranked_scores(game, 10),
+    }
 
 
 @api_router.get("/admin/promo-codes")
