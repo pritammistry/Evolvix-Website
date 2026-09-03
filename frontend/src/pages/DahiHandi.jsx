@@ -472,11 +472,18 @@ export default function DahiHandi() {
             <li><strong>Five handis</strong>, each hung higher and swinging faster.</li>
             <li><strong>Throw as often as you like.</strong> Nothing to lose but a count.</li>
             <li><strong>Five throws is perfect.</strong> Anything under ten is good.</li>
+            <li><strong>The clock runs</strong> from your first throw. Fewest throws
+              tops the board; a tie goes to the faster hand.</li>
           </ul>
           <button className="jnm-primary" onClick={start} data-testid="jnm-start-button">
             Start throwing <ArrowRight size={17} />
           </button>
-          <p className="jnm-fine">No sign-up, nothing saved. Just a game.</p>
+          {/* The old line promised "nothing saved", which stopped being true
+              once the board existed. Scores are only stored if the player
+              chooses to submit one, and the copy now says exactly that. */}
+          <p className="jnm-fine">
+            No sign-up. Nothing is saved unless you put your score on the board.
+          </p>
         </div>
       )}
 
