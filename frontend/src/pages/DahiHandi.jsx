@@ -15,8 +15,9 @@ import { janmashtamiLive, JANMASHTAMI_ENDS_AT } from "../lib/janmashtami";
 // will be by the time the throw arrives. The rhythm is learnable within a
 // couple of attempts, which is what makes it worth repeating.
 //
-// No account, no score kept anywhere, no server involved. Everything below runs
-// in the page.
+// No account is needed to play, and the game itself runs entirely in the page.
+// The only thing that reaches the server is a score the player chooses to put
+// on the leaderboard, and an enquiry they choose to send.
 
 const HANDIS = [
   { yFrac: 0.34, amp: 0.15, speed: 1.45, r: 40 },
@@ -487,7 +488,11 @@ export default function DahiHandi() {
         </div>
       )}
 
-      {phase !== "intro" && (
+      {/* The stage goes away the moment the last handi falls. Keeping it on the
+          done screen left an empty, unplayable board sitting above the result,
+          pushing the score box and the leaderboard below the fold. The result
+          card now takes the space the game was using. */}
+      {phase === "playing" && (
         <div className="jnm-stage" ref={wrapRef} data-testid="jnm-stage">
           <div className="jnm-hud" data-testid="jnm-hud">
             <span>Handi {Math.min(level + 1, HANDIS.length)} / {HANDIS.length}</span>
@@ -505,16 +510,13 @@ export default function DahiHandi() {
           <button
             className={`jnm-canvas-btn${flash ? ` jnm-canvas-btn--${flash}` : ""}`}
             onClick={throwBall}
-            disabled={phase === "done"}
             aria-label="Throw"
             data-testid="jnm-throw-button"
           >
             <canvas ref={canvasRef} className="jnm-canvas" />
-            {phase === "playing" && (
-              <span className="jnm-tap-hint" data-testid="jnm-hint">
-                {flash === "miss" ? "Just missed — go again" : flash === "hit" ? "" : "Tap to throw"}
-              </span>
-            )}
+            <span className="jnm-tap-hint" data-testid="jnm-hint">
+              {flash === "miss" ? "Just missed — go again" : flash === "hit" ? "" : "Tap to throw"}
+            </span>
           </button>
         </div>
       )}
