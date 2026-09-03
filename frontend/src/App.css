@@ -821,6 +821,9 @@ img,svg,video,canvas{max-width:100%}
 .jnm-pip--now{background:#ff9a3c}
 
 .jnm-canvas-btn{position:relative;display:block;padding:0;border:none;background:none;border-radius:24px;overflow:hidden;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;line-height:0;box-shadow:0 24px 70px rgba(20,6,40,.55)}
+/* The topbar is sticky at 82px, so a scrolled-to panel would otherwise sit
+   underneath it. */
+.jnm-stage,.jnm-result{scroll-margin-top:96px}
 .jnm-canvas{display:block;border-radius:24px;border:1px solid rgba(255,212,121,.22)}
 .jnm-canvas-btn--hit .jnm-canvas{border-color:rgba(255,212,121,.85);box-shadow:0 0 0 3px rgba(255,212,121,.22) inset}
 .jnm-canvas-btn--miss .jnm-canvas{border-color:rgba(255,255,255,.16)}
@@ -879,4 +882,12 @@ img,svg,video,canvas{max-width:100%}
   .jnm-form-row{flex-direction:column}
   .jnm-form-row .jnm-primary,.jnm-form .jnm-primary{align-self:stretch;justify-content:center}
   .jnm-board-score{font-size:.76rem}
+}
+
+/* iOS Safari zooms the page in when a focused field's text is under 16px and
+   never zooms back out — the visitor is left stranded at 120%. Floor the size
+   on touch screens; pointer:fine keeps the denser desktop sizing. */
+@media (hover:none) and (pointer:coarse){
+  .chat-input,.chat-lead-input,.welcome-input,.checkout-promo-input,
+  .jnm-form input,.jnm-form select{font-size:16px}
 }

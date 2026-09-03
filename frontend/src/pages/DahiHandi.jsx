@@ -52,6 +52,7 @@ export default function DahiHandi() {
   const offer = useFestivalOffer();
   const canvasRef = useRef(null);
   const wrapRef = useRef(null);
+  const resultRef = useRef(null);
   const rafRef = useRef(0);
   const lastRef = useRef(0);
 
@@ -122,6 +123,19 @@ export default function DahiHandi() {
   }, [fit, phase]);
 
   useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
+
+  // Starting a game swaps the intro card for the stage, and finishing swaps the
+  // stage for the result. The browser keeps whatever scroll offset it had, and
+  // because the two panels are different heights the player is left looking at
+  // the wrong part of the page — the board off screen on "Start throwing",
+  // the same again on "Play again". Bring the panel that just appeared into
+  // view. The first paint is the intro, so nothing scrolls on arrival.
+  useEffect(() => {
+    if (phase === "intro") return;
+    const el = phase === "playing" ? wrapRef.current : resultRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+  }, [phase, reduced]);
 
   const startLevel = (idx) => {
     const s = stateRef.current;
@@ -522,7 +536,7 @@ export default function DahiHandi() {
       )}
 
       {phase === "done" && (
-        <div className="jnm-card jnm-result" data-testid="jnm-result">
+        <div className="jnm-card jnm-result" ref={resultRef} data-testid="jnm-result">
           <span className="jnm-pot" aria-hidden="true">🎉</span>
           <h2>{perfect ? "Not one throw wasted" : throws <= 8 ? "Cleanly done" : "All five down"}</h2>
           <p className="jnm-score" data-testid="jnm-final">{throws}<span>{throws === 1 ? " throw" : " throws"}</span></p>
