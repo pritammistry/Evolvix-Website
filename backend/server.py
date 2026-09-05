@@ -2194,20 +2194,28 @@ def promo_status(promo: Dict[str, Any]) -> str:
     return "live"
 
 
-# ── Raksha Bandhan campaign ────────────────────────────────────────────────
-# Finishing the game earns one personal code. The percentage is rolled HERE and
-# nowhere else: the browser never sends a discount, it only asks for one, so
-# there is nothing on the client worth tampering with.
-RAKHI_CAMPAIGN = {
-    "id": "raksha-bandhan-2026",
-    "label": "Raksha Bandhan",
-    "prefix": "RAKHI",
-    # Equal odds across six tiers, as chosen for the campaign.
+# ── Puja season campaign ───────────────────────────────────────────────────
+# Durga Puja, Diwali and Chhath run as one campaign with one code, not three.
+# Finishing any chapter of the game earns that single personal code. The
+# percentage is rolled HERE and nowhere else: the browser never sends a
+# discount, it only asks for one, so there is nothing on the client worth
+# tampering with.
+PUJA_CAMPAIGN = {
+    "id": "puja-season-2026",
+    "label": "Puja Season",
+    "prefix": "UTSAV",
+    # Equal odds across six tiers, unchanged from the last campaign.
     "tiers": [15, 20, 25, 30, 35, 40],
-    # Last moment someone can finish the game and claim a code.
-    "claim_until": "2026-09-04T23:59:59+05:30",
-    # How long a code lives once claimed.
-    "code_valid_days": 7,
+    # Last moment someone can finish a chapter and claim a code. Chhath's main
+    # day, Surya Shashthi.
+    "claim_until": "2026-11-15T23:59:59+05:30",
+    # Every code in the season shares one expiry instead of counting days from
+    # the claim. Someone who plays during Durga Puja in October has to still be
+    # able to spend it at Diwali — that is when people actually buy — and a
+    # seven-day code claimed in October would be dead well before then. The few
+    # days past the claim deadline are a spending window for whoever plays on
+    # the last day.
+    "code_expires_at": "2026-11-20T23:59:59+05:30",
     # One code per account, spendable this many times. The two limits are
     # separate on purpose: claiming is capped at one so nobody can replay the
     # game for a better percentage, while the code itself is good for three
@@ -2221,12 +2229,25 @@ CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
 
 def festival_campaign_open() -> bool:
-    deadline = parse_campaign_datetime(RAKHI_CAMPAIGN["claim_until"])
+    deadline = parse_campaign_datetime(PUJA_CAMPAIGN["claim_until"])
     if deadline is None:
         # An unparseable deadline fails closed, for the same reason promo_status
         # does: a typo must never leave a discount running for ever.
         return False
     return datetime.now(timezone.utc) < deadline
+
+
+def festival_code_expiry() -> datetime:
+    """When a code issued now stops working.
+
+    A fixed season-wide date, not N days from the claim — see the note on
+    code_expires_at. An unparseable date falls back to a short window rather
+    than minting a code that never dies.
+    """
+    fixed = parse_campaign_datetime(PUJA_CAMPAIGN["code_expires_at"])
+    if fixed is None:
+        return datetime.now(timezone.utc) + timedelta(days=7)
+    return fixed
 
 
 def personal_code_tag(user: Dict[str, Any]) -> str:
@@ -2236,7 +2257,7 @@ def personal_code_tag(user: Dict[str, Any]) -> str:
     email — it is a hash, not an encoding.
     """
     seed = (user.get("email") or user.get("id") or "").strip().lower()
-    digest = hashlib.sha256(f"{RAKHI_CAMPAIGN['id']}:{seed}".encode()).digest()
+    digest = hashlib.sha256(f"{PUJA_CAMPAIGN['id']}:{seed}".encode()).digest()
     return "".join(CODE_ALPHABET[b % len(CODE_ALPHABET)] for b in digest[:3])
 
 
@@ -2245,7 +2266,7 @@ async def mint_festival_code(user: Dict[str, Any]) -> str:
     tag = personal_code_tag(user)
     for _ in range(12):
         rand = "".join(secrets.choice(CODE_ALPHABET) for _ in range(4))
-        code = f"{RAKHI_CAMPAIGN['prefix']}-{tag}{rand}"
+        code = f"{PUJA_CAMPAIGN['prefix']}-{tag}{rand}"
         if not await db.promo_codes.find_one({"code": code}):
             return code
     raise HTTPException(status_code=500, detail="Could not generate a code. Please try again.")
@@ -2366,14 +2387,14 @@ async def validate_promo_code(payload: PromoValidateRequest, request: Request):
 
 
 def festival_claim_payload(promo: Dict[str, Any], fresh: bool) -> Dict[str, Any]:
-    cap = int(promo.get("max_redemptions") or RAKHI_CAMPAIGN["max_uses"])
+    cap = int(promo.get("max_redemptions") or PUJA_CAMPAIGN["max_uses"])
     used = int(promo.get("redemption_count", 0))
     return {
         "code": promo["code"],
         "percent": int(promo["value"]),
         "expires_at": promo.get("ends_at"),
         "fresh": fresh,
-        "campaign": RAKHI_CAMPAIGN["label"],
+        "campaign": PUJA_CAMPAIGN["label"],
         "max_uses": cap,
         "uses_left": max(0, cap - used),
     }
@@ -2386,7 +2407,7 @@ async def festival_campaign_state(request: Request):
     claimed = None
     if user:
         existing = await db.promo_codes.find_one(
-            {"campaign_id": RAKHI_CAMPAIGN["id"], "bound_user_id": user["id"]},
+            {"campaign_id": PUJA_CAMPAIGN["id"], "bound_user_id": user["id"]},
             {"_id": 0},
             sort=[("created_at", 1)],
         )
@@ -2394,14 +2415,14 @@ async def festival_campaign_state(request: Request):
             claimed = festival_claim_payload(existing, fresh=False)
     return {
         "open": festival_campaign_open(),
-        "label": RAKHI_CAMPAIGN["label"],
-        "min_percent": min(RAKHI_CAMPAIGN["tiers"]),
-        "max_percent": max(RAKHI_CAMPAIGN["tiers"]),
-        "valid_days": RAKHI_CAMPAIGN["code_valid_days"],
+        "label": PUJA_CAMPAIGN["label"],
+        "min_percent": min(PUJA_CAMPAIGN["tiers"]),
+        "max_percent": max(PUJA_CAMPAIGN["tiers"]),
+        "code_expires_at": PUJA_CAMPAIGN["code_expires_at"],
         # The deadline is sent so the banner can count down to it. Only the
         # server decides whether the campaign is actually open — the date is
         # for display, `open` is the authority.
-        "closes_at": RAKHI_CAMPAIGN["claim_until"],
+        "closes_at": PUJA_CAMPAIGN["claim_until"],
         "logged_in": bool(user),
         "claimed": claimed,
     }
@@ -2420,7 +2441,7 @@ async def claim_festival_promo(request: Request):
         raise HTTPException(status_code=400, detail="This offer has closed. Watch out for the next one.")
 
     existing = await db.promo_codes.find_one(
-        {"campaign_id": RAKHI_CAMPAIGN["id"], "bound_user_id": user["id"]},
+        {"campaign_id": PUJA_CAMPAIGN["id"], "bound_user_id": user["id"]},
         {"_id": 0},
         sort=[("created_at", 1)],
     )
@@ -2434,15 +2455,15 @@ async def claim_festival_promo(request: Request):
         "type": "percent",
         # secrets, not random: the roll should not be predictable from any
         # other roll, even though the stakes here are small.
-        "value": float(secrets.choice(RAKHI_CAMPAIGN["tiers"])),
+        "value": float(secrets.choice(PUJA_CAMPAIGN["tiers"])),
         "starts_at": now.isoformat(),
-        "ends_at": (now + timedelta(days=RAKHI_CAMPAIGN["code_valid_days"])).isoformat(),
+        "ends_at": festival_code_expiry().isoformat(),
         "active": True,
-        "max_redemptions": RAKHI_CAMPAIGN["max_uses"],
+        "max_redemptions": PUJA_CAMPAIGN["max_uses"],
         "min_order_amount": None,
         "applies_to": [],  # every product in the store, no minimum
         "redemption_count": 0,
-        "campaign_id": RAKHI_CAMPAIGN["id"],
+        "campaign_id": PUJA_CAMPAIGN["id"],
         "bound_user_id": user["id"],
         "bound_email": user.get("email"),
         "created_at": now_iso(),
@@ -2454,7 +2475,7 @@ async def claim_festival_promo(request: Request):
     # and means the loser of a race still gets a single consistent answer.
     await db.promo_codes.insert_one(dict(promo))
     winner = await db.promo_codes.find_one(
-        {"campaign_id": RAKHI_CAMPAIGN["id"], "bound_user_id": user["id"]},
+        {"campaign_id": PUJA_CAMPAIGN["id"], "bound_user_id": user["id"]},
         {"_id": 0},
         sort=[("created_at", 1)],
     )
@@ -2882,29 +2903,6 @@ async def chat_stream(payload: ChatRequest):
 
 
 app.include_router(api_router)
-
-
-@app.on_event("startup")
-async def raise_festival_use_limits():
-    """Bring already-issued festival codes up to the current use limit.
-
-    The campaign shipped with a limit of one use and was raised to three while
-    it was already live, so codes handed out in between would otherwise be worth
-    less than the ones issued after. Only ever raises, never lowers, and is
-    scoped to this campaign — a code deliberately given a bigger allowance by
-    hand is left alone. Safe to run on every boot.
-    """
-    cap = RAKHI_CAMPAIGN["max_uses"]
-    try:
-        result = await db.promo_codes.update_many(
-            {"campaign_id": RAKHI_CAMPAIGN["id"], "max_redemptions": {"$lt": cap}},
-            {"$set": {"max_redemptions": cap}},
-        )
-        if result.modified_count:
-            logger.info("Raised %s festival codes to %s uses", result.modified_count, cap)
-    except Exception:
-        # A migration must never stop the API from starting.
-        logger.exception("Could not raise festival code use limits")
 
 
 @app.on_event("shutdown")

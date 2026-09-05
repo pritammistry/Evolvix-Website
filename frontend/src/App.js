@@ -1,6 +1,6 @@
 import "@/App.css";
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { Layout } from "./components/Layout";
 import { AnalyticsTracker } from "./components/AnalyticsTracker";
@@ -20,7 +20,8 @@ import Playground from "./pages/Playground";
 const MindTheShop = lazy(() => import("./pages/MindTheShop"));
 const TomorrowsOrder = lazy(() => import("./pages/TomorrowsOrder"));
 const Rangoli = lazy(() => import("./pages/Rangoli"));
-const RakhiOffer = lazy(() => import("./pages/RakhiOffer"));
+const Utsav = lazy(() => import("./pages/Utsav"));
+const DhunuchiNaach = lazy(() => import("./pages/DhunuchiNaach"));
 const DahiHandi = lazy(() => import("./pages/DahiHandi"));
 import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
@@ -49,7 +50,12 @@ function AppRoutes() {
       <Route path="/playground/mind-the-shop" element={<MindTheShop />} />
       <Route path="/playground/tomorrows-order" element={<TomorrowsOrder />} />
       <Route path="/playground/rangoli" element={<Rangoli />} />
-      <Route path="/rakhi" element={<RakhiOffer />} />
+      <Route path="/utsav" element={<Utsav />} />
+      <Route path="/utsav/dhunuchi" element={<DhunuchiNaach />} />
+      {/* Raksha Bandhan is over, but its link is in posts that are still
+          circulating. Sending it to the season that is running now is worth
+          more than a 404 or a page about a closed offer. */}
+      <Route path="/rakhi" element={<Navigate to="/utsav" replace />} />
       <Route path="/janmashtami" element={<DahiHandi />} />
       <Route path="/learning-growth" element={<Shop />} />
       <Route path="/shop" element={<Shop />} />

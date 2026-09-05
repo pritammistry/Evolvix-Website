@@ -9,12 +9,22 @@ import { fetchPlayground } from "../api";
 import { trackEvent } from "../components/AnalyticsTracker";
 import { toast } from "sonner";
 import { janmashtamiLive } from "../lib/janmashtami";
+import { seasonLive } from "../lib/utsav";
 
 // Games that live on the site itself, as opposed to the downloadable items the
 // admin manages. Adding one here is the only step needed to shelve it.
 // Festival games sit at the front while their day is on, and drop off the shelf
 // by themselves afterwards — see lib/janmashtami.js for the date.
 const FESTIVAL_GAMES = [
+  {
+    id: "utsav",
+    path: "/utsav",
+    icon: "🪔",
+    title: "Puja Season",
+    hook: "Everyone wins 15–40% off.",
+    description: "Three games across Durga Puja, Diwali and Chhath. Play any one and claim a single code worth 15–40% off anything we make — good for three purchases, all season.",
+    live: seasonLive,
+  },
   {
     id: "janmashtami",
     path: "/janmashtami",
@@ -27,14 +37,6 @@ const FESTIVAL_GAMES = [
 ];
 
 const BROWSER_GAMES = [
-  {
-    id: "rakhi",
-    path: "/rakhi",
-    icon: "🎀",
-    title: "Tie the Rakhi",
-    hook: "Everyone wins 15–40% off.",
-    description: "Land the knot on the thread three times and unwrap a discount on everything we make. One code per person, and it's yours for a week.",
-  },
   {
     id: "mind-the-shop",
     path: "/playground/mind-the-shop",

@@ -11,7 +11,9 @@ import { trackEvent } from "./AnalyticsTracker";
 // your code, go and spend it. The second is the more valuable message, and it
 // is the one people forget they are owed.
 
-const DISMISS_KEY = "evolvix_rakhi_banner_closed";
+// Keyed to the campaign, so a visitor who dismissed the Rakhi banner is not
+// silently opted out of this one too.
+const DISMISS_KEY = "evolvix_utsav_banner_closed";
 
 // Re-reads the deadline once a minute. Anything faster would be a stopwatch on
 // a page nobody is watching; anything slower and "1 hour left" could sit there
@@ -46,14 +48,14 @@ export function FestivalBanner() {
 
   if (!offer?.open || closed) return null;
   // Never advertise the game on top of the game, or in the admin panel.
-  if (location.pathname.startsWith("/rakhi") || location.pathname.startsWith("/admin")) return null;
+  if (location.pathname.startsWith("/utsav") || location.pathname.startsWith("/admin")) return null;
 
   const softDate = deadlineDate(deadline);
 
   return (
     <div className={`fest-banner${claimed ? " fest-banner--claimed" : ""}${left?.urgent ? " fest-banner--urgent" : ""}`} data-testid="festival-banner">
       <Link
-        to={claimed ? "/" : "/rakhi"}
+        to={claimed ? "/" : "/utsav"}
         className="fest-banner-body"
         onClick={() => trackEvent({ event_type: "click", label: claimed ? "festival-banner-use" : "festival-banner-play" })}
         data-testid="festival-banner-link"
@@ -72,7 +74,7 @@ export function FestivalBanner() {
           </span>
         ) : (
           <span className="fest-banner-text">
-            <strong>Raksha Bandhan — tie a rakhi, win {offer.min_percent}–{offer.max_percent}% off</strong>
+            <strong>Puja season — play once, win {offer.min_percent}–{offer.max_percent}% off</strong>
             <span className="fest-banner-sub">
               Thirty seconds, and nobody walks away empty-handed{softDate ? ` · ends ${softDate}` : ""}
             </span>
@@ -119,7 +121,7 @@ export function FestivalCodeStrip() {
       <div className="fest-strip-head">
         <span className="fest-strip-icon" aria-hidden="true">🎁</span>
         <div className="fest-strip-lead">
-          <strong>Your Raksha Bandhan code — {claimed.percent}% off</strong>
+          <strong>Your Puja code — {claimed.percent}% off</strong>
           <span>
             {left > 0
               ? `${left} of ${claimed.max_uses} ${left === 1 ? "use" : "uses"} left · valid until ${deadlineDate(claimed.expires_at)}`
@@ -171,7 +173,7 @@ export function FestivalPopupOffer({ onNavigate }) {
 
   return (
     <Link
-      to={claimed ? "/" : "/rakhi"}
+      to={claimed ? "/" : "/utsav"}
       className="fest-popup-offer"
       onClick={() => {
         trackEvent({ event_type: "click", label: claimed ? "welcome-popup-festival-use" : "welcome-popup-festival-play" });
@@ -183,13 +185,13 @@ export function FestivalPopupOffer({ onNavigate }) {
       <span className="fest-popup-copy">
         <strong>
           {claimed
-            ? `Your ${claimed.percent}% Raksha Bandhan code is unused`
-            : `Raksha Bandhan: win ${offer.min_percent}–${offer.max_percent}% off everything`}
+            ? `Your ${claimed.percent}% Puja code is unused`
+            : `Puja season: win ${offer.min_percent}–${offer.max_percent}% off everything`}
         </strong>
         <span>
           {claimed
             ? `Code ${claimed.code} — works on everything we sell`
-            : "Tie a rakhi and unwrap your discount. Nobody leaves empty-handed."}
+            : "Durga Puja, Diwali, Chhath — one game, one code, nobody leaves empty-handed."}
           {left?.label ? ` · ${left.label}` : ""}
         </span>
       </span>
