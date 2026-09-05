@@ -60,7 +60,7 @@ export function FestivalBanner() {
         onClick={() => trackEvent({ event_type: "click", label: claimed ? "festival-banner-use" : "festival-banner-play" })}
         data-testid="festival-banner-link"
       >
-        <span className="fest-banner-icon" aria-hidden="true">{claimed ? "🎁" : "🎀"}</span>
+        <span className="fest-banner-icon" aria-hidden="true">{claimed ? "🎁" : "🪔"}</span>
         {claimed ? (
           <span className="fest-banner-text">
             <strong>
@@ -181,7 +181,7 @@ export function FestivalPopupOffer({ onNavigate }) {
       }}
       data-testid="welcome-popup-festival"
     >
-      <span className="fest-popup-icon" aria-hidden="true">{claimed ? "🎁" : "🎀"}</span>
+      <span className="fest-popup-icon" aria-hidden="true">{claimed ? "🎁" : "🪔"}</span>
       <span className="fest-popup-copy">
         <strong>
           {claimed
