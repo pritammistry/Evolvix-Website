@@ -955,3 +955,4 @@ img,svg,video,canvas{max-width:100%}
 .utv-soop-log li::before{content:counter(soop);position:absolute;left:0;top:0;width:20px;height:20px;border-radius:50%;background:rgba(255,193,77,.16);color:var(--utv-gold);font-size:11px;font-weight:800;display:grid;place-items:center}
 .utv-soop-log strong{color:white}
 @media(max-width:520px){.utv-soop-tray{grid-template-columns:1fr}}
+.utv-timer{font-family:"Rajdhani","Space Grotesk",sans-serif;font-size:1.5rem;font-weight:700;color:white;line-height:1;font-variant-numeric:tabular-nums}

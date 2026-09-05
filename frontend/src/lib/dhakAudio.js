@@ -21,6 +21,8 @@
 // Everything is scheduled against the AudioContext clock rather than fired from
 // the animation loop, so the rhythm stays sample-accurate even when frames drop.
 
+function rand(a, b) { return a + Math.random() * (b - a); }
+
 function makeImpulse(ctx, seconds, decay) {
   const rate = ctx.sampleRate;
   const len = Math.floor(rate * seconds);
@@ -52,7 +54,26 @@ export class DhakKit {
 
     this.master = this.ctx.createGain();
     this.master.gain.value = 0.9;
-    this.master.connect(this.ctx.destination);
+
+    // Soft saturation. A clean sum of sine waves is the single most synthetic
+    // thing in any drum synthesis; driving it into a gentle curve adds the
+    // harmonics a microphone and a skin would have produced anyway.
+    const shaper = this.ctx.createWaveShaper();
+    const curve = new Float32Array(1024);
+    for (let i = 0; i < 1024; i += 1) {
+      const x = (i / 1023) * 2 - 1;
+      curve[i] = Math.tanh(x * 1.9);
+    }
+    shaper.curve = curve;
+    shaper.oversample = "4x";
+
+    // Rolled off at the top, because nothing in a drum-and-bell ensemble has
+    // real energy above about 9k and leaving it in sounds like a synth.
+    const tone = this.ctx.createBiquadFilter();
+    tone.type = "lowpass";
+    tone.frequency.value = 9000;
+
+    this.master.connect(shaper).connect(tone).connect(this.ctx.destination);
 
     // Dry and wet in parallel, so the room never swallows the attack.
     this.dry = this.ctx.createGain();
@@ -76,55 +97,83 @@ export class DhakKit {
     node.connect(this.reverb);
   }
 
-  // One dhak stroke. `v` is velocity: main strokes near 1, ghost strokes ~0.3.
+  // One dhak stroke, modelled rather than approximated.
+  //
+  // A drum head is a circular membrane, and a circular membrane does not ring
+  // in a harmonic series — its modes fall at roughly 1, 1.59, 2.14, 2.30, 2.65
+  // and 2.92 times the fundamental. That inharmonicity is the difference
+  // between "drum" and "bass note", and no amount of layering two harmonic
+  // oscillators will produce it.
+  //
+  // The rest is what a real recording carries and a naive synth does not: the
+  // pitch drops as the struck skin relaxes, the low modes ring far longer than
+  // the high ones, the shell adds a woody knock, and the whole thing is driven
+  // hard enough to saturate.
   dhak(at, v = 1, deep = false) {
     const ctx = this.ctx;
     const out = ctx.createGain();
-    out.gain.value = v;
-    this.send(out);
+    out.gain.value = v * 0.9;
+    // Panned very slightly per stroke, which stops a repeated sample-like
+    // sound from feeling pasted in the exact same spot every time.
+    const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    if (pan) { pan.pan.value = rand(-0.12, 0.12); out.connect(pan); this.send(pan); }
+    else this.send(out);
 
-    // Membrane: pitch falls fast as the skin gives, which is most of the
-    // character of a hand-tensioned drum.
-    const f0 = deep ? 96 : 132;
-    const body = ctx.createOscillator();
-    body.type = "sine";
-    body.frequency.setValueAtTime(f0 * 1.9, at);
-    body.frequency.exponentialRampToValueAtTime(f0 * 0.42, at + 0.13);
-    const bodyGain = ctx.createGain();
-    bodyGain.gain.setValueAtTime(0.0001, at);
-    bodyGain.gain.exponentialRampToValueAtTime(0.9, at + 0.004);
-    bodyGain.gain.exponentialRampToValueAtTime(0.0001, at + (deep ? 0.42 : 0.3));
-    body.connect(bodyGain).connect(out);
-    body.start(at); body.stop(at + 0.5);
+    const f0 = deep ? 74 : 92;
+    // Mode ratios of an ideal circular membrane, with the amplitude and decay
+    // falling off as the mode rises — exactly as they do on a real head.
+    const MODES = [
+      { r: 1.00, a: 1.00, d: deep ? 0.95 : 0.68 },
+      { r: 1.59, a: 0.42, d: 0.34 },
+      { r: 2.14, a: 0.26, d: 0.2 },
+      { r: 2.30, a: 0.18, d: 0.16 },
+      { r: 2.65, a: 0.12, d: 0.11 },
+      { r: 2.92, a: 0.08, d: 0.08 },
+    ];
+    MODES.forEach((m) => {
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      // The skin is tightest at the moment of impact and relaxes immediately,
+      // so every mode glides down. Without this a drum sounds like an organ.
+      osc.frequency.setValueAtTime(f0 * m.r * 1.28, at);
+      osc.frequency.exponentialRampToValueAtTime(f0 * m.r, at + 0.055);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(m.a * 0.5, at + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + m.d);
+      osc.connect(g).connect(out);
+      osc.start(at); osc.stop(at + m.d + 0.1);
+      this.scheduled.push(osc);
+    });
 
-    // Shell: a second, detuned voice an octave or so up, giving the wooden ring
-    // that a single oscillator cannot.
-    const shell = ctx.createOscillator();
-    shell.type = "triangle";
-    shell.frequency.setValueAtTime(f0 * 2.7, at);
-    shell.frequency.exponentialRampToValueAtTime(f0 * 1.1, at + 0.09);
-    const shellGain = ctx.createGain();
-    shellGain.gain.setValueAtTime(0.0001, at);
-    shellGain.gain.exponentialRampToValueAtTime(0.28, at + 0.003);
-    shellGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
-    shell.connect(shellGain).connect(out);
-    shell.start(at); shell.stop(at + 0.25);
-
-    // Stick: a short slap of filtered noise. Without this the drum has no
-    // transient and reads as a synth tone.
-    const src = ctx.createBufferSource();
-    src.buffer = this.noise;
+    // The stick landing on the skin: a very short, bright noise transient. This
+    // is most of what the ear uses to identify the instrument.
+    const stick = ctx.createBufferSource();
+    stick.buffer = this.noise;
+    stick.playbackRate.value = 0.8 + Math.random() * 0.4;
     const hp = ctx.createBiquadFilter();
-    hp.type = "bandpass";
-    hp.frequency.value = deep ? 1400 : 2100;
-    hp.Q.value = 0.7;
-    const slap = ctx.createGain();
-    slap.gain.setValueAtTime(0.5 * v, at);
-    slap.gain.exponentialRampToValueAtTime(0.0001, at + 0.045);
-    src.connect(hp).connect(slap).connect(out);
-    src.start(at); src.stop(at + 0.08);
+    hp.type = "highpass";
+    hp.frequency.value = deep ? 900 : 1500;
+    const sg = ctx.createGain();
+    sg.gain.setValueAtTime(0.4 * v, at);
+    sg.gain.exponentialRampToValueAtTime(0.0001, at + 0.03);
+    stick.connect(hp).connect(sg).connect(out);
+    stick.start(at); stick.stop(at + 0.06);
 
-    this.scheduled.push(body, shell, src);
+    // The wooden shell knocking underneath the head.
+    const wood = ctx.createBufferSource();
+    wood.buffer = this.noise;
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = 420;
+    bp.Q.value = 4;
+    const wg = ctx.createGain();
+    wg.gain.setValueAtTime(0.3 * v, at);
+    wg.gain.exponentialRampToValueAtTime(0.0001, at + 0.11);
+    wood.connect(bp).connect(wg).connect(out);
+    wood.start(at); wood.stop(at + 0.14);
+
+    this.scheduled.push(stick, wood);
   }
 
   // The brass kanshi that rides over the dhak on accents. Inharmonic partials,
@@ -153,20 +202,38 @@ export class DhakKit {
   // Lay the whole routine down on the audio clock in one go. `beats` carry
   // times in milliseconds from the start; `startAt` is the AudioContext time
   // those milliseconds are measured from.
+  //
+  // The filling between main strokes is a roll, not a metronome subdivision.
+  // Velocities rise and fall across it, the odd stroke is a flam — two hits a
+  // few milliseconds apart, which is how a stick actually bounces — and the
+  // pattern varies from bar to bar so nothing sounds looped.
   schedule(beats, startAt) {
     beats.forEach((b, i) => {
       const at = startAt + b.t / 1000;
       const accent = i % 4 === 0;
-      this.dhak(at, b.countIn ? 0.62 : accent ? 1 : 0.84, accent);
-      if (accent && !b.countIn) this.kanshi(at, 0.42);
+      this.dhak(at, b.countIn ? 0.6 : accent ? 1 : 0.82, accent);
+      // A flam on the accents: the second stick landing a few milliseconds
+      // behind the first. Small, and it is the difference between a machine
+      // and a pair of hands.
+      if (accent && !b.countIn) {
+        this.dhak(at - 0.022, 0.3);
+        this.kanshi(at, 0.4);
+      }
 
-      // Ghost strokes fill the gap to the next beat. Their velocity is low and
-      // slightly random so the roll breathes instead of stuttering.
       const next = beats[i + 1];
       if (!next) return;
       const gap = (next.t - b.t) / 1000;
-      if (gap > 0.34) this.dhak(at + gap * 0.5, 0.26 + Math.random() * 0.08);
-      if (gap > 0.52) this.dhak(at + gap * 0.75, 0.2 + Math.random() * 0.07);
+      if (gap < 0.3) return;
+
+      // Three or four strokes across the gap, shaped so the roll leans towards
+      // the next main beat rather than sitting flat.
+      const n = gap > 0.6 ? 4 : 3;
+      for (let j = 1; j < n; j += 1) {
+        const frac = j / n;
+        const lean = 0.16 + frac * 0.3;             // crescendo into the beat
+        const jitter = (Math.random() - 0.5) * 0.012; // human, not quantised
+        this.dhak(at + gap * frac + jitter, lean + Math.random() * 0.07);
+      }
     });
   }
 

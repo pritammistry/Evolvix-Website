@@ -24,9 +24,20 @@ import { chapterOpen, findChapter, seasonLive } from "../lib/utsav";
 
 const REF = 520;
 const REACH = 0.23;            // how far a flame can pass, as a fraction of the short side
-const GUST_EVERY = [5.5, 9];   // seconds between gusts, randomised in this range
+// Gusts come often enough to be a real opponent. The first pass was quiet
+// enough that a player could light the whole courtyard without ever meeting
+// the wind, which left the game with no tension in it at all.
+const GUST_EVERY = [2.2, 3.8];  // seconds between gusts, randomised in this range
+const GUST_SPEED = 1.15;        // fractions of the courtyard per second
 
 function rand(a, b) { return a + Math.random() * (b - a); }
+
+function fmtTime(sec) {
+  const s = Math.max(0, sec);
+  const m = Math.floor(s / 60);
+  const r = (s % 60).toFixed(1).padStart(4, "0");
+  return m ? `${m}m ${r}s` : `${r}s`;
+}
 
 // A rangoli of lamps: a centre, an inner ring and an outer ring. Laid out on
 // rings rather than a grid because a courtyard rangoli is round, and because
@@ -60,6 +71,8 @@ export default function OneFlame() {
   const [lit, setLit] = useState(1);
   const [total, setTotal] = useState(0);
   const [blownOut, setBlownOut] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  const startedAtRef = useRef(0);
   const [live] = useState(() => seasonLive() && chapterOpen(chapter));
 
   const reduced = typeof window !== "undefined"
@@ -93,6 +106,14 @@ export default function OneFlame() {
 
   useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
 
+  // Read off the wall clock rather than counted in frames, so a throttled or
+  // backgrounded tab still reports the real time taken.
+  useEffect(() => {
+    if (phase !== "playing") return undefined;
+    const id = setInterval(() => setElapsed((Date.now() - startedAtRef.current) / 1000), 200);
+    return () => clearInterval(id);
+  }, [phase]);
+
   useEffect(() => {
     if (phase === "intro") return;
     if (phase === "playing" && wrapRef.current) {
@@ -107,7 +128,11 @@ export default function OneFlame() {
     g.blown = 0;
     g.gust = null;
     g.startedAt = performance.now();
-    g.gustAt = performance.now() + rand(...GUST_EVERY) * 1000;
+    startedAtRef.current = Date.now();
+    // A shorter grace than the gap between gusts, so the wind arrives while
+    // there is still almost nothing lit and the player learns it early.
+    g.gustAt = performance.now() + 2200;
+    setElapsed(0);
     setLit(1);
     setTotal(g.lamps.length);
     setBlownOut(0);
@@ -176,7 +201,7 @@ export default function OneFlame() {
         g.gust = { x: fromLeft ? -0.2 : 1.2, dir: fromLeft ? 1 : -1, hit: false };
       }
       if (g.gust) {
-        g.gust.x += g.gust.dir * dt * 0.85;
+        g.gust.x += g.gust.dir * dt * GUST_SPEED;
         // It takes the lamps it is passing over, but never the last flame —
         // being wiped out by chance is not a challenge.
         if (!g.gust.hit && ((g.gust.dir > 0 && g.gust.x > 0.45) || (g.gust.dir < 0 && g.gust.x < 0.55))) {
@@ -185,7 +210,7 @@ export default function OneFlame() {
           if (litOnes.length > 2) {
             // The windward ones — those the gust reached first.
             litOnes.sort((a, b) => (g.gust.dir > 0 ? a.l.x - b.l.x : b.l.x - a.l.x));
-            const take = Math.min(litOnes.length - 1, 1 + Math.floor(progress * 2));
+            const take = Math.min(litOnes.length - 1, 1 + Math.floor(progress * 4));
             litOnes.slice(0, take).forEach((o) => { g.lamps[o.i].lit = false; g.blown += 1; });
             setLit(g.lamps.filter((l) => l.lit).length);
             setBlownOut(g.blown);
@@ -354,8 +379,8 @@ export default function OneFlame() {
             </p>
             <ul className="utv-rules">
               <li><strong>Tap a lamp with a ring around it.</strong> The ring means it is close enough to catch.</li>
-              <li><strong>The wind comes and goes.</strong> It takes the lamps most exposed to it — never your last one.</li>
-              <li><strong>Light them all</strong> and the chapter is done.</li>
+              <li><strong>The wind keeps coming.</strong> It takes the lamps most exposed to it — never your last one — and it gets greedier the more you have lit.</li>
+              <li><strong>Light them all</strong> as fast as you can. The clock is running.</li>
             </ul>
             <button className="utv-primary" onClick={start} data-testid="diya-start">
               Light the first one <ArrowRight size={17} />
@@ -371,8 +396,7 @@ export default function OneFlame() {
                 {blownOut ? `${blownOut} blown out` : ""}
               </span>
               <span className="utv-hud-right">
-                <span className="utv-combo">{Math.round((lit / Math.max(total, 1)) * 100)}</span>
-                <span className="utv-hud-label">%</span>
+                <span className="utv-timer" data-testid="diya-timer">{fmtTime(elapsed)}</span>
               </span>
             </div>
             <button
@@ -392,10 +416,10 @@ export default function OneFlame() {
             chapterId="diya"
             returnPath="/utsav/diya"
             headline={blownOut === 0 ? "Not one lamp lost" : "The courtyard is lit"}
-            scoreLine={`${total} lamps`}
+            scoreLine={`${total} lamps in ${fmtTime(elapsed)}`}
             detail={blownOut === 0
-              ? "You outran the wind completely."
-              : `The wind took ${blownOut} along the way, and you lit them again.`}
+              ? "You outran the wind completely — not one lamp relit."
+              : `The wind took ${blownOut} along the way, and you lit every one of them again.`}
             onReplay={start}
           />
         )}

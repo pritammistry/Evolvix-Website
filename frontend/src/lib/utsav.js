@@ -40,8 +40,8 @@ export const CHAPTERS = [
     id: "soop",
     path: "/utsav/soop",
     festival: "Chhath",
-    title: "Soop Sajao",
-    blurb: "Thekua, sugarcane, coconut, diya. Fill the soop, in order.",
+    title: "Ghat Chalo",
+    blurb: "The soop rides on your head. The ghat is a long walk through a crowd.",
     emoji: "🧺",
   },
 ];
