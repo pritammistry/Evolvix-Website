@@ -2,10 +2,17 @@
 // campaigns. One code, one URL to promote, and a reason for the same person to
 // come back as each festival arrives.
 //
-// Dates are the 2026 panchang: Durga Puja Shashthi 17 October and Vijaya
-// Dashami 20 October, Diwali 8 November, Chhath's Surya Shashthi 15 November.
-// Chapters open on a cascade with no dead air between festivals, and once a
-// chapter opens it stays open — replaying an earlier one is part of the point.
+// Chapters unlock by being earned: finish one and the next opens. The code is
+// claimable only once all three are done, and it is claimable once — replaying
+// afterwards changes nothing, which the copy says plainly so nobody grinds for
+// a better number.
+//
+// Progress lives in localStorage rather than on the server, because nobody is
+// signed in while playing — the login only happens at the claim. That means the
+// gate is an engagement gate, not a security boundary: someone determined can
+// forge it. That is a deliberate trade. Demanding an account before the first
+// game would cost far more players than the forgery costs us, and the previous
+// campaign made the same trade.
 
 export const SEASON_ENDS_AT = "2026-11-15T23:59:59+05:30";
 
@@ -20,7 +27,6 @@ export const CHAPTERS = [
     // The drum, not a diya — the Diwali chapter owns the lamp, and two cards
     // carrying the same icon reads as a mistake.
     emoji: "🥁",
-    opensAt: "2026-09-05T00:00:00+05:30",
   },
   {
     id: "diya",
@@ -29,9 +35,6 @@ export const CHAPTERS = [
     title: "One Flame",
     blurb: "One lit diya, a dark courtyard, and a wind that does not help.",
     emoji: "🪔",
-    // The day after Vijaya Dashami, so the season never goes quiet between
-    // one festival ending and the next beginning.
-    opensAt: "2026-10-21T00:00:00+05:30",
   },
   {
     id: "soop",
@@ -40,8 +43,6 @@ export const CHAPTERS = [
     title: "Soop Sajao",
     blurb: "Thekua, sugarcane, coconut, diya. Fill the soop, in order.",
     emoji: "🧺",
-    // The day after Bhai Dooj, running into Chhath itself.
-    opensAt: "2026-11-11T00:00:00+05:30",
   },
 ];
 
@@ -65,21 +66,56 @@ export function seasonLive() {
   return Date.now() < ends;
 }
 
+const PROGRESS_KEY = "utsav-progress";
+
+export function completedChapters() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "[]");
+    return Array.isArray(raw) ? raw.filter((id) => CHAPTERS.some((c) => c.id === id)) : [];
+  } catch {
+    return []; // private mode, or something else wrote nonsense to the key
+  }
+}
+
+export function markComplete(id) {
+  try {
+    const done = new Set(completedChapters());
+    done.add(id);
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify([...done]));
+  } catch { /* private mode; the chapter simply will not be remembered */ }
+}
+
+export function isComplete(id) {
+  return completedChapters().includes(id);
+}
+
+// The first chapter is always open. After that, a chapter opens once the one
+// before it is done, so the season is walked in order.
 export function chapterOpen(chapter) {
   if (previewing()) return true;
-  const opens = Date.parse(chapter.opensAt);
-  if (Number.isNaN(opens)) return false;
-  return Date.now() >= opens && seasonLive();
+  if (!seasonLive()) return false;
+  const i = CHAPTERS.findIndex((c) => c.id === chapter.id);
+  if (i <= 0) return i === 0;
+  return isComplete(CHAPTERS[i - 1].id);
+}
+
+export function allComplete() {
+  return CHAPTERS.every((c) => completedChapters().includes(c.id));
+}
+
+// The chapter to send someone to next: the first one they have not finished.
+export function nextChapter() {
+  return CHAPTERS.find((c) => !isComplete(c.id)) || null;
 }
 
 export function findChapter(id) {
   return CHAPTERS.find((c) => c.id === id) || null;
 }
 
-// "17 October" — for the locked cards, so a visitor knows when to come back
-// rather than just being told no.
-export function opensOnLabel(chapter) {
-  const d = new Date(chapter.opensAt);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-IN", { day: "numeric", month: "long" });
+// What a locked card should say instead of a date: which chapter has to be
+// finished first.
+export function unlockedByLabel(chapter) {
+  const i = CHAPTERS.findIndex((c) => c.id === chapter.id);
+  if (i <= 0) return "";
+  return CHAPTERS[i - 1].title;
 }

@@ -937,3 +937,21 @@ img,svg,video,canvas{max-width:100%}
 .utv-card--score .utv-score{margin:0 0 8px;font-family:"Rajdhani","Space Grotesk",sans-serif;font-size:2.4rem;line-height:1;color:white;font-variant-numeric:tabular-nums}
 .utv-card--score .utv-score strong{color:var(--utv-gold)}
 @media(min-width:720px){.utv-chapters{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.utv-inline-btn{display:inline-flex;align-items:center;gap:5px;padding:0;border:none;background:none;color:var(--utv-gold);font-size:inherit;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.utv-inline-btn:hover{opacity:.8}
+.utv-chapter--done{border-color:rgba(120,220,170,.36)}
+.utv-chapter--done .utv-chapter-festival{color:#8fe3b8}
+.utv-card--next{border-color:rgba(255,193,77,.42)}
+.utv-soop-ask{font-size:1.35rem;margin:6px 0 18px;color:white}
+.utv-soop-tray{list-style:none;margin:0 0 16px;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.utv-soop-item{width:100%;display:flex;align-items:center;gap:10px;padding:14px 16px;border:1px solid rgba(255,193,77,.28);border-radius:16px;background:rgba(255,193,77,.06);color:white;font-size:.9rem;font-weight:700;text-align:left;cursor:pointer;transition:border-color .2s,background .2s,transform .18s}
+.utv-soop-item:hover:not(:disabled){border-color:rgba(255,193,77,.65);background:rgba(255,193,77,.14);transform:translateY(-2px)}
+.utv-soop-item:disabled{opacity:.5;cursor:default;border-style:dashed}
+.utv-soop-icon{font-size:1.5rem;line-height:1;flex-shrink:0}
+.utv-soop-name{flex:1;min-width:0}
+.utv-soop-nudge{margin:0 0 14px;color:#ffd0a8;font-size:.88rem;font-weight:700}
+.utv-soop-log{list-style:none;margin:18px 0 0;padding:18px 0 0;border-top:1px solid rgba(255,193,77,.22);display:flex;flex-direction:column;gap:11px;text-align:left;counter-reset:soop}
+.utv-soop-log li{position:relative;padding-left:30px;color:var(--muted);font-size:.86rem;line-height:1.6;counter-increment:soop;text-wrap:pretty}
+.utv-soop-log li::before{content:counter(soop);position:absolute;left:0;top:0;width:20px;height:20px;border-radius:50%;background:rgba(255,193,77,.16);color:var(--utv-gold);font-size:11px;font-weight:800;display:grid;place-items:center}
+.utv-soop-log strong{color:white}
+@media(max-width:520px){.utv-soop-tray{grid-template-columns:1fr}}

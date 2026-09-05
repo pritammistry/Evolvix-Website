@@ -22,6 +22,8 @@ const TomorrowsOrder = lazy(() => import("./pages/TomorrowsOrder"));
 const Rangoli = lazy(() => import("./pages/Rangoli"));
 const Utsav = lazy(() => import("./pages/Utsav"));
 const DhunuchiNaach = lazy(() => import("./pages/DhunuchiNaach"));
+const OneFlame = lazy(() => import("./pages/OneFlame"));
+const SoopSajao = lazy(() => import("./pages/SoopSajao"));
 const DahiHandi = lazy(() => import("./pages/DahiHandi"));
 import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
@@ -52,6 +54,8 @@ function AppRoutes() {
       <Route path="/playground/rangoli" element={<Rangoli />} />
       <Route path="/utsav" element={<Utsav />} />
       <Route path="/utsav/dhunuchi" element={<DhunuchiNaach />} />
+      <Route path="/utsav/diya" element={<OneFlame />} />
+      <Route path="/utsav/soop" element={<SoopSajao />} />
       {/* Raksha Bandhan is over, but its link is in posts that are still
           circulating. Sending it to the season that is running now is worth
           more than a 404 or a page about a closed offer. */}

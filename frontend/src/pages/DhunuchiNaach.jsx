@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, RotateCcw, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { useSEO } from "../hooks/useSEO";
 import { trackEvent } from "../components/AnalyticsTracker";
-import { useFestivalClaim } from "../hooks/useFestivalClaim";
-import { FestivalPrize, FestivalWon } from "../components/FestivalPrize";
+import { useFestivalOffer } from "../hooks/useFestivalOffer";
+import ChapterOutro from "../components/ChapterOutro";
 import { chapterOpen, findChapter, seasonLive } from "../lib/utsav";
+import { DhakKit } from "../lib/dhakAudio";
 import { APPROACH_MS, GOOD_MS, PERFECT_MS, PHASES, TOTAL_BEATS, buildSchedule, judgeStrike } from "../lib/dhunuchiBeat";
 
 const REF = 520;             // art is authored against this height
@@ -21,7 +22,8 @@ const REF = 520;             // art is authored against this height
 // rather than something imposed on a ritual. And the dhak genuinely accelerates
 // towards a crescendo, so the difficulty curve is the real one.
 //
-// Everyone who finishes claims a code. The score is pride, not a gate: this is a
+// Finishing this chapter unlocks the next one. The code arrives only once all
+// three are done, and the score is pride rather than a gate — this is a
 // campaign, and a discount nobody can reach is worth nothing to anyone.
 
 function rand(a, b) { return a + Math.random() * (b - a); }
@@ -35,8 +37,10 @@ export default function DhunuchiNaach() {
     path: "/utsav/dhunuchi",
   });
 
-  const claimState = useFestivalClaim({ label: "dhunuchi-naach", returnPath: "/utsav/dhunuchi" });
-  const { user, campaign, offer, claiming, error, reveal, claim, recordWin, loginPath } = claimState;
+  // Read-only here: claiming belongs to ChapterOutro, and running the claim
+  // hook in both places would fetch the campaign twice on every mount.
+  const campaign = useFestivalOffer();
+  const offer = campaign?.claimed;
 
   const canvasRef = useRef(null);
   const wrapRef = useRef(null);
@@ -84,6 +88,25 @@ export default function DhunuchiNaach() {
     canvas.height = Math.round(h * dpr);
     canvas.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
     const g = gameRef.current;
+    if (!g.puff) {
+      // One soft sprite, rendered once and reused for every puff. Building a
+      // radial gradient per particle per frame would cost far more than it is
+      // worth at a few hundred particles.
+      const make = (r, gr, b) => {
+        const c = document.createElement("canvas");
+        c.width = c.height = 64;
+        const cc = c.getContext("2d");
+        const grad = cc.createRadialGradient(32, 32, 0, 32, 32, 32);
+        grad.addColorStop(0, `rgba(${r},${gr},${b},.85)`);
+        grad.addColorStop(0.45, `rgba(${r},${gr},${b},.34)`);
+        grad.addColorStop(1, `rgba(${r},${gr},${b},0)`);
+        cc.fillStyle = grad;
+        cc.fillRect(0, 0, 64, 64);
+        return c;
+      };
+      g.puff = make(214, 198, 196);        // cool, for smoke that has risen
+      g.puffWarm = make(255, 196, 132);    // lit by the coals, near the pot
+    }
     if (!g.petals.length) {
       g.petals = Array.from({ length: reduced ? 5 : 16 }, () => ({
         x: Math.random(), y: Math.random(), vy: rand(0.018, 0.05), sway: rand(0.4, 1.2), p: Math.random() * 6, s: rand(3, 6.5),
@@ -111,23 +134,9 @@ export default function DhunuchiNaach() {
     if (el) el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
   }, [phase, reduced]);
 
-  // A synthesised dhak: a low body that drops in pitch, plus a slap of noise.
-  // Synthesised rather than a sample so the page ships no audio asset, and
-  // created only once the visitor has asked for sound.
-  const thump = useCallback((accent) => {
-    const ctx = audioRef.current;
-    if (!ctx) return;
-    const t = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.frequency.setValueAtTime(accent ? 150 : 118, t);
-    osc.frequency.exponentialRampToValueAtTime(48, t + 0.18);
-    gain.gain.setValueAtTime(accent ? 0.5 : 0.32, t);
-    gain.gain.exponentialRampToValueAtTime(0.0008, t + 0.3);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(t);
-    osc.stop(t + 0.32);
-  }, []);
+  // The kit is built on the visitor's tap, which is the gesture browsers
+  // require before any audio may start, and torn down with the page.
+  useEffect(() => () => { audioRef.current?.close?.(); }, []);
 
   const judge = useCallback((delta) => {
     const g = gameRef.current;
@@ -166,11 +175,22 @@ export default function DhunuchiNaach() {
     g.swing = 1;
   }, [judge]);
 
+  // Muting mid-dance without stopping the routine: the beats stay scheduled so
+  // the rhythm does not shift, they simply stop being audible.
+  const mute = useCallback(() => {
+    const kit = audioRef.current;
+    if (kit) kit.master.gain.value = 0;
+    setSoundOn(false);
+  }, []);
+
   const finish = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
+    // Anything still scheduled would otherwise keep drumming over the result.
+    audioRef.current?.stop();
     setPhase("done");
-    recordWin();
-  }, [recordWin]);
+    // ChapterOutro records the completion and decides whether the season is
+    // finished — this only has to stop the game.
+  }, []);
 
   const start = () => {
     const { beats, endsAt } = buildSchedule();
@@ -178,8 +198,26 @@ export default function DhunuchiNaach() {
     g.beats = beats.map((b) => ({ ...b, judged: false, sounded: false }));
     g.endsAt = endsAt;
     g.startedAt = performance.now();
+    // Scheduled against the AudioContext clock rather than fired frame by
+    // frame, so the rhythm cannot drift when the renderer stutters.
+    const kit = audioRef.current;
+    if (kit) {
+      kit.stop();
+      kit.master.gain.value = soundOn ? 0.9 : 0;
+      kit.schedule(g.beats, kit.now + 0.06);
+    }
     g.combo = 0; g.hits = 0; g.perfects = 0; g.best = 0;
-    g.smoke = []; g.embers = []; g.shake = 0; g.glow = 0; g.swing = 0;
+    g.embers = []; g.shake = 0; g.glow = 0; g.swing = 0;
+    // Pre-aged puffs, so the pot is already smoking when the routine starts —
+    // a dhunuchi is lit well before anybody dances with it.
+    g.smoke = Array.from({ length: 70 }, () => {
+      const life = 0.15 + Math.random() * 0.85;
+      return {
+        x: 0.5 + rand(-0.02, 0.02), y: 0.38 - (1 - life) * 0.3,
+        vx: rand(-0.014, 0.014), vy: rand(-0.26, -0.15),
+        life, size: 7 + (1 - life) * 60, seed: Math.random() * 10,
+      };
+    });
     sectionRef.current = 0;
     setHits(0); setPerfects(0); setCombo(0); setBest(0); setJudgement(""); setSection(0);
     setPhase("playing");
@@ -188,10 +226,8 @@ export default function DhunuchiNaach() {
 
   const startWithSound = () => {
     try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      // Created inside the tap, which is the gesture browsers require.
-      if (Ctx && !audioRef.current) audioRef.current = new Ctx();
-      audioRef.current?.resume?.();
+      if (!audioRef.current) audioRef.current = new DhakKit();
+      audioRef.current.resume();
       setSoundOn(true);
     } catch { /* no audio available; the game is playable without it */ }
     start();
@@ -230,7 +266,8 @@ export default function DhunuchiNaach() {
         const b = g.beats[i];
         if (!b.sounded && t >= b.t) {
           b.sounded = true;
-          if (soundOn) thump(b.countIn || b.phase >= 2);
+          // Sound is already scheduled on the audio clock; this only drives the
+          // dancer, so the figure moves on the beat even when muted.
           g.swing = Math.max(g.swing, 0.55);
         }
         if (!b.judged && !b.countIn && t > b.t + GOOD_MS) { b.judged = true; miss(); }
@@ -246,139 +283,314 @@ export default function DhunuchiNaach() {
       ctx.save();
       if (g.shake > 0.4) ctx.translate(rand(-g.shake, g.shake), rand(-g.shake, g.shake));
 
-      const sky = ctx.createLinearGradient(0, 0, 0, h);
-      sky.addColorStop(0, "#1a0b24");
-      sky.addColorStop(0.55, "#2c0f22");
-      sky.addColorStop(1, "#160713");
-      ctx.fillStyle = sky;
+      const cx = w / 2;
+      const cy = h * 0.38;                 // the raised dhunuchi, and the target
+      const R = Math.min(w, h) * 0.082;
+      const floorY = h * 0.86;
+      // The whole scene is lit by the embers, so light level drives colour
+      // everywhere rather than each element glowing on its own.
+      const lit = 0.55 + g.glow * 0.45;
+
+      // Pandal interior: a draped ceiling falling to a lit floor.
+      const room = ctx.createLinearGradient(0, 0, 0, h);
+      room.addColorStop(0, "#25091f");
+      room.addColorStop(0.42, "#3a1020");
+      room.addColorStop(0.8, "#200a16");
+      room.addColorStop(1, "#12060f");
+      ctx.fillStyle = room;
       ctx.fillRect(-20, -20, w + 40, h + 40);
 
-      // Pandal arch behind everything, so the frame reads as a place.
+      // Cloth drapes gathered at the ceiling — the scalloped roof every pandal has.
+      ctx.fillStyle = "rgba(96,18,42,.55)";
+      const scallops = 7;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      for (let i = 0; i <= scallops; i += 1) {
+        const x0 = (i / scallops) * w;
+        ctx.quadraticCurveTo(x0 + w / scallops / 2, h * 0.115, x0 + w / scallops, 0);
+      }
+      ctx.lineTo(w, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,196,110,.3)";
+      ctx.lineWidth = 1.4 * k;
+      ctx.stroke();
+
+      // A string of lamps along the drape line.
+      for (let i = 0; i <= scallops; i += 1) {
+        const x0 = (i / scallops) * w + w / scallops / 2;
+        const y0 = h * 0.113;
+        const tw = 0.6 + 0.4 * Math.sin(t / 420 + i);
+        const lg = ctx.createRadialGradient(x0, y0, 0, x0, y0, 16 * k);
+        lg.addColorStop(0, `rgba(255,214,140,${0.85 * tw})`);
+        lg.addColorStop(1, "rgba(255,150,40,0)");
+        ctx.fillStyle = lg;
+        ctx.beginPath(); ctx.arc(x0, y0, 16 * k, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // The idol behind the dancer: a silhouetted crown and halo, kept vague on
+      // purpose — suggesting the deity rather than drawing her.
       ctx.save();
       ctx.globalAlpha = 0.5;
-      ctx.strokeStyle = "rgba(255,186,84,.34)";
-      ctx.lineWidth = 2 * k;
-      for (let i = 0; i < 3; i += 1) {
-        const r = w * (0.42 + i * 0.13);
-        ctx.beginPath();
-        ctx.arc(w / 2, h * 0.92, r, Math.PI * 1.06, Math.PI * 1.94);
-        ctx.stroke();
+      const halo = ctx.createRadialGradient(cx, h * 0.36, R * 0.4, cx, h * 0.36, R * 3.4);
+      halo.addColorStop(0, `rgba(255,190,96,${0.2 * lit})`);
+      halo.addColorStop(1, "rgba(255,150,40,0)");
+      ctx.fillStyle = halo;
+      ctx.beginPath(); ctx.arc(cx, h * 0.36, R * 3.4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "rgba(40,8,26,.85)";
+      ctx.beginPath();
+      ctx.moveTo(cx - R * 1.5, h * 0.3);
+      for (let i = 0; i < 7; i += 1) {
+        const px = cx - R * 1.5 + (i / 6) * R * 3;
+        ctx.lineTo(px, h * 0.3 - (i % 2 ? R * 0.55 : R * 0.28));
+        ctx.lineTo(px + R * 0.25, h * 0.3);
       }
+      ctx.closePath(); ctx.fill();
       ctx.restore();
 
-      // Shiuli drifting through.
-      ctx.fillStyle = "rgba(255,244,222,.62)";
+      // Floor, catching the ember light.
+      const fl = ctx.createLinearGradient(0, floorY - h * 0.05, 0, h);
+      fl.addColorStop(0, `rgba(120,44,20,${0.22 * lit})`);
+      fl.addColorStop(1, "rgba(10,4,8,0)");
+      ctx.fillStyle = fl;
+      ctx.fillRect(0, floorY - h * 0.05, w, h * 0.25);
+
+      // Crowd at the edge of the light.
+      ctx.fillStyle = "rgba(8,3,10,.8)";
+      for (let i = 0; i < 11; i += 1) {
+        const px = (i / 10) * w + Math.sin(i * 3.1) * 8 * k;
+        const hh = (18 + (i % 3) * 7) * k;
+        ctx.beginPath();
+        ctx.arc(px, h * 0.955 - hh, 7.5 * k, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(px, h * 0.985, 13 * k, hh, 0, Math.PI, 0);
+        ctx.fill();
+      }
+
+      // Shiuli drifting through the light.
       g.petals.forEach((p) => {
         p.y += p.vy * dt;
         if (p.y > 1.05) { p.y = -0.05; p.x = Math.random(); }
         const px = (p.x + Math.sin(t / 1000 * p.sway + p.p) * 0.03) * w;
+        ctx.fillStyle = `rgba(255,244,222,${0.28 + 0.3 * lit})`;
         ctx.beginPath();
         ctx.ellipse(px, p.y * h, p.s * k * 1.5, p.s * k * 0.8, p.p, 0, Math.PI * 2);
         ctx.fill();
       });
 
-      const cx = w / 2;
-      const cy = h * 0.44;
-      const R = Math.min(w, h) * 0.15;
+      // ── the dancer ──────────────────────────────────────────────────────
+      // Proportions are set from the floor rather than from the pot, so the
+      // figure stays human at any canvas size. Hips and shoulders counter-
+      // rotate and the knees give on each stroke, which is what separates a
+      // dancing figure from a swinging stick.
+      const beatPhase = g.swing;
+      const sway = Math.sin(t / 300);
+      const unit = (floorY - cy) / 5.4;            // one head-height, roughly
+      const hipY = floorY - unit * 2.05 + beatPhase * unit * 0.1;
+      const shoulderY = floorY - unit * 3.55 + beatPhase * unit * 0.07;
+      const headY = floorY - unit * 4.15;
+      const hipX = cx + sway * unit * 0.22;
+      const shoulderX = cx - sway * unit * 0.16;
 
-      // Approach rings: one per upcoming beat, collapsing onto the target.
+      // Drawn twice: once fat in warm light for the rim the embers throw, then
+      // dark on top. Without the rim the figure is black on a dark ground and
+      // simply disappears.
+      const limbs = (stroke, widthMul) => {
+        ctx.strokeStyle = stroke;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        ctx.lineWidth = unit * 0.3 * widthMul;
+        [-1, 1].forEach((side) => {
+          const kneeX = hipX + side * unit * (0.52 + sway * side * 0.12);
+          const kneeY = hipY + unit * 1.02;
+          const footX = hipX + side * unit * 0.82;
+          ctx.beginPath();
+          ctx.moveTo(hipX, hipY);
+          ctx.quadraticCurveTo(kneeX, kneeY, footX, floorY);
+          ctx.stroke();
+        });
+
+        ctx.lineWidth = unit * 0.42 * widthMul;
+        ctx.beginPath();
+        ctx.moveTo(hipX, hipY);
+        ctx.lineTo(shoulderX, shoulderY);
+        ctx.stroke();
+
+        // Right arm reaching the raised pot, left arm out low with the second.
+        ctx.lineWidth = unit * 0.24 * widthMul;
+        ctx.beginPath();
+        ctx.moveTo(shoulderX, shoulderY);
+        ctx.quadraticCurveTo(shoulderX + unit * 0.95, shoulderY - unit * 0.5, cx, cy + R * 1.5);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(shoulderX, shoulderY);
+        ctx.quadraticCurveTo(shoulderX - unit * 1.05, shoulderY + unit * 0.5, lowX, lowY - R * 0.5);
+        ctx.stroke();
+      };
+
+      const lowX = cx - unit * 2.0 - sway * unit * 0.2;
+      const lowY = floorY - unit * 2.5;
+
+      ctx.save();
+      // Rim first, at a wider stroke, in the colour of the firelight.
+      limbs(`rgba(255,150,64,${0.34 + g.glow * 0.3})`, 1.5);
+      limbs("rgba(26,9,14,.97)", 1);
+
+      // Dhoti, flaring with the movement.
+      ctx.fillStyle = "rgba(26,9,14,.97)";
+      ctx.beginPath();
+      ctx.moveTo(hipX - unit * 0.4, hipY - unit * 0.12);
+      ctx.quadraticCurveTo(hipX + sway * unit * 0.3, hipY + unit * 0.95, hipX + unit * 0.62, hipY + unit * 0.8);
+      ctx.lineTo(hipX - unit * 0.66, hipY + unit * 0.8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = `rgba(255,150,64,${0.28 + g.glow * 0.24})`;
+      ctx.lineWidth = unit * 0.05;
+      ctx.stroke();
+
+      // Head, with the firelight catching one side of it.
+      ctx.fillStyle = "rgba(26,9,14,.97)";
+      ctx.beginPath();
+      ctx.arc(shoulderX - sway * unit * 0.05, headY, unit * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = `rgba(255,160,70,${0.4 + g.glow * 0.3})`;
+      ctx.lineWidth = unit * 0.06;
+      ctx.beginPath();
+      ctx.arc(shoulderX - sway * unit * 0.05, headY, unit * 0.32, Math.PI * 1.15, Math.PI * 1.95);
+      ctx.stroke();
+      ctx.restore();
+
+      // ── the dhunuchi ────────────────────────────────────────────────────
+      // A real dhunuchi is a stemmed clay cone: wide ember bowl, pinched waist,
+      // flared foot. Drawing it properly is most of what makes the frame read
+      // as a pandal rather than as a diagram.
+      const drawDhunuchi = (x, y, r, glowLevel) => {
+        ctx.save();
+        // Heat and smoke light spilling upward.
+        const spill = ctx.createRadialGradient(x, y - r * 0.2, r * 0.1, x, y - r * 0.2, r * 3.2);
+        spill.addColorStop(0, `rgba(255,206,132,${0.4 * glowLevel})`);
+        spill.addColorStop(0.4, `rgba(255,124,40,${0.16 * glowLevel})`);
+        spill.addColorStop(1, "rgba(255,90,20,0)");
+        ctx.fillStyle = spill;
+        ctx.beginPath(); ctx.arc(x, y - r * 0.2, r * 3.2, 0, Math.PI * 2); ctx.fill();
+
+        // Clay body.
+        const clay = ctx.createLinearGradient(x - r, y, x + r, y + r * 1.8);
+        clay.addColorStop(0, "#7d3a1c");
+        clay.addColorStop(0.45, "#b5602f");
+        clay.addColorStop(1, "#5d2712");
+        ctx.fillStyle = clay;
+        ctx.beginPath();
+        ctx.moveTo(x - r, y);
+        ctx.lineTo(x - r * 0.24, y + r * 1.05);
+        ctx.lineTo(x - r * 0.24, y + r * 1.35);
+        ctx.lineTo(x - r * 0.72, y + r * 1.75);
+        ctx.lineTo(x + r * 0.72, y + r * 1.75);
+        ctx.lineTo(x + r * 0.24, y + r * 1.35);
+        ctx.lineTo(x + r * 0.24, y + r * 1.05);
+        ctx.lineTo(x + r, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,190,120,.35)";
+        ctx.lineWidth = 1.2 * k;
+        ctx.stroke();
+
+        // Rim, and the coconut husk burning in the bowl.
+        ctx.fillStyle = "#8f451f";
+        ctx.beginPath();
+        ctx.ellipse(x, y, r, r * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        const coals = ctx.createRadialGradient(x, y, 0, x, y, r);
+        coals.addColorStop(0, `rgba(255,246,206,${0.95 * glowLevel})`);
+        coals.addColorStop(0.45, `rgba(255,158,48,${0.9 * glowLevel})`);
+        coals.addColorStop(1, `rgba(150,32,8,${0.85 * glowLevel})`);
+        ctx.fillStyle = coals;
+        ctx.beginPath();
+        ctx.ellipse(x, y, r * 0.86, r * 0.25, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Individual coals, breathing at their own rates.
+        for (let i = 0; i < 7; i += 1) {
+          const a = (i / 7) * Math.PI * 2 + t / 1400;
+          const br = 0.5 + 0.5 * Math.sin(t / 260 + i * 1.7);
+          ctx.fillStyle = `rgba(255,${150 + Math.round(br * 90)},60,${(0.4 + br * 0.5) * glowLevel})`;
+          ctx.beginPath();
+          ctx.ellipse(x + Math.cos(a) * r * 0.5, y + Math.sin(a) * r * 0.14, r * 0.15, r * 0.07, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      };
+
+      drawDhunuchi(lowX, lowY, R * 0.6, 0.75);
+      drawDhunuchi(cx, cy, R, lit);
+
+      // ── approach rings ──────────────────────────────────────────────────
+      // Rings of heat rather than a UI overlay: warm, soft, and thinning as
+      // they close, so they belong to the scene.
       g.beats.forEach((b) => {
         if (b.judged) return;
         const lead = b.t - t;
         if (lead > APPROACH_MS || lead < -GOOD_MS) return;
         const p = Math.max(0, lead / APPROACH_MS);
-        const r = R * (1 + p * 2.4);
-        ctx.strokeStyle = b.countIn ? "rgba(255,255,255,.3)" : `rgba(255,196,96,${0.22 + (1 - p) * 0.7})`;
-        ctx.lineWidth = (b.countIn ? 1.6 : 2.6) * k;
+        const rr = R * (1 + p * 2.8);
+        ctx.strokeStyle = b.countIn
+          ? `rgba(255,255,255,${0.16 + (1 - p) * 0.2})`
+          : `rgba(255,${170 + Math.round((1 - p) * 60)},${90 + Math.round((1 - p) * 60)},${0.14 + (1 - p) * 0.72})`;
+        ctx.lineWidth = (1.4 + (1 - p) * 2.4) * k;
         ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.arc(cx, cy, rr, 0, Math.PI * 2);
         ctx.stroke();
       });
 
-      // The target: the ember mouth of the dhunuchi.
-      const pulse = 1 + g.glow * 0.16;
-      const gl = ctx.createRadialGradient(cx, cy, R * 0.1, cx, cy, R * 1.5 * pulse);
-      gl.addColorStop(0, `rgba(255,214,140,${0.5 + g.glow * 0.45})`);
-      gl.addColorStop(0.5, `rgba(255,132,44,${0.22 + g.glow * 0.3})`);
-      gl.addColorStop(1, "rgba(255,90,20,0)");
-      ctx.fillStyle = gl;
-      ctx.beginPath();
-      ctx.arc(cx, cy, R * 1.5 * pulse, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = `rgba(255,226,168,${0.65 + g.glow * 0.35})`;
-      ctx.lineWidth = 3 * k;
-      ctx.beginPath();
-      ctx.arc(cx, cy, R * pulse, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Smoke, thicker the longer the combo runs — the visible reward for
-      // staying on the beat.
-      const density = reduced ? 0.5 : 1;
-      if (Math.random() < (0.35 + Math.min(g.combo, 20) / 26) * density) {
-        g.smoke.push({ x: 0.5 + rand(-0.03, 0.03), y: 0.44, vx: rand(-0.02, 0.02), vy: rand(-0.14, -0.07), life: 1, size: rand(10, 26) });
+      // ── smoke ───────────────────────────────────────────────────────────
+      // Layered puffs on a curl, so the column twists and widens the way real
+      // smoke does instead of rising as a straight grey pipe. This is the
+      // signature of the dance — a thin wisp reads as a bug, so it is generous
+      // by default and thickens further as the combo runs.
+      const density = reduced ? 0.35 : 1;
+      const want = (3 + Math.min(g.combo, 24) / 5) * density;
+      for (let i = 0; i < want; i += 1) {
+        g.smoke.push({
+          x: cx / w + rand(-0.018, 0.018), y: cy / h - 0.008,
+          vx: rand(-0.014, 0.014), vy: rand(-0.26, -0.15),
+          life: 1, size: rand(7, 17), seed: Math.random() * 10,
+        });
       }
-      ctx.save();
-      g.smoke = g.smoke.filter((s) => {
-        s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt * 0.42; s.size += dt * 20;
-        if (s.life <= 0) return false;
-        ctx.fillStyle = `rgba(226,206,214,${s.life * 0.15})`;
-        ctx.beginPath();
-        ctx.arc(s.x * w, s.y * h, s.size * k, 0, Math.PI * 2);
-        ctx.fill();
+      if (g.smoke.length > 420) g.smoke.splice(0, g.smoke.length - 420);
+      g.smoke = g.smoke.filter((sm) => {
+        sm.life -= dt * 0.34;
+        if (sm.life <= 0) return false;
+        // Curl: horizontal drift on the particle's own seed, which is what
+        // turns a column into a plume.
+        sm.x += (sm.vx + Math.sin(t / 780 + sm.seed) * 0.055 * (1 - sm.life)) * dt;
+        sm.y += sm.vy * dt;
+        sm.size += dt * 34;
+        // Dense at the source and thinning as it disperses — the opposite of
+        // fading in, which left the base of the plume invisible.
+        const age = 1 - sm.life;
+        ctx.globalAlpha = Math.min(1, sm.life * 1.4) * 0.3;
+        const sprite = age < 0.3 ? g.puffWarm : g.puff;
+        const r = sm.size * k;
+        ctx.drawImage(sprite, sm.x * w - r, sm.y * h - r, r * 2, r * 2);
         return true;
       });
-      ctx.restore();
+      ctx.globalAlpha = 1;
 
-      // Embers thrown on a perfect strike. Additive, but only the embers —
-      // making the whole scene additive bleaches it to white.
+      // Sparks thrown on a clean strike. Additive, but only these — making the
+      // whole scene additive bleaches it to white.
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       g.embers = g.embers.filter((p) => {
-        p.x += p.vx * dt; p.y += p.vy * dt; p.vy += dt * 0.16; p.life -= dt * 1.5;
+        p.x += p.vx * dt; p.y += p.vy * dt; p.vy += dt * 0.2; p.life -= dt * 1.35;
         if (p.life <= 0) return false;
-        ctx.fillStyle = `rgba(255,${170 + Math.round(p.life * 70)},90,${p.life})`;
+        ctx.fillStyle = `rgba(255,${150 + Math.round(p.life * 90)},70,${p.life})`;
         ctx.beginPath();
         ctx.arc(p.x * w, p.y * h, p.size * k, 0, Math.PI * 2);
         ctx.fill();
         return true;
       });
       ctx.restore();
-
-      // The dancer, in silhouette. The swing is driven by the beat, so the
-      // figure moves with the dhak rather than on a timer of its own.
-      const sway = Math.sin(t / 240) * 0.5 + g.swing * 0.5;
-      const baseY = h * 0.88;
-      ctx.fillStyle = "rgba(12,4,14,.9)";
-      ctx.beginPath();
-      ctx.ellipse(cx, baseY, w * 0.2, h * 0.05, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "rgba(14,5,16,.94)";
-      ctx.lineCap = "round";
-      ctx.lineWidth = 13 * k;
-      ctx.beginPath();
-      ctx.moveTo(cx, baseY - h * 0.02);
-      ctx.lineTo(cx + sway * 6 * k, cy + R * 1.5);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(cx + sway * 8 * k, cy + R * 1.16, 13 * k, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.lineWidth = 9 * k;
-      [-1, 1].forEach((side) => {
-        ctx.beginPath();
-        ctx.moveTo(cx + sway * 6 * k, cy + R * 1.62);
-        ctx.lineTo(cx + side * (R * 1.5 + sway * 10 * k), cy + R * 0.62);
-        ctx.stroke();
-        // The dhunuchi in each hand, still glowing between beats.
-        const hx = cx + side * (R * 1.5 + sway * 10 * k);
-        const hy = cy + R * 0.62;
-        const hg = ctx.createRadialGradient(hx, hy, 1, hx, hy, 22 * k);
-        hg.addColorStop(0, `rgba(255,206,130,${0.75 + g.glow * 0.25})`);
-        hg.addColorStop(1, "rgba(255,110,30,0)");
-        ctx.fillStyle = hg;
-        ctx.beginPath();
-        ctx.arc(hx, hy, 22 * k, 0, Math.PI * 2);
-        ctx.fill();
-      });
 
       ctx.restore();
 
@@ -388,16 +600,13 @@ export default function DhunuchiNaach() {
 
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [phase, soundOn, reduced, thump, miss, finish]);
+  }, [phase, reduced, miss, finish]);
 
   const accuracy = Math.round((hits / TOTAL_BEATS) * 100);
   const verdict = accuracy >= 90 ? "The dhaki would be proud"
     : accuracy >= 70 ? "Well danced"
     : accuracy >= 45 ? "You found the beat"
     : "The dhak got away from you";
-
-  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/utsav` : "https://evolvixtech.in/utsav";
-  const shareText = "I danced the dhunuchi and won a Puja discount from Evolvix. See if you can beat my combo.";
 
   if (!live) {
     return (
@@ -438,7 +647,7 @@ export default function DhunuchiNaach() {
               <li><strong>Tap, click or press space.</strong> An extra strike costs nothing; a missed beat breaks your run.</li>
               {offer
                 ? <li><strong>Your code is already yours.</strong> Playing again is for the fun of it — the discount does not change.</li>
-                : <li><strong>Finish and the code is yours</strong> — 15% to 40% off, whatever your score.</li>}
+                : <li><strong>Finish to unlock the next chapter.</strong> All three, and the code is yours — 15% to 40% off.</li>}
             </ul>
             <div className="utv-startrow">
               <button className="utv-primary" onClick={startWithSound} data-testid="dhunuchi-start-sound">
@@ -473,41 +682,29 @@ export default function DhunuchiNaach() {
             >
               <canvas ref={canvasRef} className="utv-canvas" />
             </button>
-            <p className="utv-fineprint">Tap anywhere on the frame, or press space.</p>
+            <p className="utv-fineprint">
+              Tap anywhere on the frame, or press space.
+              {soundOn && (
+                <>
+                  {" · "}
+                  <button type="button" className="utv-inline-btn" onClick={mute} data-testid="dhunuchi-mute">
+                    <VolumeX size={12} /> Mute the dhak
+                  </button>
+                </>
+              )}
+            </p>
           </div>
         )}
 
-        {phase === "done" && !offer && (
-          <>
-            <div className="utv-card utv-card--score" data-testid="dhunuchi-score">
-              <h2>{verdict}</h2>
-              <p className="utv-score"><strong>{hits}</strong> of {TOTAL_BEATS} beats</p>
-              <p className="utv-lede">
-                {perfects} perfect, best run of {best} in a row.
-              </p>
-              <button className="utv-secondary" onClick={start} data-testid="dhunuchi-again">
-                <RotateCcw size={15} /> Dance it again
-              </button>
-            </div>
-            <FestivalWon
-              claim={claim}
-              claiming={claiming}
-              error={error}
-              user={user}
-              loginPath={loginPath}
-              headline="Your Puja gift is wrapped"
-              lede={
-                <>
-                  It is worth somewhere between <strong>15% and 40% off</strong> anything
-                  we make, it lasts the whole season, and it is yours whatever your score.
-                </>
-              }
-            />
-          </>
-        )}
-
-        {offer && phase !== "playing" && (
-          <FestivalPrize offer={offer} reveal={reveal} shareText={shareText} shareUrl={shareUrl} />
+        {phase === "done" && (
+          <ChapterOutro
+            chapterId="dhunuchi"
+            returnPath="/utsav/dhunuchi"
+            headline={verdict}
+            scoreLine={<><strong>{hits}</strong> of {TOTAL_BEATS} beats</>}
+            detail={`${perfects} perfect, best run of ${best} in a row.`}
+            onReplay={start}
+          />
         )}
 
         {campaign && !campaign.open && !offer && (
