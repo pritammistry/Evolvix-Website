@@ -73,7 +73,15 @@ export class DhakKit {
     tone.type = "lowpass";
     tone.frequency.value = 9000;
 
-    this.master.connect(shaper).connect(tone).connect(this.ctx.destination);
+    // A tap on the output. It costs nothing, and it is the only way to confirm
+    // the kit is actually producing sound rather than silently scheduling it —
+    // which is a mistake this file has already made once.
+    this.analyser = this.ctx.createAnalyser();
+    this.analyser.fftSize = 2048;
+
+    this.master.connect(shaper).connect(tone);
+    tone.connect(this.analyser);
+    tone.connect(this.ctx.destination);
 
     // Dry and wet in parallel, so the room never swallows the attack.
     this.dry = this.ctx.createGain();
@@ -90,6 +98,15 @@ export class DhakKit {
   }
 
   resume() { return this.ctx.resume?.(); }
+
+  // Peak amplitude on the output right now, 0 to 1. Silence reads as ~0.
+  level() {
+    const buf = new Float32Array(this.analyser.fftSize);
+    this.analyser.getFloatTimeDomainData(buf);
+    let peak = 0;
+    for (let i = 0; i < buf.length; i += 1) peak = Math.max(peak, Math.abs(buf[i]));
+    return peak;
+  }
   get now() { return this.ctx.currentTime; }
 
   send(node) {

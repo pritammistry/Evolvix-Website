@@ -46,6 +46,10 @@ export default function DhunuchiNaach() {
   const wrapRef = useRef(null);
   const rafRef = useRef(0);
   const audioRef = useRef(null);
+  // The intent has to live in a ref, not in state. start() runs in the same tick
+  // as the setSoundOn that precedes it, so it would read the previous value and
+  // mute the kit on the very first note — which is exactly what it did.
+  const soundOnRef = useRef(false);
 
   const [phase, setPhase] = useState("intro");   // intro | playing | done
   const [soundOn, setSoundOn] = useState(false);
@@ -180,6 +184,7 @@ export default function DhunuchiNaach() {
   const mute = useCallback(() => {
     const kit = audioRef.current;
     if (kit) kit.master.gain.value = 0;
+    soundOnRef.current = false;
     setSoundOn(false);
   }, []);
 
@@ -203,7 +208,7 @@ export default function DhunuchiNaach() {
     const kit = audioRef.current;
     if (kit) {
       kit.stop();
-      kit.master.gain.value = soundOn ? 0.9 : 0;
+      kit.master.gain.value = soundOnRef.current ? 0.9 : 0;
       kit.schedule(g.beats, kit.now + 0.06);
     }
     g.combo = 0; g.hits = 0; g.perfects = 0; g.best = 0;
@@ -228,6 +233,10 @@ export default function DhunuchiNaach() {
     try {
       if (!audioRef.current) audioRef.current = new DhakKit();
       audioRef.current.resume();
+      // Reachable from the console on a dev build only, so the output level can
+      // be measured during development. Never attached in production.
+      if (process.env.NODE_ENV !== "production") window.__dhak = audioRef.current;
+      soundOnRef.current = true;
       setSoundOn(true);
     } catch { /* no audio available; the game is playable without it */ }
     start();
