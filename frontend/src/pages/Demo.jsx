@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BarChart3, ArrowRight, ExternalLink, Monitor, Smartphone, ShoppingBag, BookOpen, Utensils, Stethoscope, Zap, Lock } from "lucide-react";
+import { BarChart3, ArrowRight, Boxes, ExternalLink, Monitor, Smartphone, ShoppingBag, BookOpen, Utensils, Stethoscope, Zap, Lock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { SectionHeader } from "../components/SectionHeader";
@@ -10,6 +10,20 @@ import { useSEO } from "../hooks/useSEO";
 import { getDemoIcon, statusBadgeClass } from "../lib/demoDisplay";
 
 const DEMO_SITES = [
+  {
+    id: "immersive-3d",
+    title: "Immersive 3D Product Page",
+    industry: "Retail / Any product business",
+    description: "A scroll-driven 3D product page running live in the browser — the product turns, comes apart and changes finish as the customer reads. No app, no plugin, and no downloaded model: the geometry is generated in code, so it opens on a mid-range phone instead of asking for nine megabytes.",
+    features: ["Scroll-driven 3D, live in the browser", "Exploded view and colourways", "Geometry generated in code — no heavy model files", "Falls back to a flat page where WebGL is unavailable"],
+    url: "/demo/immersive",
+    // Internal, and deliberately not behind the login the other demos use: this
+    // one exists to be shared, and a gate on a link posted to LinkedIn loses
+    // more than the captured email is worth.
+    internal: true,
+    icon: <Boxes size={28} />,
+    status: "Live Demo",
+  },
   {
     id: "optical-catalog",
     title: "Smart Store — Spectacle Shop",
@@ -92,6 +106,10 @@ export default function Demo() {
   // `url` is passed explicitly so a card can offer more than one destination
   // (e.g. the customer-facing view and the admin panel of the same product).
   function handleDemoClick(demo, url = demo.url) {
+    if (demo.internal) {
+      navigate(url);
+      return;
+    }
     if (!user) {
       redirectToLoginForDemo(navigate, demo.id, url);
       return;

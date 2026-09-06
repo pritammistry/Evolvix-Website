@@ -956,3 +956,54 @@ img,svg,video,canvas{max-width:100%}
 .utv-soop-log strong{color:white}
 @media(max-width:520px){.utv-soop-tray{grid-template-columns:1fr}}
 .utv-timer{font-family:"Rajdhani","Space Grotesk",sans-serif;font-size:1.5rem;font-weight:700;color:white;line-height:1;font-variant-numeric:tabular-nums}
+
+/* ── Immersive 3D demo ──────────────────────────────────────────────────── */
+.im3-page{--im3-ink:#eaf0ff;position:relative}
+.im3-topbar{position:sticky;top:82px;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:14px clamp(18px,4vw,64px);pointer-events:none}
+.im3-topbar>*{pointer-events:auto}
+.im3-back{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(6,8,18,.72);backdrop-filter:blur(14px);color:var(--im3-ink);font-size:.84rem;font-weight:700}
+.im3-back:hover{border-color:rgba(19,223,244,.6)}
+.im3-badge{padding:8px 15px;border-radius:999px;border:1px solid rgba(19,223,244,.4);background:rgba(19,223,244,.1);color:var(--cyan);font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+
+/* The tall track is what the scroll position is read from; the sticky child is
+   what stays on screen while it is read. */
+.im3-scroll{position:relative;height:460vh}
+.im3-sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:grid;place-items:center}
+.im3-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.im3-loading{position:absolute;color:var(--muted);font-size:.86rem;letter-spacing:.08em}
+
+.im3-copy{position:absolute;left:0;right:0;bottom:clamp(70px,12vh,130px);display:grid;place-items:center;padding:0 clamp(18px,5vw,64px);pointer-events:none}
+.im3-panel{grid-area:1/1;max-width:44ch;text-align:center;opacity:0;transform:translateY(18px);transition:opacity .5s ease,transform .5s ease}
+.im3-panel--on{opacity:1;transform:none}
+.im3-eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--cyan);font-size:.72rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.im3-panel h2{font-size:clamp(1.5rem,4.2vw,2.4rem);line-height:1.14;margin:12px 0 12px;color:white;text-wrap:balance}
+.im3-panel p{margin:0;color:#c7d2ee;font-size:.98rem;line-height:1.66;text-wrap:pretty}
+
+.im3-progress{position:absolute;right:clamp(14px,3vw,34px);top:50%;transform:translateY(-50%);display:grid;gap:10px}
+.im3-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.24);transition:background .3s,transform .3s}
+.im3-dot--on{background:var(--cyan);transform:scale(1.5)}
+.im3-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);color:var(--muted);font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;animation:im3Hint 2.4s ease-in-out infinite}
+@keyframes im3Hint{0%,100%{opacity:.35;transform:translate(-50%,0)}50%{opacity:.9;transform:translate(-50%,5px)}}
+
+.im3-outro,.im3-flat{max-width:760px;margin:0 auto;text-align:center}
+.im3-lede{color:var(--muted);font-size:1rem;line-height:1.7;max-width:52ch;margin:14px auto 26px;text-wrap:pretty}
+.im3-outro-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.im3-cta{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:15px 28px;border-radius:999px;background:linear-gradient(120deg,var(--cyan),var(--blue,#4b6bff) 60%,var(--magenta,#f12dff));color:#03060f;font-weight:800;transition:transform .2s,box-shadow .2s}
+.im3-cta:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(19,223,244,.28)}
+.im3-cta--ghost{background:none;border:1px solid rgba(255,255,255,.2);color:var(--im3-ink)}
+.im3-cta--ghost:hover{border-color:rgba(19,223,244,.6);box-shadow:none}
+.im3-flat-list{list-style:none;margin:0 0 28px;padding:0;display:grid;gap:22px;text-align:left}
+.im3-flat-list h2{font-size:1.3rem;margin:10px 0 8px;color:white}
+.im3-flat-list p{margin:0;color:var(--muted);line-height:1.65}
+
+@media(max-width:820px){
+  .im3-scroll{height:420vh}
+  .im3-topbar{top:70px}
+  .im3-copy{bottom:clamp(60px,14vh,110px)}
+  .im3-progress{right:10px}
+}
+/* A visitor who has asked for less movement gets the copy without the drift. */
+@media(prefers-reduced-motion:reduce){
+  .im3-panel{transition:none}
+  .im3-hint{animation:none}
+}

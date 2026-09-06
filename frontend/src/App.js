@@ -24,6 +24,7 @@ const Utsav = lazy(() => import("./pages/Utsav"));
 const DhunuchiNaach = lazy(() => import("./pages/DhunuchiNaach"));
 const OneFlame = lazy(() => import("./pages/OneFlame"));
 const SoopSajao = lazy(() => import("./pages/SoopSajao"));
+const ImmersiveDemo = lazy(() => import("./pages/ImmersiveDemo"));
 const DahiHandi = lazy(() => import("./pages/DahiHandi"));
 import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
@@ -65,6 +66,7 @@ function AppRoutes() {
       <Route path="/shop" element={<Shop />} />
       <Route path="/products/:slug" element={<ProductDetail />} />
       <Route path="/demo" element={<Demo />} />
+      <Route path="/demo/immersive" element={<ImmersiveDemo />} />
       <Route path="/music" element={<CreativeLab />} />
       <Route path="/creative-lab" element={<CreativeLab />} />
       <Route path="/blog" element={<Blog />} />
