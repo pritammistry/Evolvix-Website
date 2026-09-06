@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { X, Sparkles, ArrowRight, Check, Rocket, Palette, Bot, ShieldCheck, Clock } from "lucide-react";
 import { submitContact } from "../api";
+import { useLocation } from "react-router-dom";
 import { useSiteContent } from "../hooks/useSiteContent";
 import { useAuth } from "../hooks/useAuth";
 import { trackFormSubmit } from "./AnalyticsTracker";
@@ -69,7 +70,14 @@ const INTERESTS = [
   "Music for Creators",
 ];
 
+// Routes where the popup would land on top of the thing the visitor came to
+// see. The immersive demo is the clearest case: it exists to be opened in front
+// of a prospect, and a lead form over the first frame of it defeats the page.
+const QUIET_ROUTES = ["/demo/immersive", "/utsav", "/admin"];
+
 export function WelcomePopup() {
+  const { pathname } = useLocation();
+  const quiet = QUIET_ROUTES.some((r) => pathname.startsWith(r));
   const { content } = useSiteContent();
   const { user, loading: authLoading } = useAuth();
   const cfg = { ...DEFAULTS, ...(content.welcome_popup || {}) };
@@ -176,7 +184,7 @@ export function WelcomePopup() {
     }
   };
 
-  if (!visible) return null;
+  if (quiet || !visible) return null;
 
   return (
     <div
